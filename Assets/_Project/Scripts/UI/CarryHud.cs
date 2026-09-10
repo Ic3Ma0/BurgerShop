@@ -36,8 +36,9 @@ namespace BurgerShop.UI
             shownCount = inventory.Count;
             shownCapacity = inventory.Capacity;
             shownInRange = inRange;
-            string hint = inventory.IsFull ? "FULL - Carry your burgers"
+            string hint = inventory.IsFull ? "FULL - Go to the gold serving spot"
                 : inRange ? "Picking up - wait for the grill"
+                : inventory.Count > 0 ? "Take burgers to the gold serving spot"
                 : "Stand on the green pickup spot";
             label.text = $"BURGERS  {inventory.Count}/{inventory.Capacity}\n{hint}";
             label.color = inventory.IsFull ? new Color(1f, 0.79f, 0.3f) : Color.white;

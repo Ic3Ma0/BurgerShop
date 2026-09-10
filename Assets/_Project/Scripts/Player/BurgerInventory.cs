@@ -47,20 +47,28 @@ namespace BurgerShop.Player
             return true;
         }
 
-        // Delivery can consume carried stock through this interface in Goal 05.
         public bool TryTakeBurger()
         {
-            if (Count == 0)
-                return false;
-
-            Transform burger = burgers[Count - 1];
-            burgers.RemoveAt(Count - 1);
+            if (!TryTakeBurger(out Transform burger)) return false;
             if (burger != null)
             {
-                burger.SetParent(null, true);
                 burger.gameObject.SetActive(false);
                 BurgerVisual.Release(burger.gameObject);
             }
+            return true;
+        }
+
+        // Transfer ownership of the existing visual to the customer without duplicating it.
+        public bool TryTakeBurger(out Transform burger)
+        {
+            burger = null;
+            if (Count == 0)
+                return false;
+
+            burger = burgers[Count - 1];
+            burgers.RemoveAt(Count - 1);
+            if (burger != null)
+                burger.SetParent(null, true);
             CountChanged?.Invoke(Count);
             return true;
         }
