@@ -17,6 +17,7 @@ namespace BurgerShop.Customer
         float spawnCountdown;
         int nextTicket = 1;
         bool shuttingDown;
+        CustomerAgent departingCustomer;
 
         public int Count => customers.Count;
         public int Capacity => slotDistance?.Length ?? 0;
@@ -62,7 +63,12 @@ namespace BurgerShop.Customer
 
             // The leader advances first. Clamp each follower to the leader's progress
             // minus a gap, so even a long frame cannot cause overtaking or overlap.
-            for (int i = 0; i < customers.Count; i++)
+            // Keep the queue still until the served customer has stepped clear.
+            // Destroyed/externally removed customers release the gate immediately.
+            bool departureClear = departingCustomer == null ||
+                Vector3.Distance(departingCustomer.transform.position, route[route.Length - 1]) >= minimumGap;
+            if (departureClear) departingCustomer = null;
+            for (int i = 0; departureClear && i < customers.Count; i++)
             {
                 CustomerAgent customer = customers[i];
                 float target = slotDistance[i];
@@ -91,8 +97,7 @@ namespace BurgerShop.Customer
             spawnCountdown = spawnInterval;
         }
 
-        // Goal 05 can take only the waiting front customer, then handle serving,
-        // payment and departure. The caller owns the returned customer afterward.
+        // Only the waiting front customer can be served. The caller owns departure.
         public bool TryDequeueReadyCustomer(out CustomerAgent customer)
         {
             customer = ReadyCustomer;
@@ -101,6 +106,7 @@ namespace BurgerShop.Customer
             customer.Removed -= OnCustomerRemoved;
             customers.RemoveAt(0);
             customer.LeaveQueue();
+            departingCustomer = customer;
             ReassignSlots();
             return true;
         }

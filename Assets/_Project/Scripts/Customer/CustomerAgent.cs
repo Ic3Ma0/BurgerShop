@@ -10,6 +10,13 @@ namespace BurgerShop.Customer
     {
         Transform orderBubble;
         Material[] ownedMaterials;
+        Transform carriedBurger;
+        Vector3 burgerStart;
+        Vector3[] exitRoute;
+        int exitWaypoint;
+        float departureTime;
+        const float HandoffSeconds = 0.4f;
+        const float DepartureSpeed = 2.4f;
 
         public int TicketNumber { get; private set; }
         public int QueueIndex { get; private set; }
@@ -17,6 +24,9 @@ namespace BurgerShop.Customer
         public float DistanceAlongPath { get; private set; }
         public bool HasReachedSlot { get; private set; }
         public bool HasOrdered { get; private set; }
+        public bool IsDeparting { get; private set; }
+        public bool DepartureComplete { get; private set; }
+        public int PaidAmount { get; private set; }
         public event Action<CustomerAgent> Removed;
 
         internal static CustomerAgent Create(Transform parent, int ticket, Vector3 entrance)
@@ -90,6 +100,69 @@ namespace BurgerShop.Customer
             QueueIndex = -1;
             HasReachedSlot = false;
             orderBubble.gameObject.SetActive(false);
+        }
+
+        internal void BeginDeparture(Transform burger, Vector3[] waypoints, int payment)
+        {
+            IsDeparting = true;
+            PaidAmount = payment;
+            exitRoute = (Vector3[])waypoints.Clone();
+            carriedBurger = burger;
+            if (burger != null)
+            {
+                burger.SetParent(transform, true);
+                burgerStart = burger.localPosition;
+            }
+            orderBubble.Find("Background").gameObject.SetActive(false);
+            orderBubble.Find("BurgerIcon").gameObject.SetActive(false);
+            TextMesh receipt = orderBubble.GetComponentInChildren<TextMesh>(true);
+            receipt.transform.localPosition = Vector3.zero;
+            receipt.color = new Color(1f, 0.78f, 0.12f);
+            receipt.text = $"+{payment}";
+            orderBubble.gameObject.SetActive(true);
+        }
+
+        void Update()
+        {
+            if (Application.isPlaying) AdvanceDeparture(Time.deltaTime);
+        }
+
+        public void AdvanceDeparture(float deltaTime)
+        {
+            if (!IsDeparting || DepartureComplete || deltaTime <= 0f) return;
+            float previousTime = departureTime;
+            departureTime += deltaTime;
+            if (carriedBurger != null)
+            {
+                float t = Mathf.Clamp01(departureTime / HandoffSeconds);
+                carriedBurger.localPosition = Vector3.Lerp(burgerStart, new Vector3(0f, 0.85f, 0.6f), t)
+                    + Vector3.up * (Mathf.Sin(t * Mathf.PI) * 0.6f);
+                carriedBurger.localRotation = Quaternion.Slerp(carriedBurger.localRotation, Quaternion.identity, t);
+            }
+            if (departureTime > 1.4f) orderBubble.gameObject.SetActive(false);
+
+            float remaining = Mathf.Max(0f, departureTime - HandoffSeconds) - Mathf.Max(0f, previousTime - HandoffSeconds);
+            float travel = remaining * DepartureSpeed;
+            while (travel > 0f && exitWaypoint < exitRoute.Length)
+            {
+                Vector3 offset = exitRoute[exitWaypoint] - transform.position;
+                float distance = offset.magnitude;
+                if (distance > 0.0001f)
+                    transform.rotation = Quaternion.LookRotation(offset);
+                if (travel < distance)
+                {
+                    transform.position += offset.normalized * travel;
+                    break;
+                }
+                transform.position = exitRoute[exitWaypoint++];
+                travel -= distance;
+            }
+            if (exitWaypoint == exitRoute.Length)
+            {
+                DepartureComplete = true;
+                gameObject.SetActive(false);
+                BurgerVisual.Release(gameObject);
+            }
         }
 
         void LateUpdate()

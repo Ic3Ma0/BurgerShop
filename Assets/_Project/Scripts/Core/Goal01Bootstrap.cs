@@ -7,6 +7,7 @@ using BurgerShop.Player;
 using BurgerShop.Restaurant;
 using BurgerShop.UI;
 using BurgerShop.Customer;
+using BurgerShop.Economy;
 
 namespace BurgerShop.Core
 {
@@ -35,7 +36,30 @@ namespace BurgerShop.Core
             BurgerPickupZone pickup = CreatePickupZone(station, inventory);
             ConfigureCamera(player);
             CustomerQueue customers = CreateCustomers(root);
-            CreateJoystick(root, inventory, pickup, customers);
+            RestaurantWallet wallet = root.gameObject.AddComponent<RestaurantWallet>();
+            root.gameObject.AddComponent<SaleFeedback>().Configure(wallet);
+            CreateServingZone(customers, inventory, wallet);
+            CreateJoystick(root, inventory, pickup, customers, wallet);
+        }
+
+        static void CreateServingZone(CustomerQueue queue, BurgerInventory inventory, RestaurantWallet wallet)
+        {
+            GameObject spot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            spot.name = "ServingSpot";
+            spot.transform.SetParent(queue.transform, false);
+            spot.transform.position = new Vector3(0.9f, 0.02f, 3.3f);
+            spot.transform.localScale = new Vector3(1.7f, 0.02f, 1.7f);
+            spot.GetComponent<Collider>().enabled = false;
+            Object.Destroy(spot.GetComponent<Collider>());
+            ApplyMaterial(spot, CreateLit(new Color(1f, 0.70f, 0.16f)));
+
+            Vector3[] exit = { new Vector3(-4.4f, 0f, 1.7f), new Vector3(-7.8f, 0f, 1.7f), new Vector3(-7.8f, 0f, 5.8f) };
+            BurgerServingZone serving = queue.gameObject.AddComponent<BurgerServingZone>();
+            serving.Configure(queue, inventory, wallet, spot.transform, exit);
+            GameObject exitMarker = CreateStationPart(queue.transform, "CustomerExit", exit[exit.Length - 1] + Vector3.up * 0.02f,
+                new Vector3(1.4f, 0.04f, 1.4f), CreateLit(new Color(0.65f, 0.75f, 0.48f)));
+            exitMarker.GetComponent<Collider>().enabled = false;
+            Object.Destroy(exitMarker.GetComponent<Collider>());
         }
 
         static CustomerQueue CreateCustomers(Transform root)
@@ -235,7 +259,7 @@ namespace BurgerShop.Core
             follow.SetTarget(player);
         }
 
-        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers)
+        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers, RestaurantWallet wallet)
         {
             if (Object.FindFirstObjectByType<EventSystem>() == null)
             {
@@ -291,6 +315,24 @@ namespace BurgerShop.Core
             CreateHint(canvasObject.transform);
             CreateCarryHud(canvasObject.transform, inventory, pickup);
             CreateCustomerHud(canvasObject.transform, customers);
+            CreateSalesHud(canvasObject.transform, wallet);
+        }
+
+        static void CreateSalesHud(Transform canvas, RestaurantWallet wallet)
+        {
+            GameObject hud = new GameObject("SalesStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            hud.transform.SetParent(canvas, false);
+            RectTransform rect = hud.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 1f);
+            rect.anchoredPosition = new Vector2(-36f, -32f);
+            rect.sizeDelta = new Vector2(240f, 160f);
+            Text text = hud.GetComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = 30;
+            text.alignment = TextAnchor.UpperRight;
+            text.color = new Color(1f, 0.83f, 0.26f);
+            text.raycastTarget = false;
+            hud.AddComponent<SalesHud>().Configure(wallet, text);
         }
 
         static void CreateCustomerHud(Transform canvas, CustomerQueue customers)
