@@ -8,6 +8,7 @@
 /[Mm]emoryCaptures/
 *.csproj
 *.sln
+*.slnx
 *.user
 *.pidb
 *.booproj
@@ -21,3 +22,7 @@
 .vscode/
 sysinfo.txt
 crashlytics-build.properties
+
+# Unity may create this when recovering or migrating the template scene.
+/Assets/LocalSceneBackup.unity
+/Assets/LocalSceneBackup.unity.meta
