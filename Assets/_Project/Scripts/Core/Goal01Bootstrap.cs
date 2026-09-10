@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using BurgerShop.Player;
 using BurgerShop.Restaurant;
 using BurgerShop.UI;
+using BurgerShop.Customer;
 
 namespace BurgerShop.Core
 {
@@ -33,7 +34,39 @@ namespace BurgerShop.Core
             BurgerInventory inventory = player.gameObject.AddComponent<BurgerInventory>();
             BurgerPickupZone pickup = CreatePickupZone(station, inventory);
             ConfigureCamera(player);
-            CreateJoystick(root, inventory, pickup);
+            CustomerQueue customers = CreateCustomers(root);
+            CreateJoystick(root, inventory, pickup, customers);
+        }
+
+        static CustomerQueue CreateCustomers(Transform root)
+        {
+            Transform restaurant = new GameObject("CustomerArea").transform;
+            restaurant.SetParent(root, false);
+            Vector3 counterPosition = new Vector3(-2f, 0f, 3.3f);
+            Material counter = CreateLit(new Color(0.38f, 0.49f, 0.58f));
+            Material slotsMaterial = CreateLit(new Color(0.42f, 0.70f, 0.93f));
+            Material top = CreateLit(new Color(0.90f, 0.88f, 0.78f));
+            CreateStationPart(restaurant, "OrderCounter", counterPosition + Vector3.up * 0.5f, new Vector3(3.2f, 1f, 1.4f), counter);
+            CreateStationPart(restaurant, "OrderCounterTop", counterPosition + Vector3.up * 1.05f, new Vector3(3.35f, 0.12f, 1.55f), top);
+
+            Vector3 entrance = new Vector3(-8.2f, 0f, -4.4f);
+            Vector3 queueEntry = new Vector3(-2f, 0f, -4.4f);
+            Vector3[] slots = { new Vector3(-2f, 0f, 1.7f), new Vector3(-2f, 0f, -0.1f), new Vector3(-2f, 0f, -1.9f) };
+            for (int i = 0; i < slots.Length; i++)
+            {
+                GameObject marker = CreateStationPart(restaurant, $"QueueSlot_{i + 1}", slots[i] + Vector3.up * 0.015f,
+                    new Vector3(1.1f, 0.02f, 1.1f), slotsMaterial);
+                marker.GetComponent<Collider>().enabled = false;
+                Object.Destroy(marker.GetComponent<Collider>());
+            }
+            GameObject entranceMarker = CreateStationPart(restaurant, "CustomerEntrance", entrance + Vector3.up * 0.025f,
+                new Vector3(1.4f, 0.04f, 1.4f), slotsMaterial);
+            entranceMarker.GetComponent<Collider>().enabled = false;
+            Object.Destroy(entranceMarker.GetComponent<Collider>());
+
+            CustomerQueue queue = restaurant.gameObject.AddComponent<CustomerQueue>();
+            queue.Configure(entrance, queueEntry, slots, counterPosition);
+            return queue;
         }
 
         static ProductionStation CreateProductionStation(Transform root)
@@ -202,7 +235,7 @@ namespace BurgerShop.Core
             follow.SetTarget(player);
         }
 
-        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup)
+        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers)
         {
             if (Object.FindFirstObjectByType<EventSystem>() == null)
             {
@@ -257,6 +290,24 @@ namespace BurgerShop.Core
 
             CreateHint(canvasObject.transform);
             CreateCarryHud(canvasObject.transform, inventory, pickup);
+            CreateCustomerHud(canvasObject.transform, customers);
+        }
+
+        static void CreateCustomerHud(Transform canvas, CustomerQueue customers)
+        {
+            GameObject hud = new GameObject("CustomerStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            hud.transform.SetParent(canvas, false);
+            RectTransform rect = hud.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0f, -280f);
+            rect.sizeDelta = new Vector2(1000f, 110f);
+            Text text = hud.GetComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = 28;
+            text.alignment = TextAnchor.UpperCenter;
+            text.color = new Color(0.68f, 0.88f, 1f);
+            text.raycastTarget = false;
+            hud.AddComponent<CustomerQueueHud>().Configure(customers, text);
         }
 
         static void CreateCarryHud(Transform canvas, BurgerInventory inventory, BurgerPickupZone pickup)
