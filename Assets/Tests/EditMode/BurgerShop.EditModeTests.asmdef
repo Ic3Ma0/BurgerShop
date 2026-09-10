@@ -1,7 +1,9 @@
 {
   "name": "BurgerShop.EditModeTests",
   "references": [
-    "BurgerShop.Runtime"
+    "BurgerShop.Runtime",
+    "Unity.InputSystem",
+    "UnityEngine.UI"
   ],
   "includePlatforms": [
     "Editor"

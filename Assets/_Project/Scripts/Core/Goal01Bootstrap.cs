@@ -28,13 +28,15 @@ namespace BurgerShop.Core
             CreateFloor(root, floorMat);
             CreateWalls(root, wallMat);
             CreateMarkers(root, markerMat);
-            CreateProductionStation(root);
+            ProductionStation station = CreateProductionStation(root);
             Transform player = CreatePlayer(root, playerMat);
+            BurgerInventory inventory = player.gameObject.AddComponent<BurgerInventory>();
+            BurgerPickupZone pickup = CreatePickupZone(station, inventory);
             ConfigureCamera(player);
-            CreateJoystick(root);
+            CreateJoystick(root, inventory, pickup);
         }
 
-        static void CreateProductionStation(Transform root)
+        static ProductionStation CreateProductionStation(Transform root)
         {
             Transform station = new GameObject("BurgerGrill").transform;
             station.SetParent(root, false);
@@ -58,7 +60,7 @@ namespace BurgerShop.Core
 
             GameObject labelObject = new GameObject("GrillStatus");
             labelObject.transform.SetParent(station, false);
-            labelObject.transform.localPosition = new Vector3(0f, 2.25f, 0f);
+            labelObject.transform.localPosition = new Vector3(0f, 3.2f, 0f);
             TextMesh label = labelObject.AddComponent<TextMesh>();
             label.anchor = TextAnchor.MiddleCenter;
             label.alignment = TextAlignment.Center;
@@ -68,6 +70,24 @@ namespace BurgerShop.Core
 
             ProductionStation production = station.gameObject.AddComponent<ProductionStation>();
             production.Configure(output, fillObject.transform, label, 3f, 4);
+            return production;
+        }
+
+        static BurgerPickupZone CreatePickupZone(ProductionStation station, BurgerInventory inventory)
+        {
+            GameObject spot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            spot.name = "PickupSpot";
+            spot.transform.SetParent(station.transform, false);
+            spot.transform.localPosition = new Vector3(1.05f, 0.015f, -2.1f);
+            spot.transform.localScale = new Vector3(2f, 0.015f, 2f);
+            Collider collider = spot.GetComponent<Collider>();
+            collider.enabled = false;
+            Object.Destroy(collider);
+            ApplyMaterial(spot, CreateLit(new Color(0.24f, 0.77f, 0.46f)));
+
+            BurgerPickupZone zone = station.gameObject.AddComponent<BurgerPickupZone>();
+            zone.Configure(station, inventory, spot.transform);
+            return zone;
         }
 
         static GameObject CreateStationPart(Transform parent, string name, Vector3 localPosition, Vector3 localScale, Material material)
@@ -182,7 +202,7 @@ namespace BurgerShop.Core
             follow.SetTarget(player);
         }
 
-        static void CreateJoystick(Transform root)
+        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup)
         {
             if (Object.FindFirstObjectByType<EventSystem>() == null)
             {
@@ -236,6 +256,23 @@ namespace BurgerShop.Core
             padObject.AddComponent<VirtualJoystick>();
 
             CreateHint(canvasObject.transform);
+            CreateCarryHud(canvasObject.transform, inventory, pickup);
+        }
+
+        static void CreateCarryHud(Transform canvas, BurgerInventory inventory, BurgerPickupZone pickup)
+        {
+            GameObject hud = new GameObject("CarryStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            hud.transform.SetParent(canvas, false);
+            RectTransform rect = hud.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0f, -128f);
+            rect.sizeDelta = new Vector2(1000f, 130f);
+            Text text = hud.GetComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = 32;
+            text.alignment = TextAnchor.UpperCenter;
+            text.raycastTarget = false;
+            hud.AddComponent<CarryHud>().Configure(inventory, pickup, text);
         }
 
         static void CreateHint(Transform canvas)
