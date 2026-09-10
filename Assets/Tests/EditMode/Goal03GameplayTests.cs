@@ -16,8 +16,9 @@ namespace BurgerShop.Tests.EditMode
 {
     public sealed class Goal03GameplayTests
     {
-        InputSettings previousInputSettings;
-        InputSettings testInputSettings;
+        InputSettings.BackgroundBehavior previousBackgroundBehavior;
+        InputSettings.EditorInputBehaviorInPlayMode previousEditorInputBehavior;
+        bool settingsCaptured;
         Keyboard testKeyboard;
         Goal03InputDriver inputDriver;
         float previousCaptureDeltaTime;
@@ -35,11 +36,14 @@ namespace BurgerShop.Tests.EditMode
             previousCaptureDeltaTime = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
 
-            previousInputSettings = InputSystem.settings;
-            testInputSettings = Object.Instantiate(previousInputSettings);
-            InputSystem.settings = testInputSettings;
-            testInputSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
-            testInputSettings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+            // Keep the singleton settings object alive across Play Mode teardown.
+            // Replacing it with a temporary clone leaves the editor reload hook
+            // referencing a destroyed object between consecutive scene tests.
+            previousBackgroundBehavior = InputSystem.settings.backgroundBehavior;
+            previousEditorInputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
+            settingsCaptured = true;
+            InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
             testKeyboard = InputSystem.AddDevice<Keyboard>();
 
             ProductionStation station = Object.FindFirstObjectByType<ProductionStation>();
@@ -167,12 +171,16 @@ namespace BurgerShop.Tests.EditMode
             Time.captureDeltaTime = previousCaptureDeltaTime;
             if (inputDriver != null)
                 inputDriver.Dispose();
+            inputDriver = null;
             if (testKeyboard != null && testKeyboard.added)
                 InputSystem.RemoveDevice(testKeyboard);
-            if (previousInputSettings != null)
-                InputSystem.settings = previousInputSettings;
-            if (testInputSettings != null)
-                Object.Destroy(testInputSettings);
+            testKeyboard = null;
+            if (settingsCaptured)
+            {
+                InputSystem.settings.backgroundBehavior = previousBackgroundBehavior;
+                InputSystem.settings.editorInputBehaviorInPlayMode = previousEditorInputBehavior;
+                settingsCaptured = false;
+            }
         }
     }
 }
