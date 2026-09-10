@@ -58,24 +58,33 @@ namespace BurgerShop.Restaurant
 
         public bool TryTakeBurger()
         {
+            if (!TryTakeBurger(out Transform burger))
+                return false;
+
+            if (burger != null)
+                BurgerVisual.Release(burger.gameObject);
+            return true;
+        }
+
+        // Ownership of the detached visual passes to the caller (for carrying or serving).
+        public bool TryTakeBurger(out Transform burger)
+        {
+            burger = null;
             if (Stock == 0)
                 return false;
 
             Stock--;
             if (outputAnchor != null && outputAnchor.childCount > 0)
-                DestroyObject(outputAnchor.GetChild(outputAnchor.childCount - 1).gameObject);
+            {
+                burger = outputAnchor.GetChild(outputAnchor.childCount - 1);
+                // Detach now: Destroy is deferred in Play Mode and could select the same
+                // child twice when several burgers leave during one frame.
+                burger.SetParent(null, true);
+            }
 
             StockChanged?.Invoke(Stock);
             RefreshVisuals();
             return true;
-        }
-
-        static void DestroyObject(UnityEngine.Object instance)
-        {
-            if (Application.isPlaying)
-                Destroy(instance);
-            else
-                DestroyImmediate(instance);
         }
 
         void AddBurger()
@@ -115,7 +124,7 @@ namespace BurgerShop.Restaurant
 
     static class BurgerVisualFactory
     {
-        public static void Create(Transform parent, int index)
+        public static Transform Create(Transform parent, int index)
         {
             Transform burger = new GameObject($"Burger_{index + 1}").transform;
             burger.SetParent(parent, false);
@@ -124,11 +133,13 @@ namespace BurgerShop.Restaurant
             Material bun = CreateMaterial(new Color(0.95f, 0.61f, 0.20f));
             Material patty = CreateMaterial(new Color(0.25f, 0.09f, 0.04f));
             Material cheese = CreateMaterial(new Color(1f, 0.78f, 0.08f));
+            burger.gameObject.AddComponent<BurgerVisual>().OwnMaterials(bun, patty, cheese);
 
             CreateLayer(burger, "BottomBun", PrimitiveType.Cylinder, new Vector3(0f, 0.06f, 0f), new Vector3(0.55f, 0.08f, 0.55f), bun);
             CreateLayer(burger, "Patty", PrimitiveType.Cylinder, new Vector3(0f, 0.15f, 0f), new Vector3(0.52f, 0.055f, 0.52f), patty);
             CreateLayer(burger, "Cheese", PrimitiveType.Cube, new Vector3(0f, 0.22f, 0f), new Vector3(0.72f, 0.035f, 0.72f), cheese);
             CreateLayer(burger, "TopBun", PrimitiveType.Sphere, new Vector3(0f, 0.31f, 0f), new Vector3(0.58f, 0.22f, 0.58f), bun);
+            return burger;
         }
 
         static void CreateLayer(Transform parent, string name, PrimitiveType primitive, Vector3 position, Vector3 scale, Material material)
@@ -144,6 +155,7 @@ namespace BurgerShop.Restaurant
             Collider collider = layer.GetComponent<Collider>();
             if (collider != null)
             {
+                collider.enabled = false;
                 if (Application.isPlaying)
                     UnityEngine.Object.Destroy(collider);
                 else
