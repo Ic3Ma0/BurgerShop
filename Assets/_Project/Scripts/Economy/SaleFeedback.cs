@@ -12,6 +12,7 @@ namespace BurgerShop.Economy
         public void Configure(RestaurantWallet earnings)
         {
             if (wallet != null) wallet.SaleRecorded -= Play;
+            if (wallet != null) wallet.CoinsSpent -= Play;
             wallet = earnings;
             source = GetComponent<AudioSource>();
             if (source == null) source = gameObject.AddComponent<AudioSource>();
@@ -35,6 +36,7 @@ namespace BurgerShop.Economy
             }
             source.clip = chime;
             if (wallet != null) wallet.SaleRecorded += Play;
+            if (wallet != null) wallet.CoinsSpent += Play;
         }
 
         void Play(int amount)
@@ -45,6 +47,7 @@ namespace BurgerShop.Economy
         void OnDestroy()
         {
             if (wallet != null) wallet.SaleRecorded -= Play;
+            if (wallet != null) wallet.CoinsSpent -= Play;
             if (chime != null) BurgerVisual.Release(chime);
         }
     }

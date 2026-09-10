@@ -15,6 +15,7 @@ namespace BurgerShop.Restaurant
 
         public int Stock { get; private set; }
         public int Capacity => capacity;
+        public float ProductionSeconds => productionSeconds;
         public float NormalizedProgress => Stock >= capacity ? 1f : Mathf.Clamp01(elapsed / productionSeconds);
 
         public event Action<int> StockChanged;
@@ -33,6 +34,17 @@ namespace BurgerShop.Restaurant
         {
             Advance(Time.deltaTime);
             FaceLabelTowardsCamera();
+        }
+
+        public void SetProductionSeconds(float seconds)
+        {
+            if (float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(seconds));
+            float progress = Stock >= capacity ? 0f : NormalizedProgress;
+            productionSeconds = Mathf.Max(0.1f, seconds);
+            // Preserve the fraction already cooked, without spawning or losing stock.
+            elapsed = progress * productionSeconds;
+            RefreshVisuals();
         }
 
         public void Advance(float deltaTime)
