@@ -113,12 +113,12 @@ BurgerShop/
 
 ## 当前进度
 
-工程已完成初始化。玩法系统尚未实现。
+工程已完成初始化。Goal 01 玩家移动已可在 Play Mode 试玩。
 
 | Goal | 内容 | 状态 |
 | ---: | --- | --- |
 | 00 | 创建 Unity 6.3 LTS URP 项目 | 完成 |
-| 01 | 玩家移动与摄像机跟随 | 待做 |
+| 01 | 玩家移动与摄像机跟随 | 完成 |
 | 02 | 制作台定时产出汉堡 | 待做 |
 | 03 | 拾取、堆叠与携带 | 待做 |
 | 04 | 顾客生成、排队与下单 | 待做 |
@@ -135,7 +135,8 @@ BurgerShop/
 1. 安装 [Unity Hub](https://unity.com/download) 与 **Unity `6000.3.23f1`**，并勾选 **Android Build Support**。
 2. 克隆本仓库，用 Hub 打开仓库根目录。
 3. 打开 `Assets/Scenes/SampleScene.unity`。
-4. 进入 Play Mode，确认编辑器无编译错误。
+4. 进入 Play Mode。场景会生成占位地面、角色和左下角虚拟摇杆。
+5. 用 **WASD** 或拖动摇杆在 XZ 平面走动，确认斜俯视摄像机跟随，且角色不会走出围墙。
 
 后续玩法会落到 `Assets/_Project/`。涉及操作手感、队列或存档的改动，需要在 Editor 和目标 Android 设备上试玩确认。
 
