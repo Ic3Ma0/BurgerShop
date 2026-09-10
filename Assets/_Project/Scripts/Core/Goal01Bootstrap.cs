@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 using BurgerShop.Player;
+using BurgerShop.Restaurant;
 using BurgerShop.UI;
 
 namespace BurgerShop.Core
@@ -27,9 +28,57 @@ namespace BurgerShop.Core
             CreateFloor(root, floorMat);
             CreateWalls(root, wallMat);
             CreateMarkers(root, markerMat);
+            CreateProductionStation(root);
             Transform player = CreatePlayer(root, playerMat);
             ConfigureCamera(player);
             CreateJoystick(root);
+        }
+
+        static void CreateProductionStation(Transform root)
+        {
+            Transform station = new GameObject("BurgerGrill").transform;
+            station.SetParent(root, false);
+            station.position = new Vector3(4.5f, 0f, 2.5f);
+
+            Material steel = CreateLit(new Color(0.24f, 0.28f, 0.31f));
+            Material grill = CreateLit(new Color(0.08f, 0.09f, 0.10f));
+            Material tray = CreateLit(new Color(0.63f, 0.68f, 0.70f));
+            Material progress = CreateLit(new Color(0.25f, 0.87f, 0.34f));
+
+            CreateStationPart(station, "Counter", new Vector3(0f, 0.55f, 0f), new Vector3(3.4f, 1.1f, 2.2f), steel);
+            CreateStationPart(station, "GrillTop", new Vector3(-0.55f, 1.15f, 0f), new Vector3(1.8f, 0.16f, 1.7f), grill);
+            CreateStationPart(station, "OutputTray", new Vector3(1.05f, 1.16f, 0f), new Vector3(0.95f, 0.12f, 1.5f), tray);
+
+            Transform output = new GameObject("BurgerOutput").transform;
+            output.SetParent(station, false);
+            output.localPosition = new Vector3(1.05f, 1.27f, 0f);
+
+            CreateStationPart(station, "ProgressBack", new Vector3(0f, 1.55f, -1.12f), new Vector3(1.5f, 0.14f, 0.08f), grill);
+            GameObject fillObject = CreateStationPart(station, "ProgressFill", new Vector3(-0.75f, 1.55f, -1.17f), new Vector3(0f, 0.1f, 0.1f), progress);
+
+            GameObject labelObject = new GameObject("GrillStatus");
+            labelObject.transform.SetParent(station, false);
+            labelObject.transform.localPosition = new Vector3(0f, 2.25f, 0f);
+            TextMesh label = labelObject.AddComponent<TextMesh>();
+            label.anchor = TextAnchor.MiddleCenter;
+            label.alignment = TextAlignment.Center;
+            label.characterSize = 0.12f;
+            label.fontSize = 42;
+            label.color = new Color(1f, 0.92f, 0.72f);
+
+            ProductionStation production = station.gameObject.AddComponent<ProductionStation>();
+            production.Configure(output, fillObject.transform, label, 3f, 4);
+        }
+
+        static GameObject CreateStationPart(Transform parent, string name, Vector3 localPosition, Vector3 localScale, Material material)
+        {
+            GameObject part = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            part.name = name;
+            part.transform.SetParent(parent, false);
+            part.transform.localPosition = localPosition;
+            part.transform.localScale = localScale;
+            ApplyMaterial(part, material);
+            return part;
         }
 
         static void CreateFloor(Transform root, Material material)
