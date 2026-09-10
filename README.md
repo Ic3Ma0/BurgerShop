@@ -16,4 +16,14 @@
 
 ## 当前阶段
 
-项目初始化与开发环境验证。
+协作环境搭建，玩法开发暂缓。
+
+## 协作入口
+
+- [GitHub 私有仓库](https://github.com/Ic3Ma0/BurgerShop)
+- [开发任务](https://github.com/Ic3Ma0/BurgerShop/issues) · [Pull Requests](https://github.com/Ic3Ma0/BurgerShop/pulls)
+- [Notion 项目主页](https://app.notion.com/p/3d7dae010b8e8147b0bed4556df7f413)
+- [Notion 任务看板](https://app.notion.com/p/50ab7a261b03486e800d722698b7f952)
+- [Slack · Coding / burgershop](https://app.slack.com/client/T0C027LE90E/C0C1NLB6YRE)
+
+仓库、页面和频道已创建。GitHub 原生通知及 Notion PR 状态同步仍待账号连接和验证，详见 [协作说明](docs/COLLABORATION.md)。

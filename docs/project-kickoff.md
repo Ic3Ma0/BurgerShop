@@ -17,7 +17,7 @@
 - 正式项目位于 `BurgerShop/`，包含 Unity 的 `Assets/`、`Packages/`、`ProjectSettings/`。
 - 项目已固定使用 Unity `6000.3.23f1`、URP `17.3.0` 和 Input System `1.20.0`。
 - 项目已建立 `_Project` 资源分层、README、MVP Spec、Game Design 与 Goals。
-- 本地 Git 仓库已初始化为 `main` 分支；Unity 的生成目录已通过 `.gitignore` 排除，首次提交尚未执行。
+- 本地 Git 已完成首次提交并上传至 `Ic3Ma0/BurgerShop` 私有仓库，默认分支为 `main`；Unity 的生成目录通过 `.gitignore` 排除。
 - Unity CLI 的项目完整性检查已通过；完整编辑器编译与 Play Mode 验证仍作为下一项验收。
 - `work/BurgerShop_failed_bootstrap_20260910/` 是首次启动留下的独立历史目录，不属于正式仓库根目录。
 
@@ -99,7 +99,7 @@ Codex CLI 可以在终端中检查、修改和运行代码，也支持脚本化�
 
 1. 2–3 个月结束时，要核心原型、Android 测试版，还是提交商店的版本？
 2. 每周可投入时间、Unity/C# 熟悉程度，以及是否有其他参与者？
-3. 正式 GitHub 仓库的归属和可见性、Notion 项目位置、Slack 工作区与频道？
+3. 协作入口已确定：GitHub `Ic3Ma0/BurgerShop`（私有）、Notion `BurgerShop` 项目主页、Slack `Coding / burgershop`（私有）；原生自动同步待接通验证。
 4. 餐饮主题、目标设备、面向市场，以及美术音效预算？
 
-当前仅完成本地检查和本草案；没有创建远程仓库、向 Slack 发消息或写入 Notion。
+当前阶段为协作环境搭建，玩法开发暂缓。已建立远程私有仓库、Slack 私有频道和 Notion 项目页；最新联动状态与入口见 [协作说明](COLLABORATION.md)。
