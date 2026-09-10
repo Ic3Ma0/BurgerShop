@@ -1,0 +1,8 @@
+{
+  "name": "BurgerShop.Runtime",
+  "rootNamespace": "BurgerShop",
+  "references": [
+    "Unity.InputSystem",
+    "UnityEngine.UI"
+  ]
+}
