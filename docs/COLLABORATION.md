@@ -19,7 +19,7 @@
 - [x] Notion 私有项目主页、设计子页和任务看板建立。
 - [x] GitHub、Slack、Notion 入口链接建立。
 - [ ] GitHub 官方 Slack 应用安装、账号连接及频道订阅确认。
-- [ ] 确认 Notion 套餐：原生 GitHub 关联属性仅限 Business / Enterprise；据此选择原生连接或其他同步方案。
+- [ ] Notion 自动同步方案：已确认当前为免费版或 Plus，不支持原生 GitHub 关联属性；需选择替代方案，尚未启用自动同步。
 - [ ] 真实 PR 事件的通知与状态同步验证。
 
 普通链接和通过助手发送的消息不代表原生自动同步已接通。
@@ -56,7 +56,7 @@ GitHub 是代码和具体实施任务状态的依据。Notion 的产品验收与
 
 任务看板已包含状态、类别、BS 前缀唯一编号、Issue 链接与 PR 链接。两个链接字段只用于跳转。
 
-**套餐前提：Notion 官方注明 GitHub 关联属性仅限 Business 和 Enterprise。** 免费版与 Plus 不适用原生 PR 属性配置路径。本工作区具体套餐尚待确认。此前说明遗漏了这一前提，现已更正。[官方套餐限制](https://www.notion.com/help/connected-properties)
+**套餐前提：Notion 官方注明 GitHub 关联属性仅限 Business 和 Enterprise。** 用户已确认当前工作区为免费版或 Plus，因此跳过原生 PR 属性配置路径。此前说明遗漏了这一前提，现已更正。[官方套餐限制](https://www.notion.com/help/connected-properties)
 
 如果是 Business 或 Enterprise，在任务看板切换到 `Default view` 表格视图，点击表格最右侧新增属性的 `+`，搜索 `GitHub` 并选择 `GitHub Pull Requests`，再按提示连接 GitHub。符合套餐条件却找不到时，按 [Notion 官方说明](https://www.notion.com/help/github)从设置中的 Connections 添加 GitHub Pull Request 连接。仓库属于个人账号，优先使用 PR 属性的账号连接流程；不要把组织级 GitHub Workspace 连接当作已配置完成。
 
