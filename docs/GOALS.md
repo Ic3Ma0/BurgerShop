@@ -1,7 +1,7 @@
 # Burger Shop Goals
 
 - [x] Goal 00：创建 Unity 6.3 LTS URP 项目
-- [ ] Goal 01：玩家移动与摄像机跟随
+- [x] Goal 01：玩家移动与摄像机跟随
 - [ ] Goal 02：制作台定时产出汉堡
 - [ ] Goal 03：拾取、堆叠与携带
 - [ ] Goal 04：顾客生成、排队与下单
