@@ -9,15 +9,18 @@ namespace BurgerShop.UI
     {
         BurgerInventory inventory;
         BurgerPickupZone pickup;
+        GrillUpgradeZone upgrade;
         Text label;
         int shownCount = -1;
         int shownCapacity = -1;
         bool shownInRange;
+        bool shownAtUpgrade;
 
-        public void Configure(BurgerInventory carrier, BurgerPickupZone zone, Text text)
+        public void Configure(BurgerInventory carrier, BurgerPickupZone zone, Text text, GrillUpgradeZone upgradeZone = null)
         {
             inventory = carrier;
             pickup = zone;
+            upgrade = upgradeZone;
             label = text;
             shownCount = -1;
             Refresh();
@@ -30,13 +33,16 @@ namespace BurgerShop.UI
             if (inventory == null || label == null)
                 return;
             bool inRange = pickup != null && pickup.IsInRange;
-            if (shownCount == inventory.Count && shownCapacity == inventory.Capacity && shownInRange == inRange)
+            bool atUpgrade = upgrade != null && upgrade.IsInRange;
+            if (shownCount == inventory.Count && shownCapacity == inventory.Capacity && shownInRange == inRange && shownAtUpgrade == atUpgrade)
                 return;
 
             shownCount = inventory.Count;
             shownCapacity = inventory.Capacity;
             shownInRange = inRange;
-            string hint = inventory.IsFull ? "FULL - Go to the gold serving spot"
+            shownAtUpgrade = atUpgrade;
+            string hint = atUpgrade ? "Upgrade details below"
+                : inventory.IsFull ? "FULL - Go to the gold serving spot"
                 : inRange ? "Picking up - wait for the grill"
                 : inventory.Count > 0 ? "Take burgers to the gold serving spot"
                 : "Stand on the green pickup spot";

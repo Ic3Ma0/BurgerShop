@@ -39,7 +39,44 @@ namespace BurgerShop.Core
             RestaurantWallet wallet = root.gameObject.AddComponent<RestaurantWallet>();
             root.gameObject.AddComponent<SaleFeedback>().Configure(wallet);
             CreateServingZone(customers, inventory, wallet);
-            CreateJoystick(root, inventory, pickup, customers, wallet);
+            GrillUpgradeZone upgrade = CreateUpgradeZone(root, station, inventory, wallet);
+            CreateJoystick(root, inventory, pickup, customers, wallet, upgrade);
+        }
+
+        static GrillUpgradeZone CreateUpgradeZone(Transform root, ProductionStation station, BurgerInventory inventory, RestaurantWallet wallet)
+        {
+            GameObject spot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            spot.name = "GrillUpgradeSpot";
+            spot.transform.SetParent(root, false);
+            spot.transform.position = new Vector3(2f, 0.02f, -2.8f);
+            spot.transform.localScale = new Vector3(2f, 0.02f, 2f);
+            spot.GetComponent<Collider>().enabled = false;
+            Object.Destroy(spot.GetComponent<Collider>());
+            ApplyMaterial(spot, CreateLit(new Color(0.60f, 0.36f, 0.90f)));
+
+            GameObject labelObject = new GameObject("UpgradeMarkerLabel");
+            labelObject.transform.SetParent(root, false);
+            labelObject.transform.position = spot.transform.position + Vector3.up * 1.35f;
+            TextMesh label = labelObject.AddComponent<TextMesh>();
+            label.anchor = TextAnchor.MiddleCenter;
+            label.alignment = TextAlignment.Center;
+            label.fontSize = 36;
+            label.characterSize = 0.07f;
+            label.color = new Color(0.94f, 0.85f, 1f);
+
+            Transform[] lamps = new Transform[2];
+            Material lampMaterial = CreateLit(new Color(0.40f, 0.82f, 1f));
+            for (int i = 0; i < lamps.Length; i++)
+            {
+                GameObject lamp = CreateStationPart(station.transform, $"UpgradeLamp_{i + 1}",
+                    new Vector3(-1.3f + i * 0.45f, 1.3f, 0.8f), new Vector3(0.25f, 0.25f, 0.25f), lampMaterial);
+                lamp.GetComponent<Collider>().enabled = false;
+                Object.Destroy(lamp.GetComponent<Collider>());
+                lamps[i] = lamp.transform;
+            }
+            GrillUpgradeZone upgrade = root.gameObject.AddComponent<GrillUpgradeZone>();
+            upgrade.Configure(station, wallet, inventory, spot.transform, label, lamps);
+            return upgrade;
         }
 
         static void CreateServingZone(CustomerQueue queue, BurgerInventory inventory, RestaurantWallet wallet)
@@ -259,7 +296,7 @@ namespace BurgerShop.Core
             follow.SetTarget(player);
         }
 
-        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers, RestaurantWallet wallet)
+        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers, RestaurantWallet wallet, GrillUpgradeZone upgrade)
         {
             if (Object.FindFirstObjectByType<EventSystem>() == null)
             {
@@ -313,9 +350,52 @@ namespace BurgerShop.Core
             padObject.AddComponent<VirtualJoystick>();
 
             CreateHint(canvasObject.transform);
-            CreateCarryHud(canvasObject.transform, inventory, pickup);
+            CreateCarryHud(canvasObject.transform, inventory, pickup, upgrade);
             CreateCustomerHud(canvasObject.transform, customers);
             CreateSalesHud(canvasObject.transform, wallet);
+            CreateUpgradeHud(canvasObject.transform, upgrade);
+        }
+
+        static void CreateUpgradeHud(Transform canvas, GrillUpgradeZone upgrade)
+        {
+            GameObject panelObject = new GameObject("UpgradePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
+            panelObject.transform.SetParent(canvas, false);
+            RectTransform rect = panelObject.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = new Vector2(-32f, 40f);
+            rect.sizeDelta = new Vector2(600f, 220f);
+            Image background = panelObject.GetComponent<Image>();
+            background.color = new Color(0.16f, 0.10f, 0.24f, 0.92f);
+            background.raycastTarget = false;
+            CanvasGroup group = panelObject.GetComponent<CanvasGroup>();
+            group.blocksRaycasts = false;
+            group.interactable = false;
+
+            GameObject textObject = new GameObject("UpgradeStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            textObject.transform.SetParent(panelObject.transform, false);
+            RectTransform textRect = textObject.GetComponent<RectTransform>();
+            textRect.anchorMin = textRect.anchorMax = textRect.pivot = new Vector2(0f, 1f);
+            textRect.anchoredPosition = new Vector2(20f, -20f);
+            textRect.sizeDelta = new Vector2(560f, 160f);
+            Text label = textObject.GetComponent<Text>();
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.fontSize = 27;
+            label.color = new Color(0.95f, 0.91f, 1f);
+            label.raycastTarget = false;
+
+            GameObject bar = new GameObject("UpgradeProgress", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            bar.transform.SetParent(panelObject.transform, false);
+            RectTransform barRect = bar.GetComponent<RectTransform>();
+            barRect.anchorMin = barRect.anchorMax = barRect.pivot = Vector2.zero;
+            barRect.anchoredPosition = new Vector2(20f, 20f);
+            barRect.sizeDelta = new Vector2(560f, 14f);
+            Image progress = bar.GetComponent<Image>();
+            progress.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f), Vector2.zero);
+            progress.type = Image.Type.Filled;
+            progress.fillMethod = Image.FillMethod.Horizontal;
+            progress.color = new Color(0.73f, 0.53f, 1f);
+            progress.raycastTarget = false;
+            panelObject.AddComponent<UpgradeHud>().Configure(upgrade, label, progress, group);
         }
 
         static void CreateSalesHud(Transform canvas, RestaurantWallet wallet)
@@ -352,7 +432,7 @@ namespace BurgerShop.Core
             hud.AddComponent<CustomerQueueHud>().Configure(customers, text);
         }
 
-        static void CreateCarryHud(Transform canvas, BurgerInventory inventory, BurgerPickupZone pickup)
+        static void CreateCarryHud(Transform canvas, BurgerInventory inventory, BurgerPickupZone pickup, GrillUpgradeZone upgrade)
         {
             GameObject hud = new GameObject("CarryStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
             hud.transform.SetParent(canvas, false);
@@ -365,7 +445,7 @@ namespace BurgerShop.Core
             text.fontSize = 32;
             text.alignment = TextAnchor.UpperCenter;
             text.raycastTarget = false;
-            hud.AddComponent<CarryHud>().Configure(inventory, pickup, text);
+            hud.AddComponent<CarryHud>().Configure(inventory, pickup, text, upgrade);
         }
 
         static void CreateHint(Transform canvas)

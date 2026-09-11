@@ -30,7 +30,7 @@ namespace BurgerShop.UI
                 paymentUntil = Time.time + 1.4f;
             }
             shownCoins = wallet.Coins;
-            string feedback = Time.time < paymentUntil ? $"\n+{lastPayment}" : "";
+            string feedback = Time.time < paymentUntil ? $"\n{(lastPayment > 0 ? "+" : "")}{lastPayment}" : "";
             label.text = $"COINS {wallet.Coins}\nSERVED {wallet.CompletedSales}{feedback}";
         }
     }
