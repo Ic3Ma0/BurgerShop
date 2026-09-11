@@ -175,15 +175,6 @@ namespace BurgerShop.Restaurant
             }
         }
 
-        static Material CreateMaterial(Color color)
-        {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Sprites/Default");
-            Material material = new Material(shader);
-            if (material.HasProperty("_BaseColor"))
-                material.SetColor("_BaseColor", color);
-            if (material.HasProperty("_Color"))
-                material.SetColor("_Color", color);
-            return material;
-        }
+        static Material CreateMaterial(Color color) => BurgerShop.Core.RuntimeMaterials.Create(color);
     }
 }

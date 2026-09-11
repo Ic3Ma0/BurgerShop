@@ -179,15 +179,7 @@ namespace BurgerShop.Customer
                     if (material != null) BurgerVisual.Release(material);
         }
 
-        static Material MaterialFor(Color color, bool unlit = false)
-        {
-            Shader shader = Shader.Find(unlit ? "Universal Render Pipeline/Unlit" : "Universal Render Pipeline/Lit")
-                ?? Shader.Find("Sprites/Default");
-            Material material = new Material(shader);
-            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
-            if (material.HasProperty("_Color")) material.SetColor("_Color", color);
-            return material;
-        }
+        static Material MaterialFor(Color color, bool unlit = false) => BurgerShop.Core.RuntimeMaterials.Create(color, unlit);
 
         static void Part(Transform parent, string name, PrimitiveType primitive, Vector3 position, Vector3 scale, Material material)
         {

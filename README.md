@@ -37,7 +37,7 @@
 | 视角 | 斜俯视第三人称 |
 | 操作 | 单指虚拟摇杆 |
 | 单局 | 持续经营，逐步扩店 |
-| 版本 | `0.1.0` · 经营原型 |
+| 版本 | `0.1.2` · 经营原型 |
 
 第一版使用原创占位几何体验证手感与节奏，不依赖付费素材。玩法借鉴经营循环，名称、美术和内容会保持独立设计。
 
@@ -113,7 +113,7 @@ BurgerShop/
 
 ## 当前进度
 
-目前可在 Play Mode 完成 **制作 → 取餐 → 搬运 → 送餐 → 收款 → 升级 / 雇佣** 的循环。绿色区域取餐，金色区域交付，每单收入 10 金币；再到紫色区域升级烤台，或到青色区域雇佣员工自动取餐、送餐。
+目前可在 Unity Play Mode 和 vivo Android 手机上完成 **制作 → 取餐 → 搬运 → 送餐 → 收款 → 升级 / 雇佣** 的循环。绿色区域取餐，金色区域交付，每单收入 10 金币；再到紫色区域升级烤台，或到青色区域雇佣员工自动取餐、送餐。
 
 | Goal | 内容 | 状态 |
 | ---: | --- | --- |
@@ -126,7 +126,7 @@ BurgerShop/
 | 06 | 金币与升级点 | 本分支已实现，43 项测试通过 |
 | 07 | 员工自动搬运 | 本分支已实现，55 项测试通过 |
 | 08 | 本地存档 | 本分支已实现，68 项测试通过 |
-| 09 | Android 构建与真机验证 | 待做 |
+| 09 | Android 构建与真机验证 | vivo S50 真机通过，74 项测试通过 |
 
 完整勾选列表见 [`docs/GOALS.md`](docs/GOALS.md)。
 
@@ -144,9 +144,11 @@ BurgerShop/
 
 10. 准备 **50 金币**，到店铺前方的 **青色雇佣区**停留 **1.5 秒**，雇佣一名员工。他会沿通道自动取餐、搬运和交付，每次最多携带 **2 个**；没有汉堡或顾客时原地等待。你可以停下来观察收入增长，也可以和员工一起工作。只收一次雇佣费。
 
-功能说明见 [Goal 03 搬运](docs/goal-03-carry.md)、[Goal 04 顾客](docs/goal-04-customers.md)、[Goal 05 送餐收款](docs/goal-05-serving.md)、[Goal 06 升级](docs/goal-06-upgrades.md) 和 [Goal 07 员工](docs/goal-07-staff.md)。2026-09-11 本机 Unity 的 **68 项测试全部通过**，包含六项真实 SampleScene Play Mode 测试。最新测试手动赚取 50 金币并雇佣员工，玩家不动时员工独立完成至少六单，再验证玩家继续参与搬运和送餐。Android 真机尚未验收。
+功能说明见 [Goal 03 搬运](docs/goal-03-carry.md)、[Goal 04 顾客](docs/goal-04-customers.md)、[Goal 05 送餐收款](docs/goal-05-serving.md)、[Goal 06 升级](docs/goal-06-upgrades.md) 和 [Goal 07 员工](docs/goal-07-staff.md)。2026-09-11 本机 Unity 的 **74 项测试全部通过**，包含七项真实 SampleScene Play Mode 测试。最新测试手动赚取 50 金币并雇佣员工，玩家不动时员工独立完成至少六单，再验证玩家继续参与搬运和送餐。Android 0.1.2 已在 vivo S50 通过真机验收，记录见 [vivo 设备验证](docs/goal-09-device-vivo.md)。
 
 金币、成交数、升级等级和员工现在自动保存，重开后继续经营。每两秒及切到后台/退出时保存，底部显示状态；主存档损坏时尝试恢复备份。位置、顾客和场上汉堡每次重建。详见 [Goal 08 存档](docs/goal-08-save.md)。
+
+Android 构建与安装入口为 `scripts/build-android.sh`、`scripts/install-android.sh`，环境说明与设备验收清单见 [Goal 09 Android](docs/goal-09-android.md)。
 
 后续玩法会落到 `Assets/_Project/`。涉及操作手感、队列或存档的改动，需要在 Editor 和目标 Android 设备上试玩确认。
 

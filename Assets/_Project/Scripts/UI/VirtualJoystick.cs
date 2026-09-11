@@ -12,6 +12,7 @@ namespace BurgerShop.UI
 
         RectTransform _pad;
         Canvas _canvas;
+        int? activePointer;
 
         public static Vector2 Value { get; private set; }
 
@@ -23,19 +24,27 @@ namespace BurgerShop.UI
                 knob = transform.GetChild(0) as RectTransform;
         }
 
-        void OnDisable()
+        void OnDisable() => Release();
+        void OnApplicationPause(bool paused) { if (paused) Release(); }
+        void OnApplicationFocus(bool focused) { if (!focused) Release(); }
+
+        void Release()
         {
+            activePointer = null;
             Value = Vector2.zero;
             ResetKnob();
         }
 
         public void OnPointerDown(PointerEventData eventData)
         {
+            if (activePointer.HasValue) return;
+            activePointer = eventData.pointerId;
             OnDrag(eventData);
         }
 
         public void OnDrag(PointerEventData eventData)
         {
+            if (activePointer != eventData.pointerId) return;
             Camera eventCamera = _canvas != null && _canvas.renderMode != RenderMode.ScreenSpaceOverlay
                 ? _canvas.worldCamera
                 : null;
@@ -54,8 +63,7 @@ namespace BurgerShop.UI
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            Value = Vector2.zero;
-            ResetKnob();
+            if (activePointer == eventData.pointerId) Release();
         }
 
         void ResetKnob()
