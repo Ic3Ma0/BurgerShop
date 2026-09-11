@@ -35,7 +35,10 @@ set -e
 if [[ -f "$build_dir/Logs/android-build-summary.json" ]]; then
   cp "$build_dir/Logs/android-build-summary.json" "$project_dir/Logs/android-build-summary.json"
 fi
+if [[ -f "$build_dir/Logs/android-runtime-components.txt" ]]; then
+  cp "$build_dir/Logs/android-runtime-components.txt" "$project_dir/Logs/android-runtime-components.txt"
+fi
 [[ "$result" == 0 ]] || { echo "Build failed; staging retained at $build_dir" >&2; exit "$result"; }
-cp "$build_dir/Builds/Android/BurgerShop-0.1.0-arm64.apk" "$project_dir/Builds/Android/"
-(cd "$project_dir/Builds/Android" && shasum -a 256 BurgerShop-0.1.0-arm64.apk > BurgerShop-0.1.0-arm64.apk.sha256)
-echo "$project_dir/Builds/Android/BurgerShop-0.1.0-arm64.apk"
+cp "$build_dir/Builds/Android/BurgerShop-0.1.2-arm64.apk" "$project_dir/Builds/Android/"
+(cd "$project_dir/Builds/Android" && shasum -a 256 BurgerShop-0.1.2-arm64.apk > BurgerShop-0.1.2-arm64.apk.sha256)
+echo "$project_dir/Builds/Android/BurgerShop-0.1.2-arm64.apk"

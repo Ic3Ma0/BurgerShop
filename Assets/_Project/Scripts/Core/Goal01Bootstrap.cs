@@ -46,6 +46,9 @@ namespace BurgerShop.Core
             persistence.Configure(wallet, upgrade, hiring);
             CreateJoystick(root, inventory, pickup, customers, wallet, upgrade, hiring);
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            root.gameObject.AddComponent<AndroidDiagnostics>().Configure(wallet, inventory, hiring, upgrade);
+#endif
         }
 
         static void CreateSaveHud(Transform canvas, RestaurantPersistence persistence)
@@ -580,18 +583,7 @@ namespace BurgerShop.Core
             text.text = Application.isMobilePlatform ? "Drag joystick to move" : "WASD / joystick to move";
         }
 
-        static Material CreateLit(Color color)
-        {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null)
-                shader = Shader.Find("Sprites/Default");
-            var material = new Material(shader);
-            if (material.HasProperty("_BaseColor"))
-                material.SetColor("_BaseColor", color);
-            if (material.HasProperty("_Color"))
-                material.SetColor("_Color", color);
-            return material;
-        }
+        static Material CreateLit(Color color) => RuntimeMaterials.Create(color);
 
         static void ApplyMaterial(GameObject instance, Material material)
         {

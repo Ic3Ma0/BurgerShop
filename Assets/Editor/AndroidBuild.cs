@@ -21,8 +21,8 @@ namespace BurgerShop.Editor
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel35;
-            PlayerSettings.Android.bundleVersionCode = 1;
-            PlayerSettings.bundleVersion = "0.1.0";
+            PlayerSettings.Android.bundleVersionCode = 3;
+            PlayerSettings.bundleVersion = "0.1.2";
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
             PlayerSettings.allowedAutorotateToPortrait = true;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
@@ -32,7 +32,7 @@ namespace BurgerShop.Editor
             EditorUserBuildSettings.buildAppBundle = false;
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
             AssetDatabase.SaveAssets();
-            string path = Path.GetFullPath("Builds/Android/BurgerShop-0.1.0-arm64.apk");
+            string path = Path.GetFullPath("Builds/Android/BurgerShop-0.1.2-arm64.apk");
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             var options = new BuildPlayerOptions
             {
@@ -52,7 +52,26 @@ namespace BurgerShop.Editor
             }, true));
             if (report.summary.result != BuildResult.Succeeded)
                 throw new InvalidOperationException("Android APK build failed. See Logs/android-build-summary.json.");
+            VerifyRuntimeComponents();
             Debug.Log("BURGER_SHOP_ANDROID_APK_OK " + path);
+        }
+
+        // Check the actual native registration produced by IL2CPP, not just an Editor test.
+        // A successful APK build can still strip enum-created primitive colliders.
+        static void VerifyRuntimeComponents()
+        {
+            const string registrationPath = "Library/Bee/artifacts/Android/il2cppOutput/UnityClassRegistration.cpp";
+            if (!File.Exists(registrationPath))
+                throw new InvalidOperationException("Cannot verify Android runtime component registration: " + registrationPath);
+            string registration = File.ReadAllText(registrationPath);
+            string[] required = { "GameObject", "Transform", "MeshFilter", "MeshRenderer", "BoxCollider",
+                "CapsuleCollider", "SphereCollider", "CharacterController", "Camera", "UI::Canvas",
+                "UI::CanvasRenderer", "UI::CanvasGroup", "UI::RectTransform", "TextRenderingPrivate::TextMesh", "AudioSource" };
+            foreach (string type in required)
+                if (!registration.Contains("RegisterUnityClass<" + type + ">("))
+                    throw new InvalidOperationException("Android stripped a required runtime component: " + type);
+            File.WriteAllLines("Logs/android-runtime-components.txt", required);
+            Debug.Log("BURGER_SHOP_ANDROID_COMPONENTS_OK " + required.Length);
         }
 
         [Serializable]
