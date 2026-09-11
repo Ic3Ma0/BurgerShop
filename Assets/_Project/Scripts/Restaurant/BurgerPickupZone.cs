@@ -12,6 +12,7 @@ namespace BurgerShop.Restaurant
         [SerializeField, Min(0.05f)] float pickupInterval = 0.25f;
         float cooldown;
 
+        public Transform PickupPoint => pickupPoint != null ? pickupPoint : transform;
         public Vector3 PickupPosition => pickupPoint != null ? pickupPoint.position : transform.position;
         public bool IsInRange
         {
