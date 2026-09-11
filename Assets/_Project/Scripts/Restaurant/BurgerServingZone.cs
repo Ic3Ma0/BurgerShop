@@ -51,18 +51,29 @@ namespace BurgerShop.Restaurant
         {
             if (deltaTime <= 0f) return;
             cooldown = Mathf.Max(0f, cooldown - deltaTime);
-            if (cooldown > 0f || queue == null || !queue.isActiveAndEnabled
-                || inventory == null || !inventory.isActiveAndEnabled || wallet == null || !wallet.isActiveAndEnabled
-                || exitRoute == null || !IsInRange || inventory.Count == 0
-                || !wallet.CanRecordSale(price) || queue.ReadyCustomer == null) return;
+            TryServeFrom(inventory);
+        }
+
+        // Player and staff use the same transaction and cooldown. Calling this
+        // does not advance time, so extra carriers cannot accelerate the cashier.
+        public bool TryServeFrom(BurgerInventory carrier)
+        {
+            if (!isActiveAndEnabled || cooldown > 0f || queue == null || !queue.isActiveAndEnabled
+                || carrier == null || !carrier.isActiveAndEnabled || wallet == null || !wallet.isActiveAndEnabled
+                || exitRoute == null || carrier.Count == 0
+                || !wallet.CanRecordSale(price) || queue.ReadyCustomer == null) return false;
+            Vector3 offset = carrier.transform.position - ServingPosition;
+            offset.y = 0f;
+            if (offset.sqrMagnitude > radius * radius) return false;
 
             // Validate before changing any state. All ownership changes happen on
             // this frame; repeat updates cannot serve the same customer twice.
-            if (!queue.TryDequeueReadyCustomer(out CustomerAgent customer)) return;
-            inventory.TryTakeBurger(out Transform burger);
-            customer.BeginDeparture(burger, exitRoute, price);
+            if (!queue.TryDequeueReadyCustomer(out CustomerAgent customer)) return false;
             cooldown = servingInterval;
+            carrier.TryTakeBurger(out Transform burger);
+            customer.BeginDeparture(burger, exitRoute, price);
             wallet.RecordSale(price);
+            return true;
         }
     }
 }
