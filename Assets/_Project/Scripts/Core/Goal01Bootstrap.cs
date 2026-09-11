@@ -45,7 +45,7 @@ namespace BurgerShop.Core
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
             persistence.Configure(wallet, upgrade, hiring);
             CreateJoystick(root, inventory, pickup, customers, wallet, upgrade, hiring);
-            CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform, persistence);
+            CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
         }
 
         static void CreateSaveHud(Transform canvas, RestaurantPersistence persistence)
@@ -58,9 +58,9 @@ namespace BurgerShop.Core
             rect.sizeDelta = new Vector2(1000f, 28f);
             Text text = hud.GetComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 20;
+            text.fontSize = 22;
             text.alignment = TextAnchor.LowerCenter;
-            text.color = new Color(0.86f, 0.93f, 0.85f);
+            text.color = new Color(0.17f, 0.21f, 0.2f);
             text.raycastTarget = false;
             hud.AddComponent<SaveHud>().Configure(persistence, text);
         }
@@ -367,10 +367,15 @@ namespace BurgerShop.Core
             scaler.referenceResolution = new Vector2(1080f, 1920f);
             scaler.matchWidthOrHeight = 0.5f;
 
+            var safeArea = new GameObject("SafeArea", typeof(RectTransform));
+            safeArea.transform.SetParent(canvasObject.transform, false);
+            safeArea.AddComponent<SafeAreaFitter>();
+            Transform uiRoot = safeArea.transform;
+
             Sprite circle = CreateCircleSprite();
 
             GameObject padObject = new GameObject("VirtualJoystick", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            padObject.transform.SetParent(canvasObject.transform, false);
+            padObject.transform.SetParent(uiRoot, false);
             RectTransform pad = padObject.GetComponent<RectTransform>();
             pad.anchorMin = new Vector2(0f, 0f);
             pad.anchorMax = new Vector2(0f, 0f);
@@ -397,12 +402,12 @@ namespace BurgerShop.Core
 
             padObject.AddComponent<VirtualJoystick>();
 
-            CreateHint(canvasObject.transform);
-            CreateCarryHud(canvasObject.transform, inventory, pickup, upgrade, hiring);
-            CreateCustomerHud(canvasObject.transform, customers);
-            CreateSalesHud(canvasObject.transform, wallet);
-            CreateUpgradeHud(canvasObject.transform, upgrade);
-            CreateStaffHud(canvasObject.transform, hiring);
+            CreateHint(uiRoot);
+            CreateCarryHud(uiRoot, inventory, pickup, upgrade, hiring);
+            CreateCustomerHud(uiRoot, customers);
+            CreateSalesHud(uiRoot, wallet);
+            CreateUpgradeHud(uiRoot, upgrade);
+            CreateStaffHud(uiRoot, hiring);
         }
 
         static void CreateStaffHud(Transform canvas, WorkerHiringZone hiring)
@@ -572,7 +577,7 @@ namespace BurgerShop.Core
             text.alignment = TextAnchor.UpperCenter;
             text.color = new Color(1f, 0.97f, 0.9f, 0.9f);
             text.raycastTarget = false;
-            text.text = "WASD / joystick to move";
+            text.text = Application.isMobilePlatform ? "Drag joystick to move" : "WASD / joystick to move";
         }
 
         static Material CreateLit(Color color)
