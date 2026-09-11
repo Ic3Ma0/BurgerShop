@@ -54,6 +54,17 @@ namespace BurgerShop.Restaurant
 
         void Update() => Advance(Time.deltaTime);
 
+        public void RestoreWorker(bool hired, int deliveries)
+        {
+            if (deliveries < 0 || (!hired && deliveries != 0)) throw new System.ArgumentOutOfRangeException(nameof(deliveries));
+            if (!hired) return;
+            IsHired = true;
+            heldTime = 0f;
+            if (Worker == null)
+                Worker = RestaurantWorker.Create(transform, HiringPosition, grill, serving, pickupPoint, aisleCorner);
+            Worker.RestoreDeliveries(deliveries);
+        }
+
         public void Advance(float deltaTime)
         {
             if (deltaTime <= 0f) return;

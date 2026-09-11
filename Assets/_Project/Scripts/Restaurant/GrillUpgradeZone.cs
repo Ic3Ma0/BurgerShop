@@ -54,6 +54,16 @@ namespace BurgerShop.Restaurant
 
         void Update() => Advance(Time.deltaTime);
 
+        public void RestoreLevel(int level)
+        {
+            if (level < 1 || level > MaxLevel) throw new System.ArgumentOutOfRangeException(nameof(level));
+            Level = level;
+            heldTime = 0f;
+            PurchasedThisVisit = false;
+            station.SetProductionSeconds(level == 1 ? 3f : level == 2 ? 2f : 1.5f);
+            RefreshVisuals();
+        }
+
         public void Advance(float deltaTime)
         {
             if (deltaTime <= 0f) return;

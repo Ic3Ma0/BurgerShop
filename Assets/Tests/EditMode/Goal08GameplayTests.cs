@@ -1,3 +1,6 @@
+using BurgerShop.Persistence;
+using UnityEditor;
+using System.IO;
 using System.Collections;
 using BurgerShop.Economy;
 using BurgerShop.Player;
@@ -12,7 +15,7 @@ using UnityEngine.UI;
 
 namespace BurgerShop.Tests.EditMode
 {
-    public sealed class Goal07GameplayTests : SaveIsolatedGameplayTest
+    public sealed class Goal08GameplayTests : SaveIsolatedGameplayTest
     {
         float previousStep;
         InputSettings.BackgroundBehavior previousBackground;
@@ -22,7 +25,7 @@ namespace BurgerShop.Tests.EditMode
         Goal03InputDriver input;
 
         [UnityTest]
-        public IEnumerator EarnHireAndShareWorkWithAnAutonomousEmployeeInRealScene()
+        public IEnumerator EarnHireUpgradeThenRestartAndContinueFromSavedProgress()
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
@@ -36,77 +39,75 @@ namespace BurgerShop.Tests.EditMode
             keyboard = InputSystem.AddDevice<Keyboard>();
             input = new Goal03InputDriver(keyboard);
             yield return null;
-            BurgerInventory inventory = Object.FindFirstObjectByType<PlayerMotor>().GetComponent<BurgerInventory>();
-            BurgerServingZone serving = Object.FindFirstObjectByType<BurgerServingZone>();
-            BurgerPickupZone pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
-            RestaurantWallet wallet = Object.FindFirstObjectByType<RestaurantWallet>();
-            WorkerHiringZone hiring = Object.FindFirstObjectByType<WorkerHiringZone>();
-            Text status = GameObject.Find("StaffStatus").GetComponent<Text>();
-            Text detail = GameObject.Find("HiringStatus").GetComponent<Text>();
-            CanvasGroup panel = GameObject.Find("HiringPanel").GetComponent<CanvasGroup>();
-
-            Assert.That(Object.FindObjectsByType<RestaurantWorker>(FindObjectsSortMode.None), Is.Empty);
-            yield return WalkTo(inventory.transform, hiring.HiringPosition);
-            yield return WaitSeconds(2f);
-            Assert.That(hiring.IsHired, Is.False);
-            Assert.That(wallet.Coins, Is.Zero);
-            Assert.That(detail.text, Does.Contain("Need 50 more coins"));
-            Assert.That(panel.alpha, Is.EqualTo(1f));
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            var inventory = Object.FindFirstObjectByType<PlayerMotor>().GetComponent<BurgerInventory>();
+            var serving = Object.FindFirstObjectByType<BurgerServingZone>();
+            var pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
+            var wallet = Object.FindFirstObjectByType<RestaurantWallet>();
+            var hiring = Object.FindFirstObjectByType<WorkerHiringZone>();
+            var upgrade = Object.FindFirstObjectByType<GrillUpgradeZone>();
+            var persistence = Object.FindFirstObjectByType<RestaurantPersistence>();
+            Assert.That(persistence.LoadResult, Is.EqualTo(SaveLoadResult.NewGame));
             yield return WaitSeconds(16f);
             for (int trip = 1; trip <= 5; trip++)
                 yield return CollectAndServe(inventory, pickup, serving, wallet, trip);
-            Assert.That(wallet.Coins, Is.EqualTo(50));
             yield return WalkTo(inventory.transform, hiring.HiringPosition);
             float deadline = Time.time + 4f;
             while (!hiring.IsHired && Time.time < deadline) yield return null;
-            yield return null;
             Assert.That(hiring.IsHired, Is.True);
-            Assert.That(wallet.Coins, Is.Zero);
-            Assert.That(wallet.CompletedSales, Is.EqualTo(5));
-            Assert.That(Object.FindObjectsByType<RestaurantWorker>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
-            RestaurantWorker worker = hiring.Worker;
-            Assert.That(worker.Inventory.Capacity, Is.EqualTo(2));
             yield return WalkTo(inventory.transform, Vector3.zero);
-            yield return null;
-            Assert.That(panel.alpha, Is.Zero);
-            Vector3 parkedPlayer = inventory.transform.position;
-            Vector3 workerStart = worker.transform.position;
-            bool workerMoved = false;
             deadline = Time.time + 60f;
-            while (worker.CompletedDeliveries < 6 && Time.time < deadline)
-            {
-                workerMoved |= Vector3.Distance(worker.transform.position, workerStart) > 2f;
-                Assert.That(worker.Inventory.Count, Is.InRange(0, 2));
-                yield return null;
-            }
-            Assert.That(worker.CompletedDeliveries, Is.GreaterThanOrEqualTo(6));
-            Assert.That(workerMoved, Is.True);
-            Vector3 playerMovement = inventory.transform.position - parkedPlayer;
-            playerMovement.y = 0f;
-            Assert.That(playerMovement.magnitude, Is.LessThan(0.01f));
-            Assert.That(wallet.CompletedSales, Is.EqualTo(5 + worker.CompletedDeliveries));
-            Assert.That(wallet.Coins, Is.EqualTo(wallet.CompletedSales * 10 - 50));
-            yield return null;
-            Assert.That(status.text, Does.Contain("DELIVERED " + worker.CompletedDeliveries));
+            while (wallet.Coins < 40 && Time.time < deadline) yield return null;
+            Assert.That(wallet.Coins, Is.GreaterThanOrEqualTo(40));
+            yield return WalkTo(inventory.transform, upgrade.UpgradePosition);
+            deadline = Time.time + 4f;
+            while (upgrade.Level < 2 && Time.time < deadline) yield return null;
+            Assert.That(upgrade.Level, Is.EqualTo(2));
+            // Pause the employee so the expected snapshot stays unchanged during editor shutdown.
+            hiring.Worker.enabled = false;
+            // Autosave uses unscaled wall time, independent of the test's captured simulation step.
+            float savedBy = Time.realtimeSinceStartup + 2.2f;
+            while (Time.realtimeSinceStartup < savedBy) yield return null;
+            Assert.That(persistence.Status, Is.EqualTo("PROGRESS SAVED"));
+            Assert.That(new LocalSaveStore(SaveDirectory).Load(out var expected), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(expected.coins, Is.EqualTo(wallet.Coins));
+            Assert.That(expected.grillLevel, Is.EqualTo(2));
+            Assert.That(expected.workerHired, Is.True);
+            Assert.That(expected.workerDeliveries, Is.GreaterThanOrEqualTo(4));
+            SessionState.SetString("BurgerShop.Tests.ExpectedProgress", JsonUtility.ToJson(expected));
+            Restore();
+            yield return new ExitPlayMode();
 
-            // Resume manual work while the employee is still using the same stock and cashier.
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
-            yield return WalkTo(inventory.transform, pickup.PickupPosition);
-            deadline = Time.time + 10f;
-            while (inventory.Count == 0 && Time.time < deadline) yield return null;
-            Assert.That(inventory.Count, Is.GreaterThan(0));
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
-            yield return WalkTo(inventory.transform, serving.ServingPosition);
-            deadline = Time.time + 15f;
-            while (wallet.CompletedSales - worker.CompletedDeliveries <= 5 && Time.time < deadline) yield return null;
-            Assert.That(wallet.CompletedSales - worker.CompletedDeliveries, Is.GreaterThan(5));
-            Assert.That(wallet.Coins, Is.EqualTo(wallet.CompletedSales * 10 - 50));
+            EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+            yield return new EnterPlayMode();
+            previousStep = Time.captureDeltaTime;
+            Time.captureDeltaTime = 1f / 60f;
+            yield return null;
+            expected = JsonUtility.FromJson<RestaurantSaveData>(SessionState.GetString("BurgerShop.Tests.ExpectedProgress", ""));
+            wallet = Object.FindFirstObjectByType<RestaurantWallet>();
+            hiring = Object.FindFirstObjectByType<WorkerHiringZone>();
+            upgrade = Object.FindFirstObjectByType<GrillUpgradeZone>();
+            persistence = Object.FindFirstObjectByType<RestaurantPersistence>();
+            Assert.That(persistence.LoadResult, Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(wallet.Coins, Is.EqualTo(expected.coins), "Restoring staff and upgrades must not charge again.");
+            Assert.That(wallet.CompletedSales, Is.EqualTo(expected.completedSales));
+            Assert.That(upgrade.Level, Is.EqualTo(2));
+            Assert.That(Object.FindFirstObjectByType<ProductionStation>().ProductionSeconds, Is.EqualTo(2f));
             Assert.That(hiring.IsHired, Is.True);
+            Assert.That(hiring.Worker.CompletedDeliveries, Is.EqualTo(expected.workerDeliveries));
             Assert.That(Object.FindObjectsByType<RestaurantWorker>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
+            deadline = Time.time + 30f;
+            while (hiring.Worker.CompletedDeliveries <= expected.workerDeliveries && Time.time < deadline) yield return null;
+            Assert.That(hiring.Worker.CompletedDeliveries, Is.GreaterThan(expected.workerDeliveries));
+            Assert.That(wallet.Coins, Is.EqualTo(expected.coins + 10));
+            Assert.That(wallet.CompletedSales, Is.EqualTo(expected.completedSales + 1));
+            Assert.That(persistence.Flush(), Is.True);
+            Assert.That(new LocalSaveStore(SaveDirectory).Load(out var continued), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(continued.coins, Is.EqualTo(wallet.Coins));
+            Assert.That(File.Exists(persistence.FilePath + ".bak"), Is.True);
             LogAssert.NoUnexpectedReceived();
             Restore();
             yield return new ExitPlayMode();
+            SessionState.EraseString("BurgerShop.Tests.ExpectedProgress");
         }
 
         IEnumerator CollectAndServe(BurgerInventory inventory, BurgerPickupZone pickup,

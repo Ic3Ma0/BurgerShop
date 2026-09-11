@@ -14,7 +14,7 @@ using UnityEngine.UI;
 
 namespace BurgerShop.Tests.EditMode
 {
-    public sealed class Goal03GameplayTests
+    public sealed class Goal03GameplayTests : SaveIsolatedGameplayTest
     {
         InputSettings.BackgroundBehavior previousBackgroundBehavior;
         InputSettings.EditorInputBehaviorInPlayMode previousEditorInputBehavior;

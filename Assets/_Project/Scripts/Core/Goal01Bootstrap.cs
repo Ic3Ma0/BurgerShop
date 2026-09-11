@@ -8,6 +8,7 @@ using BurgerShop.Restaurant;
 using BurgerShop.UI;
 using BurgerShop.Customer;
 using BurgerShop.Economy;
+using BurgerShop.Persistence;
 
 namespace BurgerShop.Core
 {
@@ -41,7 +42,27 @@ namespace BurgerShop.Core
             BurgerServingZone serving = CreateServingZone(customers, inventory, wallet);
             GrillUpgradeZone upgrade = CreateUpgradeZone(root, station, inventory, wallet);
             WorkerHiringZone hiring = CreateHiringZone(root, station, serving, pickup, inventory, wallet);
+            RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
+            persistence.Configure(wallet, upgrade, hiring);
             CreateJoystick(root, inventory, pickup, customers, wallet, upgrade, hiring);
+            CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform, persistence);
+        }
+
+        static void CreateSaveHud(Transform canvas, RestaurantPersistence persistence)
+        {
+            GameObject hud = new GameObject("SaveStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            hud.transform.SetParent(canvas, false);
+            RectTransform rect = hud.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = new Vector2(0f, 8f);
+            rect.sizeDelta = new Vector2(1000f, 28f);
+            Text text = hud.GetComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = 20;
+            text.alignment = TextAnchor.LowerCenter;
+            text.color = new Color(0.86f, 0.93f, 0.85f);
+            text.raycastTarget = false;
+            hud.AddComponent<SaveHud>().Configure(persistence, text);
         }
 
         static WorkerHiringZone CreateHiringZone(Transform root, ProductionStation station, BurgerServingZone serving,
