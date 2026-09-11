@@ -1,0 +1,13 @@
+---
+description: BurgerShop source of truth, spec gate, and local Unity verification
+alwaysApply: true
+---
+
+# BurgerShop
+
+- Edit only this repo. `BurgerShop-Goal0*` folders are read-only history.
+- Do not add player-facing behavior without a spec in `docs/specs/` (or an explicit user-approved slice). Implementation details stay with the developer.
+- World setup lives in `Goal01Bootstrap`. Match existing zone / inventory / wallet / save patterns.
+- Verify gameplay with local Unity EditMode tests and SampleScene Play. Cloud success is not Editor or vivo acceptance.
+- Android: `scripts/build-android.sh` because the path has Chinese characters. Keep `link.xml` and Resources URP materials.
+- Do not delete `_Recovery/` or treat APK size/build success as a device pass.
