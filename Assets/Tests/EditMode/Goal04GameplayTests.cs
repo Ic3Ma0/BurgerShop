@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace BurgerShop.Tests.EditMode
 {
-    public sealed class Goal04GameplayTests
+    public sealed class Goal04GameplayTests : SaveIsolatedGameplayTest
     {
         float previousCaptureDeltaTime;
 

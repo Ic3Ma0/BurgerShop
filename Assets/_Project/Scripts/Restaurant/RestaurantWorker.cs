@@ -22,6 +22,7 @@ namespace BurgerShop.Restaurant
         public BurgerInventory Inventory { get; private set; }
         public WorkerState State { get; private set; }
         public int CompletedDeliveries { get; private set; }
+        internal void RestoreDeliveries(int count) => CompletedDeliveries = count;
         public string Activity => !isActiveAndEnabled || !DependenciesReady ? "Paused"
             : State == WorkerState.ToGrill ? "Walking to grill"
             : State == WorkerState.Collecting ? "Waiting for burgers"
