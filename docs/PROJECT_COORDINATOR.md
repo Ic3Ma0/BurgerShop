@@ -4,7 +4,7 @@ Paste the block at the bottom into a new Cursor **Project** (left nav). This fil
 
 ## 最新本地开发记录 · 2026-09-12
 
-正式目录的本地开发版已集成 013–022，并完成本轮 023–025 实现；版本为 0.2.0 / Android code 4，最终 Unity 回归 234/234。逐项状态、真机证据及体验路径见 [023–025 集成交付记录](specs/BS-SPEC-023-025-DELIVERY.md)。下面的 0.1.2 / 013 coordinator kickoff 保留为历史，不能作为当前开发范围或当前代码状态。当前本地分支 `feat/counter-table-serve`；这批内容尚未合并到 main。
+正式目录的本地开发版已集成 013–022，并完成本轮 023–025 实现；版本为 0.2.0 / Android code 4，最终 Unity 回归 234/234。逐项状态、真机证据及体验路径见 [023–025 集成交付记录](specs/BS-SPEC-023-025-DELIVERY.md)。下面的 0.1.2 / 013 coordinator kickoff 保留为历史，不能作为当前开发范围或当前代码状态。这批内容已于 2026-09-12 通过 [PR #15](https://github.com/Ic3Ma0/BurgerShop/pull/15) 合并到 main（`646eed0`）；正式目录已切换并同步 main。
 
 ## Why this is a Project, not a chat
 
