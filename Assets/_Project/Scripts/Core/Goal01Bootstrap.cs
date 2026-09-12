@@ -52,20 +52,24 @@ namespace BurgerShop.Core
             ProductionStation station = starter.Station;
             BurgerPickupZone pickup = starter.Pickup;
             GrillUpgradeZone upgrade = starter.Upgrade;
+            ExpandableGrill colaMachine = ExpandableGrill.CreateColaStarter(root, inventory, wallet);
             BurgerServingZone serving = CreateServingZone(customers, inventory, wallet, stock, dining, cash);
+            BurgerServingZone colaServing = CreateColaServing(root, inventory, wallet, dining, cash);
             WorkerHiringZone hiring = CreateHiringZone(root, station, serving, pickup, inventory, wallet, dining, bin, office);
+            hiring.RegisterCola(colaMachine.Station, colaMachine.Pickup.PickupPoint, colaServing, colaServing.DropZone);
             PlayerMotor motor = player.GetComponent<PlayerMotor>();
             BoostUpgradeZone boost = CreateBoostZone(root, inventory, motor, wallet, boostRoom);
             ShopExpansion expansion = ShopExpansion.Create(root, dining, serving, hiring, inventory, wallet, cash);
             StaffUpgradeBoard staffUpgrades = root.gameObject.AddComponent<StaffUpgradeBoard>();
             staffUpgrades.Configure(wallet, hiring, inventory);
             SessionGoalTracker goals = root.gameObject.AddComponent<SessionGoalTracker>();
-            goals.Configure(inventory, station, stock, customers, wallet, serving, dining, trashBag, hiring, boost, expansion);
+            goals.Configure(inventory, station, stock, customers, wallet, serving, dining, trashBag, hiring, boost, expansion,
+                colaServing, colaMachine.Station);
             CreateJoystick(root, inventory, pickup, customers, wallet, upgrade, hiring, goals, trashBag, staffUpgrades,
-                boost);
+                boost, colaMachine.Upgrade);
             expansion.BindUpgradeHud(Object.FindFirstObjectByType<UpgradeHud>());
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
-            persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades);
+            persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades, colaMachine.Upgrade);
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             root.gameObject.AddComponent<AndroidDiagnostics>().Configure(wallet, inventory, hiring, upgrade);
@@ -105,6 +109,32 @@ namespace BurgerShop.Core
             BoostUpgradeZone boost = root.gameObject.AddComponent<BoostUpgradeZone>();
             boost.Configure(wallet, inventory, motor, room.BoostPoint, room.BoostLabel);
             return boost;
+        }
+
+        static BurgerServingZone CreateColaServing(Transform root, BurgerInventory inventory, RestaurantWallet wallet,
+            DiningArea dining, CashFloor cash)
+        {
+            Transform area = new GameObject("ColaCustomerArea").transform;
+            area.SetParent(root, false);
+            Vector3 counterPosition = ShopLayout.ColaCounter;
+            Material counter = CreateLit(new Color(0.22f, 0.42f, 0.62f));
+            Material top = CreateLit(new Color(0.86f, 0.90f, 0.94f));
+            CreateStationPart(area, "ColaCounter", counterPosition + Vector3.up * 0.5f, new Vector3(3.2f, 1f, 1.4f), counter);
+            CreateStationPart(area, "ColaCounterTop", counterPosition + Vector3.up * 1.05f, new Vector3(3.35f, 0.12f, 1.55f), top);
+            ShopFixtures.CreateStationLabel(area, "ColaCounterLabel", counterPosition + Vector3.up * 1.85f, "COLA");
+
+            CustomerQueue queue = area.gameObject.AddComponent<CustomerQueue>();
+            queue.Product = KitchenProduct.Cola;
+            queue.Configure(ShopLayout.Entrance, ShopLayout.ColaQueueEntry, ShopLayout.ColaQueueSlots, counterPosition);
+
+            CounterStock stock = ShopFixtures.CreateCounterStock(area, ShopLayout.ColaCounterTop, false, KitchenProduct.Cola);
+            Transform circle = ShopFixtures.CreateCashierCircle(area, ShopLayout.ColaServingCircle);
+            circle.name = "ColaCashierCircle";
+            CounterDropZone drop = area.gameObject.AddComponent<CounterDropZone>();
+            drop.Configure(stock, circle, 1.05f, 0.25f, false, KitchenProduct.Cola);
+            BurgerServingZone serving = area.gameObject.AddComponent<BurgerServingZone>();
+            serving.Configure(queue, inventory, wallet, circle, ShopLayout.Exit, stock, dining, drop, 10, cash);
+            return serving;
         }
 
         static BurgerServingZone CreateServingZone(CustomerQueue queue, BurgerInventory inventory, RestaurantWallet wallet,
@@ -220,7 +250,7 @@ namespace BurgerShop.Core
             follow.SetTarget(player);
         }
 
-        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers, RestaurantWallet wallet, GrillUpgradeZone upgrade, WorkerHiringZone hiring, SessionGoalTracker goals, TrashInventory trashBag, StaffUpgradeBoard staffUpgrades = null, BoostUpgradeZone playerBoost = null)
+        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers, RestaurantWallet wallet, GrillUpgradeZone upgrade, WorkerHiringZone hiring, SessionGoalTracker goals, TrashInventory trashBag, StaffUpgradeBoard staffUpgrades = null, BoostUpgradeZone playerBoost = null, GrillUpgradeZone colaUpgrade = null)
         {
             if (Object.FindFirstObjectByType<EventSystem>() == null)
             {
@@ -285,6 +315,8 @@ namespace BurgerShop.Core
             CreateCustomerHud(uiRoot, customers);
             SalesHud.Build(uiRoot, wallet);
             CreateUpgradeHud(uiRoot, upgrade);
+            if (colaUpgrade != null)
+                Object.FindFirstObjectByType<UpgradeHud>()?.AddZone(colaUpgrade);
             CreateStaffHud(uiRoot, hiring);
             if (staffUpgrades != null)
                 StaffUpgradeHud.Build(uiRoot, staffUpgrades);

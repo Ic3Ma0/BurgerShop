@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BurgerShop.Restaurant;
 using UnityEngine;
 
 namespace BurgerShop.Customer
@@ -20,6 +21,7 @@ namespace BurgerShop.Customer
         CustomerAgent departingCustomer;
 
         public Func<int> OrderQuantityFactory { get; set; } = OrderQuantities.Dining;
+        public KitchenProduct Product { get; set; } = KitchenProduct.Burger;
 
         public int Count => customers.Count;
         public int Capacity => slotDistance?.Length ?? 0;
@@ -92,7 +94,8 @@ namespace BurgerShop.Customer
             if (Count > 0 && customers[Count - 1].DistanceAlongPath < minimumGap)
                 return;
 
-            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, route[0], OrderQuantityFactory());
+            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, route[0], OrderQuantityFactory(),
+                Product);
             arriving.AssignSlot(Count);
             arriving.Removed += OnCustomerRemoved;
             customers.Add(arriving);

@@ -16,17 +16,20 @@ namespace BurgerShop.Restaurant
         Vector3 punchRest = Vector3.one;
         int count;
         int lastCount = int.MinValue;
+        KitchenProduct product = KitchenProduct.Burger;
 
         public int Count => count;
+        public KitchenProduct Product => product;
         public bool IsFull => false;
         public bool IsEmpty => count == 0;
         public bool IsPunching => punch.IsActive;
         public float PunchScale => punch.Scale;
 
-        public void Configure(Transform anchor, TextMesh label)
+        public void Configure(Transform anchor, TextMesh label, KitchenProduct kind = KitchenProduct.Burger)
         {
             stockAnchor = anchor;
             countLabel = label;
+            product = kind;
             punchTarget = countLabel != null && countLabel.transform.parent != null
                 ? countLabel.transform.parent
                 : countLabel != null ? countLabel.transform : null;
@@ -46,9 +49,18 @@ namespace BurgerShop.Restaurant
 
         public bool TryPlaceFrom(BurgerInventory carrier)
         {
+            if (product == KitchenProduct.Cola)
+                return TryPlaceColaFrom(carrier);
             if (carrier == null || !carrier.isActiveAndEnabled || !carrier.TryTakeBurger(out Transform burger))
                 return false;
             return Accept(burger, false);
+        }
+
+        public bool TryPlaceColaFrom(BurgerInventory carrier)
+        {
+            if (carrier == null || !carrier.isActiveAndEnabled || !carrier.TryTakeCola(out Transform cup))
+                return false;
+            return Accept(cup, false);
         }
 
         public bool TryPlaceBoxedFrom(BurgerInventory carrier)
@@ -75,7 +87,7 @@ namespace BurgerShop.Restaurant
             if (count == 0) return false;
             count--;
             if (count >= MaxVisibleBurgers)
-                burger = BurgerVisualFactory.Create(null, 0);
+                burger = CreateVisual(null, 0);
             else if (burgers.Count > 0)
             {
                 burger = burgers[burgers.Count - 1];
@@ -83,7 +95,7 @@ namespace BurgerShop.Restaurant
                 if (burger != null) burger.SetParent(null, true);
             }
             else
-                burger = BurgerVisualFactory.Create(null, 0);
+                burger = CreateVisual(null, 0);
             RefreshLabel();
             return true;
         }
@@ -107,12 +119,17 @@ namespace BurgerShop.Restaurant
             return true;
         }
 
+        Transform CreateVisual(Transform parent, int index) =>
+            product == KitchenProduct.Cola
+                ? ColaVisualFactory.Create(parent, index)
+                : BurgerVisualFactory.Create(parent, index);
+
         void AttachVisual(Transform burger, bool boxed = false)
         {
             if (burger == null)
                 burger = boxed
                     ? BoxVisualFactory.Create(stockAnchor, burgers.Count)
-                    : BurgerVisualFactory.Create(stockAnchor, burgers.Count);
+                    : CreateVisual(stockAnchor, burgers.Count);
             else
                 burger.SetParent(stockAnchor, false);
             burger.localPosition = new Vector3(0f, burgers.Count * 0.22f, 0f);

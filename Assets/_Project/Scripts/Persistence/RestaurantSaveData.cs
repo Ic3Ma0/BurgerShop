@@ -8,7 +8,7 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         public int version;
         public long coins;
@@ -34,6 +34,7 @@ namespace BurgerShop.Persistence
         public int counterInvestment;
         public int boxingInvestment;
         public int driveThruInvestment;
+        public int colaLevel;
 
         public int ResolvedHiredCount => version >= 2
             ? hiredWorkerCount
@@ -50,6 +51,7 @@ namespace BurgerShop.Persistence
         public int ResolvedPlayerCarryTier => version >= 5 ? playerCarryTier : ResolvedBoostLevel;
         public bool ResolvedBoughtBoxingStation => version >= 6 && boughtBoxingStation;
         public bool ResolvedBoughtDriveThru => version >= 6 && boughtDriveThru;
+        public int ResolvedColaLevel => version >= 8 ? colaLevel : 1;
 
         public bool IsValid
         {
@@ -74,11 +76,14 @@ namespace BurgerShop.Persistence
                 if (playerSpeedTier < 0 || playerSpeedTier > 5 || playerCarryTier < 0 || playerCarryTier > 5)
                     return false;
                 if (version < 7) return true;
-                return tableInvestment >= 0 && tableInvestment <= Restaurant.ShopExpansion.TableCost
-                    && grillInvestment >= 0 && grillInvestment <= Restaurant.ShopExpansion.GrillCost
-                    && counterInvestment >= 0 && counterInvestment <= Restaurant.ShopExpansion.CounterCost
-                    && boxingInvestment >= 0 && boxingInvestment <= Restaurant.ShopExpansion.BoxingCost
-                    && driveThruInvestment >= 0 && driveThruInvestment <= Restaurant.ShopExpansion.DriveThruCost;
+                if (tableInvestment < 0 || tableInvestment > Restaurant.ShopExpansion.TableCost
+                    || grillInvestment < 0 || grillInvestment > Restaurant.ShopExpansion.GrillCost
+                    || counterInvestment < 0 || counterInvestment > Restaurant.ShopExpansion.CounterCost
+                    || boxingInvestment < 0 || boxingInvestment > Restaurant.ShopExpansion.BoxingCost
+                    || driveThruInvestment < 0 || driveThruInvestment > Restaurant.ShopExpansion.DriveThruCost)
+                    return false;
+                if (version < 8) return true;
+                return colaLevel >= 1 && colaLevel <= 3;
             }
         }
 
@@ -155,11 +160,13 @@ namespace BurgerShop.Persistence
                     playerCarryTier.ToString(CultureInfo.InvariantCulture),
                     boughtBoxingStation ? "1" : "0",
                     boughtDriveThru ? "1" : "0");
-            // Versions 1-6 must retain their original checksum byte sequence.
+            // Versions 1-7 must retain their original checksum byte sequence.
             if (version >= 7)
                 value += "|" + string.Join("|", tableInvestment.ToString(CultureInfo.InvariantCulture),
                     grillInvestment.ToString(CultureInfo.InvariantCulture), counterInvestment.ToString(CultureInfo.InvariantCulture),
                     boxingInvestment.ToString(CultureInfo.InvariantCulture), driveThruInvestment.ToString(CultureInfo.InvariantCulture));
+            if (version >= 8)
+                value += "|" + colaLevel.ToString(CultureInfo.InvariantCulture);
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }

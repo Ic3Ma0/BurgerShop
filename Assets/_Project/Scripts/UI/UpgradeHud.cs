@@ -53,18 +53,18 @@ namespace BurgerShop.UI
             if (progress != null) progress.fillAmount = zone.Progress;
             if (zone.IsMaxLevel)
             {
-                label.text = $"GRILL LV {zone.Level} - MAX\n{zone.CurrentProductionSeconds:0.0}s per burger\nFully upgraded";
+                label.text = $"{zone.ProductNoun} LV {zone.Level} - MAX\n{zone.CurrentProductionSeconds:0.0}s per {zone.ItemNoun}\nFully upgraded";
                 return;
             }
             if (zone.PurchasedThisVisit)
             {
-                label.text = $"GRILL LV {zone.Level} - Upgraded!\nNow {zone.CurrentProductionSeconds:0.0}s per burger\nNext: {zone.NextCost} COINS - leave and return";
+                label.text = $"{zone.ProductNoun} LV {zone.Level} - Upgraded!\nNow {zone.CurrentProductionSeconds:0.0}s per {zone.ItemNoun}\nNext: {zone.NextCost} COINS - leave and return";
                 return;
             }
             string hint = !zone.IsAvailable ? "Upgrade unavailable"
                 : zone.MissingCoins > 0 ? $"Need {zone.MissingCoins} more coins"
                 : $"Stay here to upgrade - {Mathf.FloorToInt(zone.Progress * 100f)}%";
-            label.text = $"GRILL LV {zone.Level} > {zone.Level + 1}\n{zone.NextCost} COINS  |  {zone.CurrentProductionSeconds:0.0}s > {zone.NextProductionSeconds:0.0}s\n{hint}";
+            label.text = $"{zone.ProductNoun} LV {zone.Level} > {zone.Level + 1}\n{zone.NextCost} COINS  |  {zone.CurrentProductionSeconds:0.0}s > {zone.NextProductionSeconds:0.0}s\n{hint}";
         }
     }
 }

@@ -31,6 +31,22 @@ namespace BurgerShop.Restaurant
         public static Vector3 GrillPickup => Grill + GrillPickupLocal;
         public static Vector3 ExtraGrillPickup => ExtraGrill + GrillPickupLocal;
 
+        // Cola: south of the two grills, still kitchen (+X). Counter east of the burger line, white circle on the staff side.
+        public static readonly Vector3 Cola = new Vector3(9f, 0f, 3f);
+        public static readonly Vector3 ColaUpgrade = Cola + new Vector3(0f, 0.02f, GrillUpgradeNorth);
+        public static Vector3 ColaPickup => Cola + GrillPickupLocal;
+        public static readonly Vector3 ColaCounter = new Vector3(3f, 0f, 4f);
+        public static readonly Vector3 ColaCounterTop = new Vector3(ColaCounter.x, 1.05f, ColaCounter.z);
+        public static readonly Vector3 ColaServingCircle = ColaCounter + StaffCircleOffset;
+        public static readonly Vector3 ColaCash = ColaServingCircle + CashFloor.CounterOffsetFromServing;
+        public static readonly Vector3 ColaQueueEntry = new Vector3(3f, 0f, -6f);
+        public static readonly Vector3[] ColaQueueSlots =
+        {
+            new Vector3(3f, 0f, 1.5f),
+            new Vector3(3f, 0f, -1.5f),
+            new Vector3(3f, 0f, -4.5f)
+        };
+
         // Dine-in counters on the center axis, facing customers to the south. White circles on the kitchen (+X) staff side.
         // Second counter stacks north so the kitchen pickup lane stays clear.
         public static readonly Vector3 Counter = new Vector3(-3f, 0f, 4f);

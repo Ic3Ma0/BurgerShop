@@ -28,6 +28,10 @@ namespace BurgerShop.Restaurant
         BoxingStation boxing;
         DriveThruLane driveThru;
         StaffUpgradeBoard upgrades;
+        ProductionStation colaGrill;
+        Transform colaPickup;
+        BurgerServingZone colaServing;
+        CounterDropZone colaDrop;
         float heldTime;
         bool purchasedThisVisit;
         SupplyLine nextSupply = SupplyLine.Dining;
@@ -47,6 +51,11 @@ namespace BurgerShop.Restaurant
         public int BoxingSupplyDeficit => driveThru == null || boxing == null || !driveThru.isActiveAndEnabled || !boxing.isActiveAndEnabled ? 0
             : Mathf.Max(0, SupplyBuffer - boxing.OutputCount - boxing.ProcessingCount - boxing.PackageCount
                 - HeldBoxes() - ReservedFor(SupplyLine.Boxing) - boxing.InputCount);
+        public int ColaSupplyDeficit => colaServing == null || !colaServing.isActiveAndEnabled ? 0
+            : Mathf.Max(0, Mathf.Max(SupplyBuffer - colaServing.TotalStock, colaServing.ActiveOrderStockDeficit)
+                - ReservedFor(SupplyLine.Cola));
+        public BurgerServingZone ColaServing => colaServing;
+        public CounterDropZone ColaDrop => colaDrop;
 
         int ReservedFor(SupplyLine line)
         {
@@ -63,14 +72,38 @@ namespace BurgerShop.Restaurant
         }
         public bool TryAssignSupply(RestaurantWorker worker)
         {
-            int dine = DiningSupplyDeficit;
+            int dine = AnyGrillHasStock() ? DiningSupplyDeficit : 0;
             int box = BoxingSupplyDeficit;
-            if (worker == null || (dine == 0 && box == 0)) return false;
-            SupplyLine line = dine > 0 && box > 0 ? nextSupply : dine > 0 ? SupplyLine.Dining : SupplyLine.Boxing;
-            int amount = Mathf.Min(worker.Inventory.Capacity, line == SupplyLine.Dining ? dine : box);
+            int cola = AnyColaHasStock() ? ColaSupplyDeficit : 0;
+            if (worker == null || (dine == 0 && box == 0 && cola == 0)) return false;
+            SupplyLine line = PickSupply(dine, box, cola);
+            int deficit = line == SupplyLine.Dining ? dine : line == SupplyLine.Cola ? cola : box;
+            int amount = Mathf.Min(worker.Inventory.Capacity, deficit);
             worker.AssignSupply(line, amount);
-            nextSupply = line == SupplyLine.Dining ? SupplyLine.Boxing : SupplyLine.Dining;
+            nextSupply = NextSupplyAfter(line, dine, box, cola);
             return true;
+        }
+
+        SupplyLine PickSupply(int dine, int box, int cola)
+        {
+            if (dine > 0 && cola > 0)
+                return nextSupply == SupplyLine.Cola ? SupplyLine.Cola : SupplyLine.Dining;
+            if (dine > 0 && box > 0)
+                return nextSupply == SupplyLine.Boxing ? SupplyLine.Boxing : SupplyLine.Dining;
+            if (cola > 0 && box > 0)
+                return nextSupply == SupplyLine.Boxing ? SupplyLine.Boxing : SupplyLine.Cola;
+            if (dine > 0) return SupplyLine.Dining;
+            if (cola > 0) return SupplyLine.Cola;
+            return SupplyLine.Boxing;
+        }
+
+        static SupplyLine NextSupplyAfter(SupplyLine line, int dine, int box, int cola)
+        {
+            if (line == SupplyLine.Dining)
+                return cola > 0 ? SupplyLine.Cola : box > 0 ? SupplyLine.Boxing : SupplyLine.Dining;
+            if (line == SupplyLine.Cola)
+                return dine > 0 ? SupplyLine.Dining : box > 0 ? SupplyLine.Boxing : SupplyLine.Cola;
+            return dine > 0 ? SupplyLine.Dining : cola > 0 ? SupplyLine.Cola : SupplyLine.Boxing;
         }
         public bool TryAssignBoxTransport(RestaurantWorker worker)
         {
@@ -191,6 +224,15 @@ namespace BurgerShop.Restaurant
 
         public void RegisterDriveThru(DriveThruLane lane) => driveThru = lane;
 
+        public void RegisterCola(ProductionStation station, Transform pickup, BurgerServingZone cashier,
+            CounterDropZone dropZone)
+        {
+            colaGrill = station;
+            colaPickup = pickup;
+            colaServing = cashier;
+            colaDrop = dropZone;
+        }
+
         public bool MayGoWindow(RestaurantWorker worker)
         {
             for (int i = 0; i < workers.Count; i++)
@@ -210,8 +252,17 @@ namespace BurgerShop.Restaurant
             return grill != null && grill.isActiveAndEnabled && grill.Stock > 0;
         }
 
-        public bool TryGetCollectTarget(out ProductionStation station, out Transform pickup)
+        public bool AnyColaHasStock() =>
+            colaGrill != null && colaGrill.isActiveAndEnabled && colaGrill.Stock > 0;
+
+        public bool TryGetCollectTarget(RestaurantWorker worker, out ProductionStation station, out Transform pickup)
         {
+            if (worker != null && worker.SupplyTarget == SupplyLine.Cola)
+            {
+                station = colaGrill;
+                pickup = colaPickup;
+                return station != null && pickup != null;
+            }
             station = grill;
             pickup = pickupPoint;
             for (int i = 0; i < kitchens.Count; i++)
@@ -330,6 +381,17 @@ namespace BurgerShop.Restaurant
                 RestaurantWorker other = workers[i];
                 if (other == null || other == worker || !other.isActiveAndEnabled) continue;
                 if (other.Job == WorkerJob.Serve) return false;
+            }
+            return true;
+        }
+
+        public bool MayGoServeCola(RestaurantWorker worker)
+        {
+            for (int i = 0; i < workers.Count; i++)
+            {
+                RestaurantWorker other = workers[i];
+                if (other == null || other == worker || !other.isActiveAndEnabled) continue;
+                if (other.Job == WorkerJob.ServeCola) return false;
             }
             return true;
         }

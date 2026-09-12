@@ -410,5 +410,65 @@ namespace BurgerShop.Tests.EditMode
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
+
+        static RestaurantSaveData ProgressV8(long coins = 25, int cola = 1) => new RestaurantSaveData
+        {
+            version = 8, coins = coins, completedSales = 18, grillLevel = 3, workerHired = true,
+            workerDeliveries = 7, hiredWorkerCount = 1, workerClears = 3, boostLevel = 0,
+            staffSpeedTier = 1, staffCarryTier = 0, playerSpeedTier = 2, playerCarryTier = 1,
+            colaLevel = cola
+        };
+
+        [Test] public void Version8RoundTripRestoresColaLevelAndKeepsCoins()
+        {
+            Assert.That(store.Save(ProgressV8(600, 3)), Is.True);
+            Assert.That(new LocalSaveStore(directory).Load(out var data), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(data.version, Is.EqualTo(8));
+            Assert.That(data.colaLevel, Is.EqualTo(3));
+            Assert.That(data.ResolvedColaLevel, Is.EqualTo(3));
+            Assert.That(data.coins, Is.EqualTo(600));
+            Assert.That(data.grillLevel, Is.EqualTo(3));
+        }
+
+        [Test] public void Version7AndOlderResolveColaToLevelOneWithoutLosingProgress()
+        {
+            Assert.That(store.Save(ProgressV6(600, true, false)), Is.True);
+            Assert.That(store.Load(out var data), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(data.version, Is.EqualTo(6));
+            Assert.That(data.ResolvedColaLevel, Is.EqualTo(1));
+            Assert.That(data.coins, Is.EqualTo(600));
+            Assert.That(data.grillLevel, Is.EqualTo(3));
+            Assert.That(data.ResolvedBoughtBoxingStation, Is.True);
+            var v7 = ProgressV6(600); v7.version = 7;
+            Assert.That(store.Save(v7), Is.True);
+            Assert.That(new LocalSaveStore(directory).Load(out data), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(data.version, Is.EqualTo(7));
+            Assert.That(data.ResolvedColaLevel, Is.EqualTo(1));
+            Assert.That(data.coins, Is.EqualTo(600));
+            Assert.That(data.grillLevel, Is.EqualTo(3));
+        }
+
+        [Test] public void V7FixtureWithOriginalChecksumStillLoadsAfterColaSchema()
+        {
+            var old = ProgressV6(80, true, false);
+            old.version = 7;
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(store.FilePath, "{\"data\":" + JsonUtility.ToJson(old) +
+                ",\"checksum\":\"73j327IPYvv5e76y8LwotxiRq6D0/esfEPdsySBx/6U=\"}");
+            Assert.That(store.Load(out var data), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(data.version, Is.EqualTo(7));
+            Assert.That(data.coins, Is.EqualTo(80));
+            Assert.That(data.grillLevel, Is.EqualTo(3));
+            Assert.That(data.ResolvedColaLevel, Is.EqualTo(1));
+            Assert.That(data.ResolvedBoughtBoxingStation, Is.True);
+        }
+
+        [TestCase(0)] [TestCase(4)]
+        public void Version8RejectsColaLevelOutsideOneToThree(int level)
+        {
+            var data = ProgressV8(cola: level);
+            Assert.That(data.IsValid, Is.False);
+            Assert.That(store.Save(data), Is.False);
+        }
     }
 }

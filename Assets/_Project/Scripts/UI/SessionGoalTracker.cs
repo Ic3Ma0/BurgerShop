@@ -20,12 +20,17 @@ namespace BurgerShop.UI
         WorkerHiringZone hiring;
         BoostUpgradeZone boost;
         ShopExpansion expansion;
+        BurgerServingZone colaServing;
+        ProductionStation colaGrill;
         float celebrateLeft = 1.5f;
-        int lastInventory = -1;
+        int lastBurgerHeld = -1;
         int lastCounter = -1;
+        int lastColaCounter = -1;
         int lastSales = -1;
+        int lastColaOrders = -1;
         bool pickedUp;
         bool stocked;
+        bool stockedCola;
         bool sawTable;
         bool sawGrill;
         bool sawCounter;
@@ -45,7 +50,8 @@ namespace BurgerShop.UI
         public void Configure(BurgerInventory carrier, ProductionStation station, CounterStock stock,
             CustomerQueue customers, RestaurantWallet earnings, BurgerServingZone cashier,
             DiningArea hall = null, TrashInventory trashBag = null, WorkerHiringZone staff = null,
-            BoostUpgradeZone playerBoost = null, ShopExpansion shop = null)
+            BoostUpgradeZone playerBoost = null, ShopExpansion shop = null,
+            BurgerServingZone colaCashier = null, ProductionStation cola = null)
         {
             inventory = carrier;
             grill = station;
@@ -58,9 +64,13 @@ namespace BurgerShop.UI
             hiring = staff;
             boost = playerBoost;
             expansion = shop;
-            lastInventory = inventory != null ? inventory.Count : 0;
+            colaServing = colaCashier;
+            colaGrill = cola;
+            lastBurgerHeld = BurgerHeld();
             lastCounter = StockCount();
+            lastColaCounter = ColaStockCount();
             lastSales = wallet != null ? wallet.CompletedSales : 0;
+            lastColaOrders = colaServing != null ? colaServing.CompletedOrders : 0;
             sawTable = expansion != null && expansion.HasExtraTable;
             sawGrill = expansion != null && expansion.HasExtraGrill;
             sawCounter = expansion != null && expansion.HasExtraCounter;
@@ -93,17 +103,24 @@ namespace BurgerShop.UI
 
         void DetectMilestones()
         {
-            int carried = inventory != null ? inventory.Count : 0;
+            int burgers = BurgerHeld();
             int stock = StockCount();
+            int colaStock = ColaStockCount();
             int sales = wallet != null ? wallet.CompletedSales : 0;
-            if (!pickedUp && carried > lastInventory && lastInventory >= 0)
+            int colaOrders = colaServing != null ? colaServing.CompletedOrders : 0;
+            if (!pickedUp && burgers > lastBurgerHeld && lastBurgerHeld >= 0)
                 Complete("Pick up a burger");
             if (!stocked && stock > lastCounter && lastCounter >= 0)
                 Complete("Move to burger counter");
+            if (!stockedCola && colaStock > lastColaCounter && lastColaCounter >= 0)
+                Complete("Move to cola counter");
             int packagesNow = PackageCount();
             if (sales > lastSales)
-                Complete(expansion != null && expansion.HasDriveThru && lastPackage >= 0 && packagesNow < lastPackage
-                    ? "Sell a combo" : "Serve a customer");
+            {
+                bool combo = expansion != null && expansion.HasDriveThru && lastPackage >= 0 && packagesNow < lastPackage;
+                bool colaSale = colaOrders > lastColaOrders;
+                Complete(combo ? "Sell a combo" : colaSale ? "Serve a cola customer" : "Serve a customer");
+            }
             if (expansion != null)
             {
                 if (expansion.HasExtraTable && !sawTable) Complete("Install a table");
@@ -123,12 +140,15 @@ namespace BurgerShop.UI
                 Complete("Box the burger");
             if (!stockedPackage && packages > lastPackage && lastPackage >= 0)
                 Complete("Stock the package counter");
-            if (carried > 0) pickedUp = true;
+            if (burgers > 0) pickedUp = true;
             if (stock > 0) stocked = true;
+            if (colaStock > 0) stockedCola = true;
             if (boxed > 0) boxedBurger = true;
             if (packages > 0) stockedPackage = true;
-            lastInventory = carried;
+            lastBurgerHeld = burgers;
             lastCounter = stock;
+            lastColaCounter = colaStock;
+            lastColaOrders = colaOrders;
             lastBoxed = boxed;
             lastPackage = packages;
             lastSales = sales;
@@ -142,6 +162,14 @@ namespace BurgerShop.UI
             return counter != null ? counter.Count : 0;
         }
 
+        int ColaStockCount() => colaServing != null ? colaServing.TotalStock : 0;
+
+        int BurgerHeld()
+        {
+            if (inventory == null) return 0;
+            return inventory.LooseCount + inventory.BoxedCount;
+        }
+
         void Complete(string title)
         {
             Title = title;
@@ -150,6 +178,7 @@ namespace BurgerShop.UI
             celebrateLeft = 1.35f;
             if (title == "Pick up a burger") pickedUp = true;
             if (title == "Move to burger counter") stocked = true;
+            if (title == "Move to cola counter") stockedCola = true;
             if (title == "Box the burger") boxedBurger = true;
             if (title == "Stock the package counter") stockedPackage = true;
         }
@@ -225,9 +254,21 @@ namespace BurgerShop.UI
                 Show("Sell a combo", 0, 1);
                 return;
             }
+            if (inventory != null && inventory.ColaCount > 0)
+            {
+                Show("Move to cola counter", 0, 1);
+                return;
+            }
             if (carried > 0 && (counter == null || !counter.IsFull))
             {
                 Show("Move to burger counter", 0, 1);
+                return;
+            }
+            bool colaReady = colaServing != null && colaServing.HasReadyCustomer;
+            int colaStock = ColaStockCount();
+            if (colaStock > 0 && colaReady)
+            {
+                Show("Serve a cola customer", 0, 1);
                 return;
             }
             if (stock > 0 && ready)
@@ -235,9 +276,20 @@ namespace BurgerShop.UI
                 Show("Serve a customer", 0, 1);
                 return;
             }
+            if (colaStock > 0)
+            {
+                Show("Wait at the cola counter", 0, 1);
+                return;
+            }
             if (stock > 0)
             {
                 Show("Wait at the counter", 0, 1);
+                return;
+            }
+            if (colaGrill != null && colaGrill.isActiveAndEnabled && colaGrill.Stock > 0
+                && (grill == null || !grill.isActiveAndEnabled || grill.Stock <= 0))
+            {
+                Show("Pick up a cola", 0, 1);
                 return;
             }
             Show("Pick up a burger", 0, 1);

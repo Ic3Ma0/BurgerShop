@@ -13,6 +13,7 @@ namespace BurgerShop.Persistence
         BoostUpgradeZone boost;
         ShopExpansion expansion;
         StaffUpgradeBoard staffUpgrades;
+        GrillUpgradeZone colaUpgrade;
         LocalSaveStore store;
         string lastChecksum;
         float elapsed;
@@ -36,6 +37,11 @@ namespace BurgerShop.Persistence
 
         public void Configure(RestaurantWallet earnings, GrillUpgradeZone grill, WorkerHiringZone staff,
             BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades, string directory = null)
+            => Configure(earnings, grill, staff, playerBoost, shop, upgrades, null, directory);
+
+        public void Configure(RestaurantWallet earnings, GrillUpgradeZone grill, WorkerHiringZone staff,
+            BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades, GrillUpgradeZone cola,
+            string directory = null)
         {
             wallet = earnings;
             upgrade = grill;
@@ -45,6 +51,7 @@ namespace BurgerShop.Persistence
             expansion = shop;
             if (expansion != null) expansion.PurchaseCompleted += RequestSave;
             staffUpgrades = upgrades;
+            colaUpgrade = cola;
             if (directory == null)
             {
                 directory = Application.persistentDataPath;
@@ -69,6 +76,7 @@ namespace BurgerShop.Persistence
                 if (data.version >= 7)
                     expansion?.RestoreInvestments(data.tableInvestment, data.grillInvestment, data.counterInvestment,
                         data.boxingInvestment, data.driveThruInvestment);
+                colaUpgrade?.RestoreLevel(data.ResolvedColaLevel);
                 lastChecksum = data.Checksum();
             }
             Status = LoadResult == SaveLoadResult.Loaded ? "PROGRESS RESTORED"
@@ -118,7 +126,8 @@ namespace BurgerShop.Persistence
                 grillInvestment = expansion?.GrillPad?.Invested ?? 0,
                 counterInvestment = expansion?.CounterPad?.Invested ?? 0,
                 boxingInvestment = expansion?.BoxingPad?.Invested ?? 0,
-                driveThruInvestment = expansion?.DriveThruPad?.Invested ?? 0
+                driveThruInvestment = expansion?.DriveThruPad?.Invested ?? 0,
+                colaLevel = colaUpgrade != null ? colaUpgrade.Level : 1
             };
             string checksum = data.Checksum();
             if (checksum == lastChecksum) return true;
