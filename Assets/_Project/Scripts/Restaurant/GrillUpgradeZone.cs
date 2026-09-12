@@ -108,6 +108,7 @@ namespace BurgerShop.Restaurant
             RefreshVisuals();
             feedback?.PlayUpgrade(Level);
             LevelApplied?.Invoke(Level, true);
+            GetComponentInParent<GrowthUpgrades>()?.RecordGrill(this);
         }
 
         float SecondsFor(int level)

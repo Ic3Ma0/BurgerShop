@@ -8,7 +8,7 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 8;
+        public const int CurrentVersion = 9;
 
         public int version;
         public long coins;
@@ -37,6 +37,11 @@ namespace BurgerShop.Persistence
         public int shopRank = 1;
         public int goalIndex;
         public int goalProgress;
+        public int upgradeStars;
+        public bool westExpanded,bagMachineBuilt,bagTableBuilt,bagCounterBuilt;
+        public int bagMachineInvestment,bagTableInvestment,bagCounterInvestment;
+        public Restaurant.FacilityLevelRecord[] facilityLevels;
+        public int ResolvedUpgradeStars => version >= 9 ? upgradeStars : (int)Math.Min(int.MaxValue, 2L*ResolvedGoalIndex + 2L*(grillLevel-1) + 2L*Math.Max(0,ResolvedExtraGrillLevel-1));
 
         public int ResolvedHiredCount => version >= 2
             ? hiredWorkerCount
@@ -57,6 +62,7 @@ namespace BurgerShop.Persistence
         {
             get
             {
+                if(version >= 9) return shopRank;
                 int implied = Restaurant.ShopRanks.Implied(ResolvedBoughtExtraTable, version >= 7 ? tableInvestment : 0,
                     ResolvedBoughtBoxingStation, version >= 7 ? boxingInvestment : 0,
                     ResolvedBoughtExtraGrill, version >= 7 ? grillInvestment : 0,
@@ -100,9 +106,28 @@ namespace BurgerShop.Persistence
                     || driveThruInvestment < 0 || driveThruInvestment > Restaurant.ShopExpansion.DriveThruCost)
                     return false;
                 if (version < 8) return true;
+                if(version >= 9 && (upgradeStars < 0 || !ValidFacilityLevels() || !ValidBagLine()))return false;
                 return shopRank >= Restaurant.ShopRanks.Min && shopRank <= Restaurant.ShopRanks.Max
                     && goalIndex >= 0 && goalProgress >= 0;
             }
+        }
+
+        bool ValidBagLine()
+        {
+            if(bagMachineInvestment<0||bagMachineInvestment>250||bagTableInvestment<0||bagTableInvestment>200||bagCounterInvestment<0||bagCounterInvestment>300)return false;
+            if(!westExpanded&&(bagMachineBuilt||bagTableBuilt||bagCounterBuilt||bagMachineInvestment>0||bagTableInvestment>0||bagCounterInvestment>0))return false;
+            if(!bagMachineBuilt&&(bagTableBuilt||bagTableInvestment>0))return false;
+            if(!bagTableBuilt&&(bagCounterBuilt||bagCounterInvestment>0))return false;
+            return !westExpanded||shopRank>=6;
+        }
+
+        bool ValidFacilityLevels()
+        {
+            if(facilityLevels==null)return true;
+            var seen=new System.Collections.Generic.HashSet<string>();
+            foreach(var row in facilityLevels)
+                if(row==null||!Restaurant.GrowthUpgrades.ValidId(row.id)||!seen.Add(row.id)||row.level<1||row.level>(row.id.StartsWith("table-")?4:3))return false;
+            return true;
         }
 
         internal string Checksum()
@@ -186,6 +211,13 @@ namespace BurgerShop.Persistence
             if (version >= 8)
                 value += "|" + string.Join("|", shopRank.ToString(CultureInfo.InvariantCulture),
                     goalIndex.ToString(CultureInfo.InvariantCulture), goalProgress.ToString(CultureInfo.InvariantCulture));
+            if(version >= 9)
+            {
+                value += "|"+upgradeStars.ToString(CultureInfo.InvariantCulture);
+                value += "|"+(westExpanded?"1":"0")+"|"+(bagMachineBuilt?"1":"0")+"|"+(bagTableBuilt?"1":"0")+"|"+(bagCounterBuilt?"1":"0");
+                value += "|"+bagMachineInvestment.ToString(CultureInfo.InvariantCulture)+"|"+bagTableInvestment.ToString(CultureInfo.InvariantCulture)+"|"+bagCounterInvestment.ToString(CultureInfo.InvariantCulture);
+                if(facilityLevels!=null)foreach(var row in facilityLevels)value += "|"+row.id+":"+row.level.ToString(CultureInfo.InvariantCulture);
+            }
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }

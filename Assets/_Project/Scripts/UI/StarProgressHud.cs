@@ -8,6 +8,7 @@ namespace BurgerShop.UI
     {
         SessionGoalTracker tracker;
         Text label;
+        Text upgradeLabel;
         RectTransform fillRect;
         readonly NumberPunch punch = new NumberPunch();
         int shown = int.MinValue;
@@ -40,6 +41,7 @@ namespace BurgerShop.UI
             valueRect.offsetMax = new Vector2(-10f, 0f);
 
             var hud = root.gameObject.AddComponent<StarProgressHud>();
+            hud.upgradeLabel=HudChrome.Label(root.transform,"RankAction",new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(0,2),new Vector2(260,26),24,HudChrome.Tomato,TextAnchor.MiddleCenter,true,false);
             hud.Configure(goals, value, fill);
             return hud;
         }
@@ -70,6 +72,7 @@ namespace BurgerShop.UI
                 shown = tracker.Stars;
             }
             label.text = tracker.StarLabel;
+            if(upgradeLabel!=null)upgradeLabel.text=!tracker.IsMaxRank&&tracker.Stars>=tracker.StarCap?"Upgrade":"";
             punch.Advance(deltaTime);
             label.rectTransform.localScale = new Vector3(punch.Scale, punch.Scale, 1f);
             if (fillRect != null)

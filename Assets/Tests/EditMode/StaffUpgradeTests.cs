@@ -173,7 +173,7 @@ namespace BurgerShop.Tests.EditMode
         public void ClickSpeedSpendsFiftyAndMakesTheWorkerFaster()
         {
             RestaurantWorker worker = HireOne();
-            Assert.That(worker.WalkSpeed, Is.EqualTo(StaffBoost.BaseWalkSpeed));
+            Assert.That(worker.WalkSpeed, Is.EqualTo(StaffBoost.BaseWalkSpeed*.85f));
             Assert.That(worker.Inventory.Capacity, Is.EqualTo(StaffBoost.BaseCarry));
             grill.Advance(12f);
             worker.transform.position = new Vector3(0f, worker.transform.position.y, 0f);
@@ -188,7 +188,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(board.SpeedTier, Is.EqualTo(1));
             Assert.That(worker.WalkSpeed, Is.EqualTo(StaffBoost.WalkSpeed(1)).Within(0.001f));
-            Assert.That(worker.WalkSpeed, Is.GreaterThan(StaffBoost.BaseWalkSpeed));
+            Assert.That(worker.WalkSpeed, Is.GreaterThan(StaffBoost.BaseWalkSpeed*.85f));
             Assert.That(hud.IsVisible, Is.True);
             Assert.That(hud.Popup.FirstLabel.text, Does.Contain("150"));
 
@@ -290,7 +290,7 @@ namespace BurgerShop.Tests.EditMode
                 persistence.Configure(wallet, grillUpgrade, hiring, null, null, board, directory);
                 Assert.That(board.SpeedTier, Is.Zero);
                 Assert.That(board.CarryTier, Is.Zero);
-                Assert.That(hiring.Worker.WalkSpeed, Is.EqualTo(StaffBoost.BaseWalkSpeed));
+                Assert.That(hiring.Worker.WalkSpeed, Is.EqualTo(StaffBoost.BaseWalkSpeed*.85f));
                 Assert.That(hiring.Worker.Inventory.Capacity, Is.EqualTo(2));
                 Assert.That(wallet.Coins, Is.EqualTo(40));
             }

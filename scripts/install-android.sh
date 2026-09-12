@@ -2,7 +2,7 @@
 set -euo pipefail
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 adb_tool="${ADB:-/Applications/Unity/Hub/Editor/6000.3.23f1/PlaybackEngines/AndroidPlayer/SDK/platform-tools/adb}"
-apk_path="${1:-$project_dir/Builds/Android/BurgerShop-0.2.1-arm64.apk}"
+apk_path="${1:-$project_dir/Builds/Android/BurgerShop-0.3.0-arm64.apk}"
 package_id='com.ic3ma0.burgershop'
 [[ -x "$adb_tool" ]] || { echo 'Set ADB to the Android platform-tools adb executable.' >&2; exit 1; }
 [[ -f "$apk_path" ]] || { echo "APK not found: $apk_path" >&2; exit 1; }

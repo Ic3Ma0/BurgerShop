@@ -130,7 +130,7 @@ namespace BurgerShop.Restaurant
         }
 
         public static bool ContainsPlayable(Vector3 point) =>
-            ContainsHall(point) || ContainsHrOffice(point) || ContainsBoostRoom(point);
+            ContainsHall(point) || ContainsHrOffice(point) || ContainsBoostRoom(point) || (BagLine.Current!=null && BagLine.Current.Expanded && point.x>=-26.5f && point.x<=-14.5f && Mathf.Abs(point.z)<=8.5f);
 
         public static bool ContainsHall(Vector3 point)
         {

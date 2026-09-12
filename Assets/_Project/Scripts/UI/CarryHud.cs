@@ -35,11 +35,13 @@ namespace BurgerShop.UI
             // Empty on initialization should not flash an unsolicited badge.
             if(dt==0&&!show)group.alpha=0;
             string mix=inventory.BoxedCount>0?$"  BOX {inventory.BoxedCount}":"";
+            mix += inventory.EmptyBagCount>0?$"  BAGS {inventory.EmptyBagCount}":"";
+            mix += inventory.BaggedCount>0?$"  PACKED {inventory.BaggedCount}":"";
             string waste=trash!=null&&trash.Count>0?$"\nTRASH {trash.Count}":"";
             foodIcon.sprite=FoodIcons.Get(inventory.BoxedCount==inventory.Count&&inventory.Count>0?FoodIcon.Box:FoodIcon.Burger);
             trashIcon.enabled=trash!=null&&trash.Count>0;
             foodIcon.rectTransform.anchoredPosition=new Vector2(-164,trashIcon.enabled?20:0);
-            label.text=$"{inventory.Count}/{inventory.Capacity}{mix}"+(inventory.IsFull?"  FULL":"")+waste;
+            label.text=$"{inventory.Count}/{inventory.Capacity}{mix}"+(inventory.Count>inventory.Capacity?"\nUnload to collect":inventory.IsFull?"  FULL":"")+waste;
             if(Camera.main!=null)
             {
                 Vector3 p=Camera.main.WorldToScreenPoint(inventory.transform.position+Vector3.up*.2f);

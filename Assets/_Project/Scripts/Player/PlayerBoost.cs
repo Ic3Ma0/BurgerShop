@@ -15,7 +15,7 @@ namespace BurgerShop.Player
             BaseCarry + CarryPerLevel * Mathf.Clamp(level, 0, MaxLevel);
 
         public static float MoveSpeed(int level) =>
-            BaseMoveSpeed * (1f + SpeedBonusPerLevel * Mathf.Clamp(level, 0, MaxLevel));
+            0.85f * BaseMoveSpeed * (1f + SpeedBonusPerLevel * Mathf.Clamp(level, 0, MaxLevel));
 
         public static int CostForNextLevel(int currentLevel) =>
             currentLevel < 0 || currentLevel >= MaxLevel ? 0 : Costs[currentLevel];

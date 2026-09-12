@@ -203,7 +203,7 @@ namespace BurgerShop.Tests.EditMode
             worker.Advance(100f);
             worker.Advance(0.1f);
             Assert.That(player.TryCollectFrom(grill), Is.True);
-            worker.Advance(0.25f);
+            worker.Advance(0.35f);
             Assert.That(player.TryCollectFrom(grill), Is.True);
             Assert.That(worker.Inventory.Count, Is.EqualTo(2));
             Assert.That(player.Count, Is.EqualTo(2));

@@ -77,8 +77,7 @@ namespace BurgerShop.Restaurant
 
         public static int StarCap(int rank)
         {
-            ShopGoal[] goals = Goals(rank);
-            return goals.Length == 0 ? 1 : goals.Length;
+            return rank >= Max ? 0 : 2 + 2 * Math.Max(1, rank);
         }
 
         public static bool PadUnlocked(int rank, string title)

@@ -6,10 +6,10 @@ namespace BurgerShop.Restaurant
     public enum WorkerState
     {
         ToGrill, Collecting, ToCounter, Serving, ToTrash, CollectingTrash, ToBin, Dumping,
-        ToBoxing, Boxing, ToPackage, Packing, ToWindow, SellingWindow
+        ToBoxing, Boxing, ToPackage, Packing, ToWindow, SellingWindow, ToBagMachine, BagMachine, ToBagTable, BagTable, ToBagCounter, BagCounter
     }
-    public enum SupplyLine { None, Dining, Boxing }
-    public enum WorkerJob { Idle, Collect, Stock, Serve, Clean, Box, Pack, DriveSell }
+    public enum SupplyLine { None, Dining, Boxing, Bag }
+    public enum WorkerJob { Idle, Collect, Stock, Serve, Clean, Box, Pack, DriveSell, Bag, BagSell }
 
     [ExecuteAlways]
     public sealed class RestaurantWorker : MonoBehaviour
@@ -38,9 +38,12 @@ namespace BurgerShop.Restaurant
         float pickupCooldown;
         Material[] ownedMaterials;
         TextMesh label;
-        float walkSpeed = StaffBoost.BaseWalkSpeed;
+        float walkSpeed = StaffBoost.WalkSpeed(0);
         BurgerShop.Customer.CustomerOrder serviceOrder;
         bool preferWindow;
+        bool preferBag=true;
+        BagLine Bag=>crew!=null?crew.BagLine:null;
+        internal void RecordBagOrder(){CompletedDeliveries++;preferBag=false;}
         public SupplyLine SupplyTarget { get; private set; }
         public int ReservedRaw { get; private set; }
         public int BoxPickupGoal { get; private set; }
@@ -78,7 +81,7 @@ namespace BurgerShop.Restaurant
         }
         internal void RecordCompletedOrder(bool window = false)
         {
-            CompletedDeliveries++;
+            CompletedDeliveries++;preferBag=true;
             preferWindow = !window;
         }
         internal void RestoreDeliveries(int count) => CompletedDeliveries = count;
@@ -145,7 +148,7 @@ namespace BurgerShop.Restaurant
             if (State == WorkerState.ToGrill || State == WorkerState.ToCounter
                 || State == WorkerState.ToTrash || State == WorkerState.ToBin
                 || State == WorkerState.ToBoxing || State == WorkerState.ToPackage
-                || State == WorkerState.ToWindow)
+                || State == WorkerState.ToWindow || State == WorkerState.ToBagMachine || State == WorkerState.ToBagTable || State == WorkerState.ToBagCounter)
             {
                 if (MoveAlongRoute(deltaTime))
                 {
@@ -155,12 +158,16 @@ namespace BurgerShop.Restaurant
                         : State == WorkerState.ToBin ? WorkerState.Dumping
                         : State == WorkerState.ToBoxing ? WorkerState.Boxing
                         : State == WorkerState.ToPackage ? WorkerState.Packing
+                        : State == WorkerState.ToBagMachine ? WorkerState.BagMachine
+                        : State == WorkerState.ToBagTable ? WorkerState.BagTable
+                        : State == WorkerState.ToBagCounter ? WorkerState.BagCounter
                         : WorkerState.SellingWindow;
                     pickupCooldown = 0f;
                 }
                 KeepInPlayable();
                 return;
             }
+            if(State==WorkerState.BagMachine||State==WorkerState.BagTable||State==WorkerState.BagCounter){TickBag();KeepInPlayable();return;}
             if (State == WorkerState.Collecting)
             {
                 TickCollecting(deltaTime);
@@ -274,12 +281,14 @@ namespace BurgerShop.Restaurant
             offset.y = 0f;
             if (offset.sqrMagnitude > 1f) { Begin(WorkerJob.Collect, WorkerState.ToGrill); return; }
             if (!Inventory.IsFull && pickupCooldown <= 0f && Inventory.TryCollectFrom(grill))
-                pickupCooldown = 0.25f;
+                pickupCooldown = 0.35f;
             int target = crew != null ? Mathf.Max(1, ReservedRaw) : Inventory.Capacity;
             if (Inventory.IsFull || Inventory.LooseCount >= target || (Inventory.Count > 0 && grill.Stock == 0))
             {
                 if (crew != null) ReservedRaw = Mathf.Min(ReservedRaw, Inventory.LooseCount);
-                if (BoxingReady && SupplyTarget == SupplyLine.Boxing && CarryingLoose)
+                if (Bag!=null && Bag.CounterBuilt && SupplyTarget==SupplyLine.Bag && CarryingLoose)
+                    Begin(WorkerJob.Bag,WorkerState.ToBagTable);
+                else if (BoxingReady && SupplyTarget == SupplyLine.Boxing && CarryingLoose)
                 {
                     BoxPickupGoal = Inventory.LooseCount;
                     Begin(WorkerJob.Box, WorkerState.ToBoxing);
@@ -336,7 +345,7 @@ namespace BurgerShop.Restaurant
             if (cleaningTable.IsDirty && pickupCooldown <= 0f
                 && cleaningTable.TryBeginPickup(Trash, out TrashMotion started))
             {
-                pickupCooldown = 0.25f;
+                pickupCooldown = 0.35f;
                 started.Advance(deltaTime);
             }
             if (!cleaningTable.IsDirty && !cleaningTable.HasPendingPickups)
@@ -361,7 +370,7 @@ namespace BurgerShop.Restaurant
             pickupCooldown = Mathf.Max(0f, pickupCooldown - deltaTime);
             if (pickupCooldown <= 0f && Trash.Count > 0 && bin.TryDumpFrom(Trash, out TrashMotion started))
             {
-                pickupCooldown = 0.25f;
+                pickupCooldown = 0.35f;
                 CompletedClears++;
                 started.Advance(deltaTime);
             }
@@ -369,8 +378,38 @@ namespace BurgerShop.Restaurant
                 ChooseJob();
         }
 
+        void TickBag()
+        {
+            if(Bag==null||!Bag.CounterBuilt){ClearSupply();ChooseJob();return;}
+            if(State==WorkerState.BagCounter)
+            {
+                if(Inventory.BaggedCount>0)return;
+                if(Job==WorkerJob.BagSell&&Bag.ReadyToSell){Bag.TryServe(Inventory);return;}
+                // An in-flight handoff is owned by the line; its completion records the worker.
+                if(Job==WorkerJob.BagSell&&Bag.Queue.ReadyCustomer!=null&&Bag.StockCount>0)return;
+                ClearSupply();ChooseJob();return;
+            }
+            if(State==WorkerState.BagMachine)
+            {
+                int need=Mathf.Max(0,Bag.InputBurgers-Bag.InputBags);
+                if(Inventory.IsFull||Inventory.EmptyBagCount>=Mathf.Min(Inventory.Capacity,need)||(Inventory.EmptyBagCount>0&&Bag.EmptyStock==0))Begin(WorkerJob.Bag,WorkerState.ToBagTable);
+                else if(need==0){ClearSupply();ChooseJob();}
+                return;
+            }
+            if(Inventory.LooseCount>0||Inventory.EmptyBagCount>0)return;
+            if(Inventory.BaggedCount>0){Begin(WorkerJob.Bag,WorkerState.ToBagCounter);return;}
+            if(Bag.InputBurgers>Bag.InputBags&&Bag.InputBags==0){Begin(WorkerJob.Bag,WorkerState.ToBagMachine);return;}
+            if(!Bag.HasWork){ClearSupply();ChooseJob();}
+        }
+
         void ChooseJob()
         {
+            if(Bag!=null&&Bag.CounterBuilt)
+            {
+                if(Inventory!=null&&Inventory.BaggedCount>0){Begin(WorkerJob.Bag,WorkerState.ToBagCounter);return;}
+                if(Inventory!=null&&Inventory.EmptyBagCount>0){Begin(WorkerJob.Bag,WorkerState.ToBagTable);return;}
+                if(CarryingLoose&&SupplyTarget==SupplyLine.Bag){Begin(WorkerJob.Bag,WorkerState.ToBagTable);return;}
+            }
             if (CarryingBoxed && BoxingReady) { Begin(WorkerJob.Pack, WorkerState.ToPackage); return; }
             if (CarryingLoose)
             {
@@ -392,6 +431,8 @@ namespace BurgerShop.Restaurant
             }
             bool dine = serving != null && serving.ReadyToSell && (crew == null || crew.MayGoServe(this));
             bool window = DriveThruReady;
+            bool bagReady=Bag!=null&&Bag.ReadyToSell&&crew.BagAvailableFor(this);
+            if(bagReady&&(preferBag||(!dine&&!window))){cleaningTable=null;Begin(WorkerJob.BagSell,WorkerState.ToBagCounter);return;}
             if (window && (!dine || preferWindow))
             { cleaningTable = null; Begin(WorkerJob.DriveSell, WorkerState.ToWindow); return; }
             if (dine)
@@ -403,6 +444,7 @@ namespace BurgerShop.Restaurant
             cleaningTable = null;
             if (crew != null && crew.TryAssignBoxTransport(this))
             { Begin(WorkerJob.Box, WorkerState.ToBoxing); return; }
+            if(Bag!=null&&Bag.HasWork&&crew.BagAvailableFor(this)){Begin(WorkerJob.Bag,WorkerState.ToBagTable);return;}
             bool grillHas = crew != null ? crew.AnyGrillHasStock() : grill != null && grill.isActiveAndEnabled && grill.Stock > 0;
             if (grillHas && Inventory != null && !Inventory.IsFull && (crew == null || crew.TryAssignSupply(this)))
             { Begin(WorkerJob.Collect, WorkerState.ToGrill); return; }
@@ -424,6 +466,9 @@ namespace BurgerShop.Restaurant
                     : travel == WorkerState.ToBoxing ? WorkerState.Boxing
                     : travel == WorkerState.ToPackage ? WorkerState.Packing
                     : travel == WorkerState.ToWindow ? WorkerState.SellingWindow
+                    : travel == WorkerState.ToBagMachine ? WorkerState.BagMachine
+                    : travel == WorkerState.ToBagTable ? WorkerState.BagTable
+                    : travel == WorkerState.ToBagCounter ? WorkerState.BagCounter
                     : WorkerState.Collecting;
                 pickupCooldown = 0f;
                 return;
@@ -435,7 +480,17 @@ namespace BurgerShop.Restaurant
         {
             State = state;
             Vector3 destination = DestinationFor(state);
-            if (state == WorkerState.ToBoxing || state == WorkerState.ToPackage || state == WorkerState.ToWindow)
+            if(destination.x < -15 || transform.position.x < -15)
+            {
+                var points=new System.Collections.Generic.List<Vector3>();
+                bool fromWest=transform.position.x < -15, toWest=destination.x < -15;
+                if(fromWest){points.Add(AtHeight(new Vector3(-20,0,transform.position.z)));points.Add(AtHeight(new Vector3(-20,0,0)));}
+                if(fromWest&&!toWest){points.Add(AtHeight(new Vector3(-16,0,0)));points.Add(AtHeight(new Vector3(-14,0,0)));points.Add(AtHeight(new Vector3(-14,0,-2)));points.Add(AtHeight(aisleCorner));}
+                if(!fromWest&&toWest){points.Add(AtHeight(aisleCorner));points.Add(AtHeight(new Vector3(-14,0,-2)));points.Add(AtHeight(new Vector3(-14,0,0)));points.Add(AtHeight(new Vector3(-16,0,0)));points.Add(AtHeight(new Vector3(-20,0,0)));}
+                if(toWest)points.Add(AtHeight(new Vector3(-20,0,destination.z)));
+                points.Add(AtHeight(destination));route=points.ToArray();
+            }
+            else if (state == WorkerState.ToBoxing || state == WorkerState.ToPackage || state == WorkerState.ToWindow)
             {
                 // Use the west side of BOX/PACK for local trips instead of returning to the hall every time.
                 float southZ = state == WorkerState.ToWindow ? -13.3f : destination.z;
@@ -456,6 +511,9 @@ namespace BurgerShop.Restaurant
         {
             if (Job == WorkerJob.Idle)
                 return IdleStand();
+            if(state==WorkerState.ToBagMachine)return BagLine.MachinePoint;
+            if(state==WorkerState.ToBagTable)return BagLine.WorkPoint;
+            if(state==WorkerState.ToBagCounter)return BagLine.CounterPoint;
             if (state == WorkerState.ToGrill)
                 return CollectStand();
             if (state == WorkerState.ToCounter)

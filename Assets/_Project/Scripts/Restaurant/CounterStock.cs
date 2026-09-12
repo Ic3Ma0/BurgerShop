@@ -7,6 +7,8 @@ namespace BurgerShop.Restaurant
 {
     public sealed class CounterStock : MonoBehaviour
     {
+        public Vector3 CounterPosition => stockAnchor!=null?stockAnchor.position-new Vector3(.55f,.18f,0):transform.position;
+        public int ServiceLevel { get; set; } = 1;
         public const int MaxVisibleBurgers = 8;
         Transform stockAnchor;
         TextMesh countLabel;

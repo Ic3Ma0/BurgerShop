@@ -54,9 +54,9 @@ namespace BurgerShop.UI
                 return;
             }
             popup.SetVisible(true);
-            popup.PaintStat(true, "Speed", board.SpeedTier,
-                Mathf.RoundToInt(Restaurant.StaffBoost.WalkSpeed(board.SpeedTier) / Restaurant.StaffBoost.BaseWalkSpeed * 100) + "%",
-                Mathf.RoundToInt(Restaurant.StaffBoost.WalkSpeed(board.SpeedTier + 1) / Restaurant.StaffBoost.BaseWalkSpeed * 100) + "%",
+            popup.PaintStat(true, "Speed (u/s)", board.SpeedTier,
+                Restaurant.StaffBoost.WalkSpeed(board.SpeedTier).ToString("0.00"),
+                Restaurant.StaffBoost.WalkSpeed(board.SpeedTier + 1).ToString("0.00"),
                 board.SpeedIsMax, board.SpeedCost, board.Coins);
             popup.PaintStat(false, "Carry", board.CarryTier, Restaurant.StaffBoost.CarryCapacity(board.CarryTier).ToString(),
                 Restaurant.StaffBoost.CarryCapacity(board.CarryTier + 1).ToString(), board.CarryIsMax, board.CarryCost, board.Coins);

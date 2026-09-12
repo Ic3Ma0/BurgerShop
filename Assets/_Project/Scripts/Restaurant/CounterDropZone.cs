@@ -8,7 +8,7 @@ namespace BurgerShop.Restaurant
         CounterStock stock;
         Transform dropPoint;
         [SerializeField, Min(0.1f)] float radius = 1.05f;
-        [SerializeField, Min(0.05f)] float dropInterval = 0.25f;
+        [SerializeField, Min(0.05f)] float dropInterval = 0.35f;
         bool boxed;
         float cooldown;
 
@@ -22,7 +22,7 @@ namespace BurgerShop.Restaurant
             stock = counter;
             dropPoint = point;
             radius = Mathf.Max(0.1f, dropRadius);
-            dropInterval = Mathf.Max(0.05f, interval);
+            dropInterval = Mathf.Max(0.35f, interval);
             boxed = acceptBoxes;
             cooldown = 0f;
         }

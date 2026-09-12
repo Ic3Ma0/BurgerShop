@@ -241,7 +241,7 @@ namespace BurgerShop.Tests.EditMode
             for (int i = 0; i < 180; i++) customer.AdvanceDeparture(1f / 60f);
             Assert.That(customer.IsEating, Is.True);
             Assert.That(Vector3.Distance(customer.transform.position, table.transform.position), Is.LessThan(1.3f));
-            customer.AdvanceDeparture(3.1f);
+            customer.AdvanceDeparture(5.1f);
             Assert.That(customer.IsEating, Is.False);
             customer.AdvanceDeparture(100f);
             Assert.That(customer == null, Is.True);

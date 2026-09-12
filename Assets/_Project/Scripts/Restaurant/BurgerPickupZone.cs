@@ -9,7 +9,7 @@ namespace BurgerShop.Restaurant
         [SerializeField] BurgerInventory inventory;
         [SerializeField] Transform pickupPoint;
         [SerializeField, Min(0.1f)] float radius = 1f;
-        [SerializeField, Min(0.05f)] float pickupInterval = 0.25f;
+        [SerializeField, Min(0.05f)] float pickupInterval = 0.35f;
         float cooldown;
 
         public bool CanCollect => IsInRange && station != null && station.Stock > 0 && inventory != null && !inventory.IsFull;
@@ -34,7 +34,7 @@ namespace BurgerShop.Restaurant
             inventory = carrier;
             pickupPoint = point;
             radius = Mathf.Max(0.1f, pickupRadius);
-            pickupInterval = Mathf.Max(0.05f, interval);
+            pickupInterval = Mathf.Max(0.35f, interval);
             cooldown = 0f;
         }
 
@@ -45,14 +45,13 @@ namespace BurgerShop.Restaurant
             if (deltaTime <= 0f)
                 return;
 
+            cooldown = Mathf.Max(0f, cooldown - deltaTime);
             if (station == null || !station.isActiveAndEnabled || inventory == null
                 || !inventory.isActiveAndEnabled || !IsInRange)
             {
-                cooldown = 0f;
                 return;
             }
 
-            cooldown = Mathf.Max(0f, cooldown - deltaTime);
             // Transfer at most one per frame: a hitch must not make the stack jump to full.
             if (cooldown <= 0f && inventory.TryCollectFrom(station))
                 cooldown = pickupInterval;

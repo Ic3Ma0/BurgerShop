@@ -102,9 +102,11 @@ namespace BurgerShop.Tests.EditMode
             grill.Advance(12f);
             Assert.That(inventory.TryCollectFrom(grill), Is.True);
             tracker.Advance(0.01f);
+            Assert.That(tracker.Stars, Is.Zero);
+            tracker.AddUpgradeStars();
             stars.Advance(0.08f);
             capsule.Advance(0.08f);
-            Assert.That(tracker.Stars, Is.EqualTo(1));
+            Assert.That(tracker.Stars, Is.EqualTo(2));
             Assert.That(stars.IsPunching, Is.True);
             Assert.That(stars.PunchScale, Is.GreaterThan(1.05f));
             Assert.That(capsule.IsProgressPunching, Is.True);

@@ -66,7 +66,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(tracker.Required, Is.EqualTo(1));
             Assert.That(tracker.IsCelebrating, Is.False);
             Assert.That(tracker.Stars, Is.EqualTo(0));
-            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.1  0/3"));
+            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.1  0/4"));
             tracker.Advance(2f);
             Assert.That(tracker.IsCelebrating, Is.False);
             Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
@@ -74,7 +74,7 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void PickupThenThreeSalesFillRankOneStars()
+        public void PickupThenThreeSalesAdvanceGuidanceWithoutStars()
         {
             tracker.Advance(2f);
             grill.Advance(12f);
@@ -83,7 +83,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
             Assert.That(tracker.Progress, Is.EqualTo(1));
             Assert.That(tracker.IsCelebrating, Is.True);
-            Assert.That(tracker.Stars, Is.EqualTo(1));
+            Assert.That(tracker.Stars, Is.EqualTo(0));
             tracker.Advance(2f);
             Assert.That(tracker.Title, Is.EqualTo("Serve customers"));
             Assert.That(tracker.Progress, Is.Zero);
@@ -94,7 +94,7 @@ namespace BurgerShop.Tests.EditMode
                 tracker.Advance(0.01f);
             }
             Assert.That(tracker.IsCelebrating, Is.True);
-            Assert.That(tracker.Stars, Is.EqualTo(2));
+            Assert.That(tracker.Stars, Is.EqualTo(0));
             tracker.Advance(2f);
             Assert.That(tracker.Title, Is.EqualTo("Install a table"));
             Assert.That(wallet.CompletedSales, Is.EqualTo(3));

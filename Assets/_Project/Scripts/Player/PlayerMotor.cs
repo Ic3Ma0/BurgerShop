@@ -20,7 +20,8 @@ namespace BurgerShop.Player
         int boostLevel;
 
         public int BoostLevel => boostLevel;
-        public float MoveSpeed => PlayerBoost.MoveSpeed(boostLevel);
+        public float TemporarySpeedMultiplier { get; set; } = 1f;
+        public float MoveSpeed => PlayerBoost.MoveSpeed(boostLevel) * TemporarySpeedMultiplier;
 
         public void ApplyBoostLevel(int level)
         {

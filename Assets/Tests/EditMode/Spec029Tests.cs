@@ -69,7 +69,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void NewShopShowsRankOneAndOnlyTheTablePad()
         {
-            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.1  0/3"));
+            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.1  0/4"));
             Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
             Assert.That(expansion.TablePad.RankVisible, Is.True);
             Assert.That(expansion.BoxingPad.RankVisible, Is.False);
@@ -90,7 +90,7 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void InstallingTheTableRanksUpAndUnlocksBoxing()
+        public void InstallingTheTableNoLongerAutoRanksUp()
         {
             wallet.RestoreProgress(150, 0);
             tracker.Restore(1, 2, 0);
@@ -99,15 +99,12 @@ namespace BurgerShop.Tests.EditMode
             tracker.Advance(0.01f);
             Assert.That(tracker.IsCelebrating, Is.True);
             tracker.Advance(0.7f);
-            Assert.That(tracker.IsRankingUp, Is.True);
-            Assert.That(tracker.Rank, Is.EqualTo(2));
-            Assert.That(expansion.BoxingPad.RankVisible, Is.True);
-            Assert.That(expansion.GrillPad.RankVisible, Is.False);
-            Assert.That(wallet.Coins, Is.Zero);
-            tracker.Advance(1f);
             Assert.That(tracker.IsRankingUp, Is.False);
-            Assert.That(tracker.Title, Is.EqualTo("Serve customers"));
-            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.2  0/2"));
+            Assert.That(tracker.Rank, Is.EqualTo(1));
+            Assert.That(tracker.Stars, Is.Zero);
+            Assert.That(expansion.BoxingPad.RankVisible, Is.False);
+            Assert.That(wallet.Coins, Is.Zero);
+
         }
 
         [Test]
@@ -134,7 +131,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(data.ResolvedShopRank, Is.EqualTo(ShopRanks.Max));
             Assert.That(data.ResolvedGoalIndex, Is.Zero);
             tracker.Restore(data.ResolvedShopRank, data.ResolvedGoalIndex, data.ResolvedGoalProgress);
-            Assert.That(tracker.StarLabel, Is.EqualTo("MAX"));
+            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.6 MAX"));
             Assert.That(tracker.IsCelebrating, Is.False);
             Assert.That(wallet.Coins, Is.Zero);
         }

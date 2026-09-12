@@ -158,10 +158,10 @@ namespace BurgerShop.Tests.EditMode
         public void ClickSpeedAndCarrySpendIndependentlyAndLeaveCloses()
         {
             int[] prices = { 50, 150, 300, 450, 600 };
-            float[] speeds = { 6.325f, 7.15f, 7.975f, 8.8f, 9.625f };
+            float[] speeds = { 5.37625f, 6.0775f, 6.77875f, 7.48f, 8.18125f };
             wallet.RestoreProgress(3100, 0);
             Assert.That(player.Capacity, Is.EqualTo(4));
-            Assert.That(motor.MoveSpeed, Is.EqualTo(5.5f).Within(0.001f));
+            Assert.That(motor.MoveSpeed, Is.EqualTo(4.675f).Within(0.001f));
             Assert.That(staffBag.Capacity, Is.EqualTo(2));
 
             Enter();
@@ -223,7 +223,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(boost.SpeedTier, Is.Zero);
             Assert.That(boost.CarryTier, Is.Zero);
             Assert.That(player.Capacity, Is.EqualTo(4));
-            Assert.That(motor.MoveSpeed, Is.EqualTo(5.5f).Within(0.001f));
+            Assert.That(motor.MoveSpeed, Is.EqualTo(4.675f).Within(0.001f));
             hud.RefreshNow();
             Assert.That(hud.IsVisible, Is.False, "X keeps the sheet closed while still in the room.");
             Leave();
@@ -277,7 +277,7 @@ namespace BurgerShop.Tests.EditMode
             boost.RestoreTiers(v1.ResolvedPlayerSpeedTier, v1.ResolvedPlayerCarryTier);
             wallet.RestoreProgress(v1.coins, v1.completedSales);
             Assert.That(player.Capacity, Is.EqualTo(4));
-            Assert.That(motor.MoveSpeed, Is.EqualTo(5.5f).Within(0.001f));
+            Assert.That(motor.MoveSpeed, Is.EqualTo(4.675f).Within(0.001f));
             Assert.That(wallet.Coins, Is.EqualTo(88));
 
             var v3 = new RestaurantSaveData
@@ -292,7 +292,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(boost.SpeedTier, Is.EqualTo(3));
             Assert.That(boost.CarryTier, Is.EqualTo(3));
             Assert.That(player.Capacity, Is.EqualTo(7));
-            Assert.That(motor.MoveSpeed, Is.EqualTo(7.975f).Within(0.001f));
+            Assert.That(motor.MoveSpeed, Is.EqualTo(6.77875f).Within(0.001f));
             Assert.That(staffBag.Capacity, Is.EqualTo(2));
         }
 
@@ -302,7 +302,7 @@ namespace BurgerShop.Tests.EditMode
             wallet.RestoreProgress(40, 2);
             boost.RestoreTiers(4, 2);
             Assert.That(player.Capacity, Is.EqualTo(6));
-            Assert.That(motor.MoveSpeed, Is.EqualTo(8.8f).Within(0.001f));
+            Assert.That(motor.MoveSpeed, Is.EqualTo(7.48f).Within(0.001f));
             Assert.That(wallet.Coins, Is.EqualTo(40));
             Assert.That(staffBag.Capacity, Is.EqualTo(2));
             Assert.Throws<System.ArgumentOutOfRangeException>(() => boost.RestoreTiers(6, 0));

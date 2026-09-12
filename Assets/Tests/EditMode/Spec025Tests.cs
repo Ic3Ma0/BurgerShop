@@ -121,7 +121,7 @@ namespace BurgerShop.Tests.EditMode
         {
             if (crew.HiredCount == 0) crew.RestoreWorkers(1, 0, 0);
             var worker = crew.Worker; BeginBoxWork(worker, box.CirclePosition, 0);
-            for (int i = 0; i < count; i++) { Give(worker.Inventory, 1); Step(0.7f); }
+            for (int i = 0; i < count; i++) { Give(worker.Inventory, 1); Step(0.8f); }
             Assert.That(box.OutputCount, Is.EqualTo(count));
             return worker;
         }
@@ -132,7 +132,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(box.TryBoxFrom(player), Is.True);
             Assert.That(player.LooseCount, Is.EqualTo(3)); Assert.That(player.BoxedCount, Is.Zero);
             Assert.That(box.InputCount, Is.EqualTo(1)); Assert.That(box.TotalProcessed, Is.Zero);
-            Step(0.3f);
+            Step(0.4f);
             Assert.That(box.ProcessingCount, Is.EqualTo(1)); Assert.That(player.BoxedCount, Is.Zero);
             Step(4f);
             Assert.That(player.BoxedCount, Is.EqualTo(4)); Assert.That(player.LooseCount, Is.Zero);
@@ -143,7 +143,7 @@ namespace BurgerShop.Tests.EditMode
         [Test] public void AC02LeavingPausesOnlyProcessingAndOutputCapacityReservesTheInFlightSlot()
         {
             Give(player, 4); player.transform.position = box.CirclePosition;
-            box.TryBoxFrom(player); Step(0.3f);
+            box.TryBoxFrom(player); Step(0.4f);
             float progress = box.ProcessingProgress; int total = box.TableCount;
             player.transform.position = new Vector3(10, 1, -4); Step(3f);
             Assert.That(box.ProcessingProgress, Is.EqualTo(progress));
@@ -287,7 +287,7 @@ namespace BurgerShop.Tests.EditMode
         [Test] public void RawLeftOnTheTableGetsAnOperatorWithoutCollectingMoreRawFirst()
         {
             OpenLane(); Give(player, 1); player.transform.position = box.CirclePosition;
-            box.TryBoxFrom(player); player.transform.position = new Vector3(10, 1, -4); Step(0.3f);
+            box.TryBoxFrom(player); player.transform.position = new Vector3(10, 1, -4); Step(0.4f);
             Assert.That(box.InputCount, Is.EqualTo(1)); Assert.That(box.ProcessingCount, Is.Zero);
             crew.RestoreWorkers(1, 0, 0);
             Assert.That(crew.Worker.Job, Is.EqualTo(WorkerJob.Box));
@@ -300,7 +300,7 @@ namespace BurgerShop.Tests.EditMode
         [Test] public void AC07AllDirtyTablesAndFullRawInputOutputCannotPermanentlyTrapTheCrew()
         {
             OpenLane(); var maker = FillOutput(8);
-            for (int i = 0; i < 4; i++) { Give(maker.Inventory, 2); Step(0.7f); }
+            for (int i = 0; i < 4; i++) { Give(maker.Inventory, 2); Step(0.8f); }
             Assert.That(box.InputCount, Is.EqualTo(8)); Assert.That(box.OutputCount, Is.EqualTo(8));
             crew.RestoreWorkers(3, 0, 0);
             foreach (var table in dining.Tables) table.LeaveMealTrash(0);

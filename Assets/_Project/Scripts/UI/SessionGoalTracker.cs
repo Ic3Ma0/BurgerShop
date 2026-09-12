@@ -44,7 +44,7 @@ namespace BurgerShop.UI
         public int Stars { get; private set; }
         public int StarCap => ShopRanks.StarCap(Rank);
         public bool IsMaxRank => ShopRanks.IsMax(Rank);
-        public string StarLabel => IsMaxRank ? "MAX" : $"Lv.{Rank}  {Stars}/{StarCap}";
+        public string StarLabel => IsMaxRank ? "Lv.6 MAX" : $"Lv.{Rank}  {Stars}/{StarCap}";
 
         public void Configure(BurgerInventory carrier, ProductionStation station, CounterStock stock,
             CustomerQueue customers, RestaurantWallet earnings, BurgerServingZone cashier,
@@ -72,13 +72,13 @@ namespace BurgerShop.UI
             PaintCurrent();
         }
 
-        public void Restore(int nextRank, int nextGoalIndex, int nextGoalProgress)
+        public void Restore(int nextRank, int nextGoalIndex, int nextGoalProgress, int savedStars = 0)
         {
             rank = Mathf.Clamp(nextRank, ShopRanks.Min, ShopRanks.Max);
             ReloadGoals();
-            goalIndex = rankGoals.Length == 0 ? 0 : Mathf.Clamp(nextGoalIndex, 0, Mathf.Max(0, rankGoals.Length - 1));
+            goalIndex = rankGoals.Length == 0 ? 0 : Mathf.Clamp(nextGoalIndex, 0, rankGoals.Length);
             goalProgress = Mathf.Max(0, nextGoalProgress);
-            Stars = IsMaxRank ? StarCap : goalIndex;
+            Stars = Mathf.Max(0, savedStars);
             SnapshotCounts();
             celebrateLeft = 0f;
             IsCelebrating = false;
@@ -163,7 +163,6 @@ namespace BurgerShop.UI
             ShopGoal goal = rankGoals[goalIndex];
             Title = goal.Title;
             Progress = Required = goal.Required;
-            Stars = Mathf.Min(goalIndex + 1, StarCap);
             IsCelebrating = true;
             celebrateLeft = 0.6f;
             ProgressChanged?.Invoke();
@@ -171,34 +170,30 @@ namespace BurgerShop.UI
 
         void AdvanceAfterGoal()
         {
-            goalIndex++;
+            goalIndex = Mathf.Min(goalIndex + 1, rankGoals.Length);
             goalProgress = 0;
-            if (goalIndex >= rankGoals.Length)
-            {
-                if (rank < ShopRanks.Max)
-                {
-                    rank++;
-                    goalIndex = 0;
-                    ReloadGoals();
-                    Stars = 0;
-                    expansion?.ApplyRank(rank);
-                    IsRankingUp = true;
-                    celebrateLeft = 0.9f;
-                    Title = rank >= ShopRanks.Max ? "Shop MAX" : "Shop Rank " + rank;
-                    Progress = Required = 1;
-                    FeedbackDirector.Current?.Success(
-                        inventory != null ? inventory.transform.position : Vector3.zero,
-                        "Rank Up!",
-                        inventory != null ? inventory.transform : null);
-                    ProgressChanged?.Invoke();
-                    return;
-                }
-                goalIndex = 0;
-                ReloadGoals();
-            }
-            Stars = goalIndex;
             PaintCurrent();
             ProgressChanged?.Invoke();
+        }
+
+        public void AddUpgradeStars()
+        {
+            Stars = (int)Math.Min(int.MaxValue,(long)Stars + 2);
+            ProgressChanged?.Invoke();
+        }
+
+        public bool TryUpgradeRank(int expectedRank)
+        {
+            if (rank != expectedRank || IsMaxRank || Stars < StarCap) return false;
+            Stars -= StarCap; rank++;
+            goalIndex = 0; goalProgress = 0; ReloadGoals();
+            expansion?.ApplyRank(rank);
+            IsCelebrating = false; IsRankingUp = true; celebrateLeft = .9f;
+            Title = "Rank Up!"; Progress = Required = 1;
+            FeedbackDirector.Current?.Success(inventory != null ? inventory.transform.position : Vector3.zero,"Rank Up!",inventory != null ? inventory.transform : null);
+            ProgressChanged?.Invoke();
+            GetComponent<Persistence.RestaurantPersistence>()?.Flush();
+            return true;
         }
 
         void PaintCurrent()
@@ -213,7 +208,8 @@ namespace BurgerShop.UI
                 Progress = Mathf.Clamp(goalProgress, 0, Required);
                 return;
             }
-            ShowLoop();
+            if (!IsMaxRank) Show(Stars >= StarCap ? "Tap the star to upgrade" : "Upgrade furniture or machines · +2 Stars", Stars, StarCap);
+            else ShowLoop();
         }
 
         bool TryShowChore()

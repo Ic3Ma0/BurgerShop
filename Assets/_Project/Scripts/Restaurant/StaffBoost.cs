@@ -16,7 +16,7 @@ namespace BurgerShop.Restaurant
             BaseCarry + CarryPerTier * Mathf.Clamp(tier, 0, MaxTier);
 
         public static float WalkSpeed(int tier) =>
-            BaseWalkSpeed * (1f + SpeedBonusPerTier * Mathf.Clamp(tier, 0, MaxTier));
+            0.85f * BaseWalkSpeed * (1f + SpeedBonusPerTier * Mathf.Clamp(tier, 0, MaxTier));
 
         public static int CostForNextTier(int currentTier) =>
             currentTier < 0 || currentTier >= MaxTier ? 0 : Costs[currentTier];

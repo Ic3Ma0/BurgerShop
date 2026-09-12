@@ -31,6 +31,16 @@ namespace BurgerShop.Restaurant
         float heldTime;
         bool purchasedThisVisit;
         SupplyLine nextSupply = SupplyLine.Dining;
+        public BagLine BagLine {get;private set;}
+        public void RegisterBagLine(BagLine line)=>BagLine=line;
+        public bool BagAvailableFor(RestaurantWorker worker)
+        {
+            if(BagLine==null||!BagLine.CounterBuilt)return false;
+            foreach(var other in workers)if(other!=null&&other!=worker&&other.isActiveAndEnabled&&(other.SupplyTarget==SupplyLine.Bag||other.Job==WorkerJob.Bag||other.Job==WorkerJob.BagSell))return false;
+            return true;
+        }
+        int HeldBagged(){int count=0;foreach(var w in workers)if(w!=null&&w.Inventory!=null)count+=w.Inventory.BaggedCount;return count;}
+        public int BagSupplyDeficit => BagLine==null||!BagLine.CounterBuilt?0:Mathf.Max(0,SupplyBuffer-BagLine.StockCount-BagLine.OutputCount-BagLine.ProcessingCount-BagLine.InputBurgers-HeldBagged()-ReservedFor(SupplyLine.Bag));
         public const int SupplyBuffer = 4;
         public bool AllTablesDirty
         {
@@ -63,15 +73,18 @@ namespace BurgerShop.Restaurant
         }
         public bool TryAssignSupply(RestaurantWorker worker)
         {
-            int dine = DiningSupplyDeficit;
-            int box = BoxingSupplyDeficit;
-            if (worker == null || (dine == 0 && box == 0)) return false;
-            SupplyLine line = dine > 0 && box > 0 ? nextSupply : dine > 0 ? SupplyLine.Dining : SupplyLine.Boxing;
-            int amount = Mathf.Min(worker.Inventory.Capacity, line == SupplyLine.Dining ? dine : box);
-            worker.AssignSupply(line, amount);
-            nextSupply = line == SupplyLine.Dining ? SupplyLine.Boxing : SupplyLine.Dining;
-            return true;
+            if(worker==null)return false;
+            int[] deficits={DiningSupplyDeficit,BoxingSupplyDeficit,BagAvailableFor(worker)?BagSupplyDeficit:0};
+            int start=nextSupply==SupplyLine.Dining?0:nextSupply==SupplyLine.Boxing?1:2;
+            for(int n=0;n<3;n++)
+            {
+                int index=(start+n)%3;if(deficits[index]<=0)continue;
+                worker.AssignSupply((SupplyLine)(index+1),Mathf.Min(worker.Inventory.Capacity,deficits[index]));
+                nextSupply=(SupplyLine)((index+1)%3+1);return true;
+            }
+            return false;
         }
+
         public bool TryAssignBoxTransport(RestaurantWorker worker)
         {
             if (worker == null || boxing == null || driveThru == null || !boxing.isActiveAndEnabled || !driveThru.isActiveAndEnabled) return false;

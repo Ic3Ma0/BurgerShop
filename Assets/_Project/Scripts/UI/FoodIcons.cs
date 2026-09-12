@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace BurgerShop.UI
 {
-    public enum FoodIcon { Burger, Box, Coin, Speed, Carry, Clean, Lock, Check }
+    public enum FoodIcon { Burger, Box, Coin, Speed, Carry, Clean, Lock, Check, Phone, Gloves, Skates, EmptyBag, Bagged, Chair1, Chair2, Chair3, Chair4 }
 
     // Original, code-drawn icons. Supersampled at creation; cached for the whole session.
     public static class FoodIcons
@@ -72,6 +72,25 @@ namespace BurgerShop.UI
                     if(y>.5f&&Disc(x,y,.5f,.6f,.24f)&&!Disc(x,y,.5f,.6f,.15f))return ink;
                     if(Box(x,y,.2f,.18f,.8f,.56f))return ink;
                     if(Disc(x,y,.5f,.4f,.06f))return gold;break;
+                case FoodIcon.Chair1:
+                case FoodIcon.Chair2:
+                case FoodIcon.Chair3:
+                case FoodIcon.Chair4:
+                    if(Box(x,y,.22f,.2f,.3f,.53f)||Box(x,y,.7f,.2f,.78f,.53f))return ink;
+                    if(Box(x,y,.2f,.45f,.8f,.56f)||Box(x,y,.22f,.6f,.78f,.88f))return icon==FoodIcon.Chair1?gold:new Color(.15f,.44f,.8f);
+                    if(icon>=FoodIcon.Chair3&&y>.55f&&Disc(x,y,.5f,.72f,.27f))return cream;
+                    if(icon==FoodIcon.Chair4&&(Box(x,y,.12f,.51f,.2f,.72f)||Box(x,y,.8f,.51f,.88f,.72f)))return ink;break;
+                case FoodIcon.Phone:
+                    if(Box(x,y,.28f,.12f,.72f,.9f)){if(Box(x,y,.34f,.27f,.66f,.78f))return cream;return ink;}break;
+                case FoodIcon.Gloves:
+                    if(Box(x,y,.3f,.15f,.75f,.6f)||Box(x,y,.32f,.48f,.43f,.89f)||Box(x,y,.45f,.48f,.56f,.94f)||Box(x,y,.58f,.48f,.69f,.88f)||Line(x,y,.34f,.38f,.16f,.58f,.08f))return gold;break;
+                case FoodIcon.Skates:
+                    if(Disc(x,y,.32f,.18f,.09f)||Disc(x,y,.7f,.18f,.09f))return ink;
+                    if(Box(x,y,.22f,.31f,.82f,.48f)||Box(x,y,.22f,.4f,.48f,.84f))return HudChrome.Tomato;break;
+                case FoodIcon.EmptyBag:
+                case FoodIcon.Bagged:
+                    if(y>.62f&&Disc(x,y,.5f,.68f,.22f)&&!Disc(x,y,.5f,.68f,.14f))return ink;
+                    if(Box(x,y,.2f,.12f,.8f,.67f))return icon==FoodIcon.Bagged&&y>.3f&&y<.48f?HudChrome.Tomato:gold;break;
                 case FoodIcon.Check:
                     if(Line(x,y,.2f,.5f,.43f,.28f,.065f)||Line(x,y,.43f,.28f,.82f,.78f,.065f))return HudChrome.Green;break;
             }

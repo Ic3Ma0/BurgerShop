@@ -238,7 +238,7 @@ namespace BurgerShop.Tests.EditMode
             Pause(serving, true); serving.Advance(10f);
             Assert.That(customer.Order.Delivered, Is.Zero);
             Assert.That(customer.Order.InFlight, Is.True);
-            Pause(serving, false); serving.Advance(0.25f);
+            Pause(serving, false); serving.Advance(0.35f);
             Assert.That(customer.Order.Delivered, Is.EqualTo(1));
             serving.Advance(10f);
             Assert.That(customer.Order.Delivered, Is.EqualTo(1));

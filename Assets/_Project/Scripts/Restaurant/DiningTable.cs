@@ -19,7 +19,7 @@ namespace BurgerShop.Restaurant
         TrashInventory collector;
         CashFloor cash;
         float pickupRadius = 1.35f;
-        float pickupInterval = 0.25f;
+        float pickupInterval = 0.35f;
         float pickupCooldown;
 
         public int SeatCount => seats?.Length ?? 0;
@@ -65,11 +65,14 @@ namespace BurgerShop.Restaurant
                 return false;
             }
         }
-        public float EatSeconds { get; private set; } = 3f;
+        public int FurnitureLevel { get; private set; } = 1;
+        public int MealTip => 10 + (FurnitureLevel-1)*5;
+        public void SetFurnitureLevel(int value) { FurnitureLevel=Mathf.Clamp(value,1,4); FurnitureVisual.Apply(this); }
+        public float EatSeconds { get; private set; } = 5f;
         public Vector3 WaitPosition => waitPosition;
         public Vector3 Center => transform.position;
 
-        public void Configure(Vector3[] sitPositions, Vector3 wait, float eatSeconds = 3f)
+        public void Configure(Vector3[] sitPositions, Vector3 wait, float eatSeconds = 5f)
         {
             seats = (Vector3[])sitPositions.Clone();
             occupants = new CustomerAgent[seats.Length];
@@ -87,13 +90,14 @@ namespace BurgerShop.Restaurant
         {
             collector = bag;
             pickupRadius = Mathf.Max(0.1f, radius);
-            pickupInterval = Mathf.Max(0.05f, interval);
+            pickupInterval = Mathf.Max(0.35f, interval);
             pickupCooldown = 0f;
         }
 
         public void BindCash(CashFloor floor) => cash = floor;
 
-        public void LeaveMealCash() => cash?.DropAtTable(this, CashFloor.DiningDrop);
+        public void LeaveMealCash() => LeaveMealCash(MealTip);
+        public void LeaveMealCash(int lockedTip) => cash?.DropAtTable(this, lockedTip);
 
         public bool IsSeatBlocked(int seatIndex)
         {
@@ -119,6 +123,7 @@ namespace BurgerShop.Restaurant
             for (int i = 0; i < occupants.Length; i++)
             {
                 if (!SeatIsOpen(i, guest)) continue;
+                if(occupants[i] != guest) guest.LockMealTip(MealTip);
                 occupants[i] = guest;
                 sitPosition = seats[i];
                 seatIndex = i;
@@ -287,7 +292,7 @@ namespace BurgerShop.Restaurant
                 position + new Vector3(0f, 0f, 0.95f),
                 position + new Vector3(0f, 0f, -0.95f)
             };
-            table.Configure(sit, position + new Vector3(-1.15f, 0f, 0f), 3f);
+            table.Configure(sit, position + new Vector3(-1.15f, 0f, 0f), 5f);
             return table;
         }
 

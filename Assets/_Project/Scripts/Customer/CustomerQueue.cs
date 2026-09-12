@@ -7,7 +7,7 @@ namespace BurgerShop.Customer
     public sealed class CustomerQueue : MonoBehaviour
     {
         [SerializeField, Min(0.1f)] float spawnInterval = 4f;
-        [SerializeField, Min(0.1f)] float walkSpeed = 2.4f;
+        [SerializeField, Min(0.1f)] float walkSpeed = 1.92f;
         [SerializeField, Min(0.1f)] float minimumGap = 1.2f;
         readonly List<CustomerAgent> customers = new List<CustomerAgent>();
         Vector3[] route;
@@ -17,6 +17,11 @@ namespace BurgerShop.Customer
         float spawnCountdown;
         int nextTicket = 1;
         bool shuttingDown;
+        bool paused, unfocused;
+        readonly SpecialCustomerPolicy specials = new SpecialCustomerPolicy();
+        public Func<CustomerKind> CustomerKindFactory { get; set; }
+        void OnApplicationPause(bool value) => paused = value;
+        void OnApplicationFocus(bool value) => unfocused = !value;
         CustomerAgent departingCustomer;
 
         public Func<int> OrderQuantityFactory { get; set; } = OrderQuantities.Dining;
@@ -26,7 +31,7 @@ namespace BurgerShop.Customer
         public bool IsFull => Count >= Capacity;
         public IReadOnlyList<CustomerAgent> Customers => customers;
         public CustomerAgent FrontCustomer => Count > 0 ? customers[0] : null;
-        public CustomerAgent ReadyCustomer => FrontCustomer != null && FrontCustomer.HasReachedSlot && FrontCustomer.HasOrdered ? FrontCustomer : null;
+        public CustomerAgent ReadyCustomer => FrontCustomer != null && FrontCustomer.HasReachedSlot && FrontCustomer.HasOrdered && FrontCustomer.CanAcceptOrder ? FrontCustomer : null;
         public float MinimumGap => minimumGap;
 
         // Slots are supplied front first. Everyone follows one path from the entrance
@@ -60,7 +65,7 @@ namespace BurgerShop.Customer
 
         public void Advance(float deltaTime)
         {
-            if (deltaTime <= 0f || route == null)
+            if (deltaTime <= 0f || route == null || paused || unfocused)
                 return;
 
             // The leader advances first. Clamp each follower to the leader's progress
@@ -80,6 +85,8 @@ namespace BurgerShop.Customer
                 customer.MoveOnPath(PositionAt(progress), progress, progress >= target - 0.001f, counterPosition, deltaTime);
             }
 
+            FrontCustomer?.AdvanceCalling(deltaTime, FindFirstObjectByType<BurgerShop.Player.PlayerMotor>()?.transform);
+
             if (IsFull)
             {
                 spawnCountdown = spawnInterval;
@@ -92,7 +99,12 @@ namespace BurgerShop.Customer
             if (Count > 0 && customers[Count - 1].DistanceAlongPath < minimumGap)
                 return;
 
-            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, route[0], OrderQuantityFactory());
+            var goals = FindFirstObjectByType<BurgerShop.UI.SessionGoalTracker>();
+            var wallet = FindFirstObjectByType<BurgerShop.Economy.RestaurantWallet>();
+            bool occupied = customers.Exists(c => c.Kind != CustomerKind.Normal);
+            CustomerKind kind = CustomerKindFactory != null ? CustomerKindFactory() : specials.Next(
+                goals != null && goals.Rank >= 2 && wallet != null && wallet.CompletedSales >= 5, occupied, UnityEngine.Random.value);
+            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, route[0], OrderQuantityFactory(), kind);
             arriving.AssignSlot(Count);
             arriving.Removed += OnCustomerRemoved;
             customers.Add(arriving);

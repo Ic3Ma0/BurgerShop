@@ -10,7 +10,7 @@ namespace BurgerShop.Restaurant
 
         TrashInventory inventory;
         [SerializeField, Min(0.1f)] float radius = 1f;
-        [SerializeField, Min(0.05f)] float dropInterval = 0.25f;
+        [SerializeField, Min(0.05f)] float dropInterval = 0.35f;
         float cooldown;
 
         public Vector3 DropPosition => transform.position;
@@ -31,7 +31,7 @@ namespace BurgerShop.Restaurant
         {
             inventory = carrier;
             radius = Mathf.Max(0.1f, dropRadius);
-            dropInterval = Mathf.Max(0.05f, interval);
+            dropInterval = Mathf.Max(0.35f, interval);
             cooldown = 0f;
         }
 

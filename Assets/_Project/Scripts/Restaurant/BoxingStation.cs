@@ -6,7 +6,9 @@ namespace BurgerShop.Restaurant
 {
     public sealed class BoxingStation : MonoBehaviour
     {
-        public const float BoxInterval = 0.25f;
+        public const float BoxInterval = 0.35f;
+        public int WorkLevel { get; set; } = 1;
+        public float ProcessingSeconds => .35f - .05f*(Mathf.Clamp(WorkLevel,1,3)-1);
         public const float WorkRadius = 0.9f;
         public const int InputCapacity = 8;
         public const int OutputCapacity = 8;
@@ -55,7 +57,7 @@ namespace BurgerShop.Restaurant
         public int TableCount => InputCount + OutputCount + ProcessingCount;
         public bool InputFull => InputCount >= InputCapacity;
         public bool OutputFull => OutputCount + ProcessingCount >= OutputCapacity;
-        public float ProcessingProgress => processing ? Mathf.Clamp01(processingAge / BoxInterval) : 0f;
+        public float ProcessingProgress => processing ? Mathf.Clamp01(processingAge / ProcessingSeconds) : 0f;
         public int TotalRawReceived { get; private set; }
         public int TotalProcessed { get; private set; }
         public int TotalBoxPickups { get; private set; }

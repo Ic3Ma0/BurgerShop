@@ -93,7 +93,9 @@ namespace BurgerShop.Persistence
                 RestoredGoalIndex = 0;
                 RestoredGoalProgress = 0;
             }
-            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress);
+            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, data?.ResolvedUpgradeStars ?? 0);
+            GetComponent<BagLine>()?.Restore(data);
+            GetComponent<GrowthUpgrades>()?.Restore(data?.facilityLevels, data?.grillLevel ?? 1, data?.ResolvedExtraGrillLevel ?? 0);
             if (goals != null)
                 expansion?.ApplyRank(goals.Rank);
             Status = LoadResult == SaveLoadResult.Loaded ? "PROGRESS RESTORED"
@@ -146,15 +148,17 @@ namespace BurgerShop.Persistence
                 driveThruInvestment = expansion?.DriveThruPad?.Invested ?? 0,
                 shopRank = goals != null ? goals.Rank : RestoredRank,
                 goalIndex = goals != null ? goals.GoalIndex : RestoredGoalIndex,
-                goalProgress = goals != null ? goals.GoalProgress : RestoredGoalProgress
+                goalProgress = goals != null ? goals.GoalProgress : RestoredGoalProgress,
+                upgradeStars = goals != null ? goals.Stars : 0,
+                facilityLevels = GetComponent<GrowthUpgrades>()?.Capture(),
+                westExpanded = GetComponent<BagLine>()?.Expanded ?? false,
+                bagMachineBuilt = GetComponent<BagLine>()?.MachineBuilt ?? false,
+                bagTableBuilt = GetComponent<BagLine>()?.TableBuilt ?? false,
+                bagCounterBuilt = GetComponent<BagLine>()?.CounterBuilt ?? false,
+                bagMachineInvestment = GetComponent<BagLine>()?.MachinePad?.Invested ?? 0,
+                bagTableInvestment = GetComponent<BagLine>()?.TablePad?.Invested ?? 0,
+                bagCounterInvestment = GetComponent<BagLine>()?.CounterPad?.Invested ?? 0
             };
-            if (expansion != null)
-                data.shopRank = Mathf.Max(data.shopRank, ShopRanks.Implied(expansion.HasExtraTable,
-                    expansion.TablePad != null ? expansion.TablePad.Invested : 0,
-                    expansion.HasBoxing, expansion.BoxingPad != null ? expansion.BoxingPad.Invested : 0,
-                    expansion.HasExtraGrill, expansion.GrillPad != null ? expansion.GrillPad.Invested : 0,
-                    expansion.HasExtraCounter, expansion.CounterPad != null ? expansion.CounterPad.Invested : 0,
-                    expansion.HasDriveThru, expansion.DriveThruPad != null ? expansion.DriveThruPad.Invested : 0));
             string checksum = data.Checksum();
             if (checksum == lastChecksum) return true;
             if (!store.Save(data)) { Status = "SAVE FAILED - RETRYING"; return false; }

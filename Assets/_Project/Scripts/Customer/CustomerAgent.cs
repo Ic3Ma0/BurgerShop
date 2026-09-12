@@ -23,9 +23,17 @@ namespace BurgerShop.Customer
         float eatTime;
         Phase phase;
         const float HandoffSeconds = 0.4f;
-        const float DepartureSpeed = 2.4f;
+        const float DepartureSpeed = 1.92f;
 
         enum Phase { None, Handoff, ToSeat, Eating, Exiting }
+
+        int lockedMealTip = 10;
+        public void LockMealTip(int tip) => lockedMealTip=tip;
+        public CustomerKind Kind { get; private set; }
+        public float CallingRemaining { get; private set; }
+        public float ReminderProgress { get; private set; }
+        bool callStarted, callFinished;
+        public bool CanAcceptOrder => Kind != CustomerKind.Calling || callFinished;
 
         public int TicketNumber { get; private set; }
         public int QueueIndex { get; private set; }
@@ -42,14 +50,16 @@ namespace BurgerShop.Customer
         public int PaidAmount { get; private set; }
         public event Action<CustomerAgent> Removed;
 
-        internal static CustomerAgent Create(Transform parent, int ticket, Vector3 entrance, int quantity = 1)
+        internal static CustomerAgent Create(Transform parent, int ticket, Vector3 entrance, int quantity = 1, CustomerKind kind = CustomerKind.Normal)
         {
             GameObject root = new GameObject($"Customer_{ticket}");
             root.transform.SetParent(parent, false);
             root.transform.position = entrance;
             CustomerAgent agent = root.AddComponent<CustomerAgent>();
             agent.TicketNumber = ticket;
-            agent.Order = new CustomerOrder(quantity);
+            agent.Kind = kind;
+            if (kind == CustomerKind.BigEater) quantity = 10;
+            agent.Order = new CustomerOrder(quantity, kind == CustomerKind.BigEater ? 10 : 4);
             Color[] shirts = { new Color(0.23f, 0.52f, 0.91f), new Color(0.70f, 0.35f, 0.69f), new Color(0.28f, 0.70f, 0.69f) };
             Material shirt = MaterialFor(shirts[(ticket - 1) % shirts.Length]);
             Material skin = MaterialFor(new Color(0.93f, 0.71f, 0.49f));
@@ -62,6 +72,10 @@ namespace BurgerShop.Customer
             Part(root.transform, "Hair", PrimitiveType.Cube, new Vector3(0f, 1.69f, -0.03f), new Vector3(0.55f, 0.14f, 0.48f), hair);
             Part(root.transform, "Nose", PrimitiveType.Sphere, new Vector3(0f, 1.47f, 0.28f), new Vector3(0.14f, 0.12f, 0.15f), skin);
 
+            if (kind == CustomerKind.BigEater)
+                root.transform.Find("Body").localScale = new Vector3(1.05f, .70f, .9f);
+            if (kind == CustomerKind.Calling)
+                Part(root.transform, "Phone", PrimitiveType.Cube, new Vector3(.31f,1.4f,.16f), new Vector3(.09f,.32f,.17f), hair);
             agent.orderBubble = new GameObject("OrderBubble").transform;
             agent.orderBubble.SetParent(root.transform, false);
             agent.orderBubble.localPosition = new Vector3(0f, 2.25f, 0f);
@@ -107,6 +121,22 @@ namespace BurgerShop.Customer
                 HasOrdered = true;
                 orderBubble.gameObject.SetActive(true);
             }
+        }
+
+        public void AdvanceCalling(float seconds, Transform player)
+        {
+            if (seconds <= 0 || Kind != CustomerKind.Calling || callFinished || QueueIndex != 0 || !HasReachedSlot) return;
+            if (!callStarted) { callStarted = true; CallingRemaining = 8f; }
+            else CallingRemaining = Mathf.Max(0, CallingRemaining - seconds);
+            bool near = player != null && ShopLayout.Horizontal(player.position, transform.position) <= 1.5f;
+            ReminderProgress = near ? ReminderProgress + seconds : 0f;
+            if (CallingRemaining <= 0 || ReminderProgress >= 1f)
+            {
+                callFinished = true; CallingRemaining = 0;
+                orderBubble.GetComponentInChildren<TextMesh>(true).text = "x" + RemainingQuantity;
+                UI.FeedbackDirector.Current?.World(transform.position, "", .45f);
+            }
+            else orderBubble.GetComponentInChildren<TextMesh>(true).text = (near ? "Remind " : "Calling ") + Mathf.CeilToInt(CallingRemaining);
         }
 
         internal void LeaveQueue()
@@ -206,6 +236,7 @@ namespace BurgerShop.Customer
                     return;
                 }
                 FaceTable();
+                LockMealTip(table.MealTip);
                 PlaceBurgerOnTable();
                 phase = Phase.Eating;
                 eatTime = 0f;
@@ -214,14 +245,14 @@ namespace BurgerShop.Customer
             if (phase == Phase.Eating)
             {
                 eatTime += deltaTime;
-                float need = table != null ? table.EatSeconds : 3f;
+                float need = (table != null ? table.EatSeconds : 5f) * (Kind == CustomerKind.BigEater ? 1.5f : 1f);
                 if (eatTime < need) return;
                 int finishedSeat = seatIndex;
                 DiningTable finishedTable = table;
                 if (finishedTable != null && finishedSeat >= 0)
                 {
                     finishedTable.LeaveMealTrash(finishedSeat);
-                    finishedTable.LeaveMealCash();
+                    finishedTable.LeaveMealCash(lockedMealTip);
                 }
                 finishedTable?.Release(this);
                 seatIndex = -1;

@@ -114,7 +114,7 @@ namespace BurgerShop.Tests.EditMode
             pickup.Advance(0.01f);
             pickup.Advance(0.1f);
             Assert.That(inventory.Count, Is.EqualTo(1));
-            pickup.Advance(0.16f);
+            pickup.Advance(0.26f);
             Assert.That(inventory.Count, Is.EqualTo(2));
             pickup.Advance(10f);
             Assert.That(inventory.Count, Is.EqualTo(3));

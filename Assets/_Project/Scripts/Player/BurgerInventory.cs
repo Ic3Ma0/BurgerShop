@@ -5,12 +5,13 @@ using UnityEngine;
 
 namespace BurgerShop.Player
 {
+    public enum CarriedItemKind { Burger, Boxed, EmptyBag, Bagged }
     public sealed class BurgerInventory : MonoBehaviour
     {
         [SerializeField, Min(1)] int capacity = 4;
         [SerializeField] Transform carryAnchor;
         readonly List<Transform> burgers = new List<Transform>();
-        readonly List<bool> boxed = new List<bool>();
+        readonly List<CarriedItemKind> boxed = new List<CarriedItemKind>();
 
         int incomingBoxes;
         public int IncomingBoxes => incomingBoxes;
@@ -21,20 +22,25 @@ namespace BurgerShop.Player
             {
                 int loose = 0;
                 for (int i = 0; i < boxed.Count; i++)
-                    if (!boxed[i]) loose++;
+                    if (boxed[i] == CarriedItemKind.Burger) loose++;
                 return loose;
             }
         }
-        public int BoxedCount => Count - LooseCount;
-        public int Capacity => capacity;
-        public bool IsFull => Count >= capacity;
+        public int BoxedCount => CountKind(CarriedItemKind.Boxed) + incomingBoxes;
+        public int EmptyBagCount => CountKind(CarriedItemKind.EmptyBag);
+        public int BaggedCount => CountKind(CarriedItemKind.Bagged);
+        int CountKind(CarriedItemKind kind) { int n=0;foreach(var k in boxed)if(k==kind)n++;return n; }
+        public int PermanentCapacity => capacity;
+        public float CapacityMultiplier { get; set; } = 1f;
+        public int Capacity => Mathf.CeilToInt(capacity * CapacityMultiplier);
+        public bool IsFull => Count >= Capacity;
         public event Action<int> CountChanged;
 
         void Awake() => Configure(capacity);
 
         public void Configure(int maxCapacity = PlayerBoost.BaseCarry)
         {
-            capacity = Mathf.Max(1, Count, maxCapacity);
+            capacity = Mathf.Max(1, maxCapacity);
             if (carryAnchor == null)
             {
                 carryAnchor = new GameObject("CarryStack").transform;
@@ -64,7 +70,7 @@ namespace BurgerShop.Player
             burger.localRotation = Quaternion.identity;
             burger.localScale = Vector3.one;
             burgers.Add(burger);
-            boxed.Add(false);
+            boxed.Add(CarriedItemKind.Burger);
             CountChanged?.Invoke(Count);
             return true;
         }
@@ -81,7 +87,7 @@ namespace BurgerShop.Player
             if (incomingBoxes <= 0) throw new InvalidOperationException("No incoming box was reserved.");
             incomingBoxes--;
             burgers.Add(box);
-            boxed.Add(true);
+            boxed.Add(CarriedItemKind.Boxed);
             Restack();
             CountChanged?.Invoke(Count);
         }
@@ -90,7 +96,7 @@ namespace BurgerShop.Player
         {
             for (int i = burgers.Count - 1; i >= 0; i--)
             {
-                if (boxed[i]) continue;
+                if (boxed[i] != CarriedItemKind.Burger) continue;
                 Transform loose = burgers[i];
                 if (loose != null)
                     BurgerVisual.Release(loose.gameObject);
@@ -99,7 +105,7 @@ namespace BurgerShop.Player
                 box.localRotation = Quaternion.identity;
                 box.localScale = Vector3.one;
                 burgers[i] = box;
-                boxed[i] = true;
+                boxed[i] = CarriedItemKind.Boxed;
                 CountChanged?.Invoke(Count);
                 return true;
             }
@@ -118,11 +124,11 @@ namespace BurgerShop.Player
         }
 
         // Transfer ownership of the existing visual to the customer without duplicating it.
-        public bool TryTakeBurger(out Transform burger) => TryTake(false, out burger);
+        public bool TryTakeBurger(out Transform burger) => TryTake(CarriedItemKind.Burger, out burger);
 
-        public bool TryTakeBoxed(out Transform box) => TryTake(true, out box);
+        public bool TryTakeBoxed(out Transform box) => TryTake(CarriedItemKind.Boxed, out box);
 
-        bool TryTake(bool wantBoxed, out Transform item)
+        public bool TryTake(CarriedItemKind wantBoxed, out Transform item)
         {
             item = null;
             for (int i = burgers.Count - 1; i >= 0; i--)
@@ -138,6 +144,12 @@ namespace BurgerShop.Player
                 return true;
             }
             return false;
+        }
+
+        public bool TryReceive(CarriedItemKind kind, Transform visual)
+        {
+            if(IsFull || visual==null)return false;
+            burgers.Add(visual);boxed.Add(kind);Restack();CountChanged?.Invoke(Count);return true;
         }
 
         void Restack()

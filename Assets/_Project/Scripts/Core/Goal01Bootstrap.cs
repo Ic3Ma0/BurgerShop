@@ -67,9 +67,14 @@ namespace BurgerShop.Core
             FeedbackDirector.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), inventory);
             WorldLabelHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), player);
             expansion.BindUpgradeHud(Object.FindFirstObjectByType<UpgradeHud>());
+            var growth = root.gameObject.AddComponent<GrowthUpgrades>();
+            growth.Configure(wallet,goals,inventory,expansion);
+            root.gameObject.AddComponent<BagLine>().Configure(wallet,goals,growth,hiring,inventory,cash);
+            GrowthUpgradeHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),growth,goals,wallet);
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
             persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades, goals);
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
+            player.gameObject.AddComponent<TemporaryPowerups>().Configure(inventory,motor,wallet,Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"));
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             root.gameObject.AddComponent<AndroidDiagnostics>().Configure(wallet, inventory, hiring, upgrade);
 #endif

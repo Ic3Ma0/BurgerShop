@@ -29,7 +29,7 @@ namespace BurgerShop.Restaurant
         float flightAge;
         BurgerInventory flightServer;
         bool paused;
-        public const float HandoffDuration = 0.35f;
+        public const float HandoffDuration = 0.45f;
         public const float BetweenItems = 0.15f;
         public bool IsHandoffActive => ownedCustomer != null && ownedCustomer.Order.InFlight;
         public int OwningCounter => ownedCustomer != null ? ownedCounter : -1;
@@ -237,7 +237,7 @@ namespace BurgerShop.Restaurant
             CustomerAgent customer = ownedCustomer;
             customer.ReceiveItem(flyingBurger);
             DeliveredUnits++;
-            cooldown = BetweenItems;
+            cooldown = Mathf.Max(.05f, BetweenItems - .05f*(StockAt(ownedCounter).ServiceLevel-1));
             if (customer.Order.IsComplete && customer.Order.TrySettle())
             {
                 int amount = customer.OrderSize * price;

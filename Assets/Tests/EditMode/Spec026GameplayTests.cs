@@ -31,7 +31,7 @@ namespace BurgerShop.Tests.EditMode
             for(int i=0;i<30;i++)yield return null;
             var hud=Object.FindFirstObjectByType<PlayerUpgradeHud>();
             Assert.That(hud.IsVisible,Is.True);
-            Assert.That(hud.Popup.FirstLabel.text,Does.Contain("100%").And.Contain("115%"));
+            Assert.That(hud.Popup.FirstLabel.text,Does.Contain("4.68").And.Contain("5.38"));
             GameplayEvidence.Capture("../spec026-028/template-upgrade.png");
             yield return new ExitPlayMode();
         }
