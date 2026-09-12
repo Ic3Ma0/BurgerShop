@@ -84,6 +84,21 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
+        public void ApplyingASetKeepsChairsFacingTheTableAndRaisesPay()
+        {
+            Assert.That(table.MealPay, Is.EqualTo(10));
+            Assert.That(table.EatSeconds, Is.EqualTo(3f));
+            table.ApplySet(TableSetId.Patio);
+            Assert.That(table.MealPay, Is.EqualTo(15));
+            Assert.That(table.EatSeconds, Is.EqualTo(2.7f));
+            Assert.That(table.FurnitureLevel, Is.EqualTo(2));
+            AssertChairFacesTable(table, "ChairA");
+            AssertChairFacesTable(table, "ChairB");
+            Color top = table.transform.Find("Top").GetComponent<Renderer>().sharedMaterial.color;
+            Assert.That(top.b, Is.GreaterThan(top.r));
+        }
+
+        [Test]
         public void AddedExtraTableHasTwoChairsFacingTheTop()
         {
             DiningArea area = DiningArea.Create(root.transform, DiningArea.ShopPositions);

@@ -51,6 +51,8 @@ namespace BurgerShop.Restaurant
         };
         public static readonly Vector3 ExtraTable = new Vector3(-12f, 0f, 3f);
         public static readonly Vector3 TableUnlock = Pad(ExtraTable);
+        public static readonly Vector3 TableUpgradeOffset = new Vector3(1.55f, 0.02f, 0f);
+        public static Vector3 TableUpgradePad(Vector3 table) => table + TableUpgradeOffset;
         public static readonly Vector3 TrashBin = new Vector3(-13f, 0f, 0f);
 
         // Boxing / drive-thru: south wall. BOX → PACK → WINDOW on x = −9. Lane west; Boost door east.

@@ -13,6 +13,7 @@ namespace BurgerShop.Persistence
         BoostUpgradeZone boost;
         ShopExpansion expansion;
         StaffUpgradeBoard staffUpgrades;
+        TableUpgradeBoard tableUpgrades;
         LocalSaveStore store;
         string lastChecksum;
         float elapsed;
@@ -36,6 +37,11 @@ namespace BurgerShop.Persistence
 
         public void Configure(RestaurantWallet earnings, GrillUpgradeZone grill, WorkerHiringZone staff,
             BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades, string directory = null)
+            => Configure(earnings, grill, staff, playerBoost, shop, upgrades, null, directory);
+
+        public void Configure(RestaurantWallet earnings, GrillUpgradeZone grill, WorkerHiringZone staff,
+            BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades,
+            TableUpgradeBoard tables, string directory = null)
         {
             wallet = earnings;
             upgrade = grill;
@@ -45,6 +51,9 @@ namespace BurgerShop.Persistence
             expansion = shop;
             if (expansion != null) expansion.PurchaseCompleted += RequestSave;
             staffUpgrades = upgrades;
+            if (tableUpgrades != null) tableUpgrades.Changed -= RequestSave;
+            tableUpgrades = tables;
+            if (tableUpgrades != null) tableUpgrades.Changed += RequestSave;
             if (directory == null)
             {
                 directory = Application.persistentDataPath;
@@ -69,6 +78,9 @@ namespace BurgerShop.Persistence
                 if (data.version >= 7)
                     expansion?.RestoreInvestments(data.tableInvestment, data.grillInvestment, data.counterInvestment,
                         data.boxingInvestment, data.driveThruInvestment);
+                tableUpgrades?.Restore(data.ResolvedTable0Set, data.ResolvedTable1Set, data.ResolvedTable2Set,
+                    data.ResolvedExtraTableSet, data.ResolvedTable0Investment, data.ResolvedTable1Investment,
+                    data.ResolvedTable2Investment, data.ResolvedExtraTableInvestment);
                 lastChecksum = data.Checksum();
             }
             Status = LoadResult == SaveLoadResult.Loaded ? "PROGRESS RESTORED"
@@ -118,7 +130,15 @@ namespace BurgerShop.Persistence
                 grillInvestment = expansion?.GrillPad?.Invested ?? 0,
                 counterInvestment = expansion?.CounterPad?.Invested ?? 0,
                 boxingInvestment = expansion?.BoxingPad?.Invested ?? 0,
-                driveThruInvestment = expansion?.DriveThruPad?.Invested ?? 0
+                driveThruInvestment = expansion?.DriveThruPad?.Invested ?? 0,
+                table0Set = tableUpgrades?.SetAt(0) ?? 0,
+                table1Set = tableUpgrades?.SetAt(1) ?? 0,
+                table2Set = tableUpgrades?.SetAt(2) ?? 0,
+                extraTableSet = tableUpgrades?.SetAt(3) ?? 0,
+                table0Investment = tableUpgrades?.InvestedAt(0) ?? 0,
+                table1Investment = tableUpgrades?.InvestedAt(1) ?? 0,
+                table2Investment = tableUpgrades?.InvestedAt(2) ?? 0,
+                extraTableInvestment = tableUpgrades?.InvestedAt(3) ?? 0
             };
             string checksum = data.Checksum();
             if (checksum == lastChecksum) return true;
@@ -130,7 +150,11 @@ namespace BurgerShop.Persistence
         }
 
         void RequestSave() => saveRequested = true;
-        void OnDestroy() { if (expansion != null) expansion.PurchaseCompleted -= RequestSave; }
+        void OnDestroy()
+        {
+            if (expansion != null) expansion.PurchaseCompleted -= RequestSave;
+            if (tableUpgrades != null) tableUpgrades.Changed -= RequestSave;
+        }
         void OnApplicationPause(bool paused) { if (paused) Flush(); }
         void OnApplicationFocus(bool focused) { if (!focused) Flush(); }
         void OnApplicationQuit() => Flush();

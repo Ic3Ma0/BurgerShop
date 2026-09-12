@@ -65,7 +65,10 @@ namespace BurgerShop.Restaurant
                 return false;
             }
         }
-        public float EatSeconds { get; private set; } = 3f;
+        public float EatSeconds { get; private set; } = TableSetCatalog.StarterEatSeconds;
+        public int MealPay { get; private set; } = TableSetCatalog.StarterPay;
+        public TableSetId SetId { get; private set; } = TableSetId.Starter;
+        public int FurnitureLevel => TableSetCatalog.Get(SetId).FurnitureLevel;
         public Vector3 WaitPosition => waitPosition;
         public Vector3 Center => transform.position;
 
@@ -83,6 +86,15 @@ namespace BurgerShop.Restaurant
             pickupCooldown = 0f;
         }
 
+        public void ApplySet(TableSetId id)
+        {
+            TableSet set = TableSetCatalog.Get(id);
+            SetId = set.Id;
+            MealPay = set.MealPay;
+            EatSeconds = set.EatSeconds;
+            Recolor(set);
+        }
+
         public void BindCollector(TrashInventory bag, float radius = 1.35f, float interval = 0.25f)
         {
             collector = bag;
@@ -93,7 +105,7 @@ namespace BurgerShop.Restaurant
 
         public void BindCash(CashFloor floor) => cash = floor;
 
-        public void LeaveMealCash() => cash?.DropAtTable(this, CashFloor.DiningDrop);
+        public void LeaveMealCash() => cash?.DropAtTable(this, MealPay);
 
         public bool IsSeatBlocked(int seatIndex)
         {
@@ -287,8 +299,29 @@ namespace BurgerShop.Restaurant
                 position + new Vector3(0f, 0f, 0.95f),
                 position + new Vector3(0f, 0f, -0.95f)
             };
-            table.Configure(sit, position + new Vector3(-1.15f, 0f, 0f), 3f);
+            table.Configure(sit, position + new Vector3(-1.15f, 0f, 0f), TableSetCatalog.StarterEatSeconds);
+            table.ApplySet(TableSetId.Starter);
             return table;
+        }
+
+        void Recolor(TableSet set)
+        {
+            Paint(transform.Find("Top"), set.TableColor);
+            PaintChair(transform.Find("ChairA"), set);
+            PaintChair(transform.Find("ChairB"), set);
+        }
+
+        static void PaintChair(Transform chair, TableSet set)
+        {
+            if (chair == null) return;
+            Paint(chair.Find("Seat"), set.ChairColor);
+        }
+
+        static void Paint(Transform part, Color color)
+        {
+            if (part == null) return;
+            Renderer renderer = part.GetComponent<Renderer>();
+            if (renderer != null) renderer.sharedMaterial = BurgerShop.Core.RuntimeMaterials.Create(color);
         }
 
         static void Chair(Transform parent, string name, Vector3 local, Material cushion, Material frame)

@@ -8,7 +8,7 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         public int version;
         public long coins;
@@ -34,6 +34,14 @@ namespace BurgerShop.Persistence
         public int counterInvestment;
         public int boxingInvestment;
         public int driveThruInvestment;
+        public int table0Set;
+        public int table1Set;
+        public int table2Set;
+        public int extraTableSet;
+        public int table0Investment;
+        public int table1Investment;
+        public int table2Investment;
+        public int extraTableInvestment;
 
         public int ResolvedHiredCount => version >= 2
             ? hiredWorkerCount
@@ -50,6 +58,14 @@ namespace BurgerShop.Persistence
         public int ResolvedPlayerCarryTier => version >= 5 ? playerCarryTier : ResolvedBoostLevel;
         public bool ResolvedBoughtBoxingStation => version >= 6 && boughtBoxingStation;
         public bool ResolvedBoughtDriveThru => version >= 6 && boughtDriveThru;
+        public int ResolvedTable0Set => version >= 8 ? table0Set : 0;
+        public int ResolvedTable1Set => version >= 8 ? table1Set : 0;
+        public int ResolvedTable2Set => version >= 8 ? table2Set : 0;
+        public int ResolvedExtraTableSet => version >= 8 ? extraTableSet : 0;
+        public int ResolvedTable0Investment => version >= 8 ? table0Investment : 0;
+        public int ResolvedTable1Investment => version >= 8 ? table1Investment : 0;
+        public int ResolvedTable2Investment => version >= 8 ? table2Investment : 0;
+        public int ResolvedExtraTableInvestment => version >= 8 ? extraTableInvestment : 0;
 
         public bool IsValid
         {
@@ -74,11 +90,19 @@ namespace BurgerShop.Persistence
                 if (playerSpeedTier < 0 || playerSpeedTier > 5 || playerCarryTier < 0 || playerCarryTier > 5)
                     return false;
                 if (version < 7) return true;
-                return tableInvestment >= 0 && tableInvestment <= Restaurant.ShopExpansion.TableCost
-                    && grillInvestment >= 0 && grillInvestment <= Restaurant.ShopExpansion.GrillCost
-                    && counterInvestment >= 0 && counterInvestment <= Restaurant.ShopExpansion.CounterCost
-                    && boxingInvestment >= 0 && boxingInvestment <= Restaurant.ShopExpansion.BoxingCost
-                    && driveThruInvestment >= 0 && driveThruInvestment <= Restaurant.ShopExpansion.DriveThruCost;
+                if (tableInvestment < 0 || tableInvestment > Restaurant.ShopExpansion.TableCost
+                    || grillInvestment < 0 || grillInvestment > Restaurant.ShopExpansion.GrillCost
+                    || counterInvestment < 0 || counterInvestment > Restaurant.ShopExpansion.CounterCost
+                    || boxingInvestment < 0 || boxingInvestment > Restaurant.ShopExpansion.BoxingCost
+                    || driveThruInvestment < 0 || driveThruInvestment > Restaurant.ShopExpansion.DriveThruCost)
+                    return false;
+                if (version < 8) return true;
+                if (!Restaurant.TableSetCatalog.IsConsistent(table0Set, table0Investment)
+                    || !Restaurant.TableSetCatalog.IsConsistent(table1Set, table1Investment)
+                    || !Restaurant.TableSetCatalog.IsConsistent(table2Set, table2Investment)
+                    || !Restaurant.TableSetCatalog.IsConsistent(extraTableSet, extraTableInvestment))
+                    return false;
+                return boughtExtraTable || (extraTableSet == 0 && extraTableInvestment == 0);
             }
         }
 
@@ -160,6 +184,12 @@ namespace BurgerShop.Persistence
                 value += "|" + string.Join("|", tableInvestment.ToString(CultureInfo.InvariantCulture),
                     grillInvestment.ToString(CultureInfo.InvariantCulture), counterInvestment.ToString(CultureInfo.InvariantCulture),
                     boxingInvestment.ToString(CultureInfo.InvariantCulture), driveThruInvestment.ToString(CultureInfo.InvariantCulture));
+            if (version >= 8)
+                value += "|" + string.Join("|",
+                    table0Set.ToString(CultureInfo.InvariantCulture), table1Set.ToString(CultureInfo.InvariantCulture),
+                    table2Set.ToString(CultureInfo.InvariantCulture), extraTableSet.ToString(CultureInfo.InvariantCulture),
+                    table0Investment.ToString(CultureInfo.InvariantCulture), table1Investment.ToString(CultureInfo.InvariantCulture),
+                    table2Investment.ToString(CultureInfo.InvariantCulture), extraTableInvestment.ToString(CultureInfo.InvariantCulture));
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }
