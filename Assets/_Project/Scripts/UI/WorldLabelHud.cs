@@ -56,6 +56,8 @@ namespace BurgerShop.UI
                 bool order=n=="OrderQuantity"||n=="BagOrderQuantity";
                 if(order || n=="CounterStockCount" || n=="ColaStockCount" || n=="PackageStockCount")
                     foreach(var r in source.transform.parent.GetComponentsInChildren<Renderer>(true))r.enabled=false;
+                // Only customer and vehicle order icons remain in the world-space HUD.
+                if(!order)continue;
                 var card=HudChrome.Panel(transform,"Card_"+n,Vector2.zero,Vector2.one*.5f,Vector2.zero,new Vector2(240,80),HudChrome.Cream);
                 var text=HudChrome.Label(card.transform,"Value",Vector2.zero,Vector2.one,Vector2.one*.5f,Vector2.zero,Vector2.zero,28,HudChrome.Ink,TextAnchor.MiddleLeft,true,false);
                 text.rectTransform.offsetMin=new Vector2(64,8);text.rectTransform.offsetMax=new Vector2(-16,-8);
