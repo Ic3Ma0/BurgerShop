@@ -41,6 +41,7 @@ namespace BurgerShop.Restaurant
 
     public sealed class BicycleCourier : MonoBehaviour
     {
+        public bool HasCargoTrailer {get;private set;}
         public int Quantity {get;private set;}
         public int Received {get;private set;}
         public int Remaining=>Quantity-Received;
@@ -48,16 +49,18 @@ namespace BurgerShop.Restaurant
         public bool Finished {get;private set;}
         Transform rack,legs;TextMesh order;
         int exitStep;
-        public static BicycleCourier Create(Transform parent,Vector3 spawn,int quantity)
+        public static BicycleCourier Create(Transform parent,Vector3 spawn,int quantity,bool cargoTrailer=false)
         {
             var root=new GameObject("BicycleCourier");root.transform.SetParent(parent,false);root.transform.position=spawn;
-            var rider=root.AddComponent<BicycleCourier>();rider.Quantity=Mathf.Max(1,quantity);rider.Build();return rider;
+            var rider=root.AddComponent<BicycleCourier>();rider.Quantity=Mathf.Max(1,quantity);rider.HasCargoTrailer=cargoTrailer;rider.Build();return rider;
         }
         void Build()
         {
-            var frame=RuntimeMaterials.Create(new Color(.1f,.7f,.52f));var tyre=RuntimeMaterials.Create(new Color(.10f,.12f,.15f));
+            var frame=RuntimeMaterials.Create(new Color(1f,.64f,.05f));var tyre=RuntimeMaterials.Create(new Color(.10f,.12f,.15f));
             var steel=RuntimeMaterials.Create(new Color(.75f,.81f,.83f));var coat=RuntimeMaterials.Create(new Color(.15f,.40f,.85f));var skin=RuntimeMaterials.Create(new Color(.76f,.52f,.33f));
-            gameObject.AddComponent<BurgerVisual>().OwnMaterials(frame,tyre,steel,coat,skin);
+            var red=RuntimeMaterials.Create(new Color(.95f,.12f,.06f));
+            var green=RuntimeMaterials.Create(new Color(.12f,.58f,.24f));
+            gameObject.AddComponent<BurgerVisual>().OwnMaterials(frame,tyre,steel,coat,skin,red,green);
             foreach(float z in new[]{-.68f,.68f})
             {
                 var wheel=BagVisualFactory.Part(transform,"Wheel",PrimitiveType.Cylinder,new Vector3(0,.40f,z),new Vector3(.76f,.055f,.76f),tyre);
@@ -75,7 +78,11 @@ namespace BurgerShop.Restaurant
             var torso=BagVisualFactory.Part(transform,"Rider",PrimitiveType.Capsule,new Vector3(0,1.40f,-.18f),new Vector3(.42f,.36f,.42f),coat);
             torso.transform.localRotation=Quaternion.Euler(15,0,0);
             BagVisualFactory.Part(transform,"Head",PrimitiveType.Sphere,new Vector3(0,1.89f,-.04f),Vector3.one*.30f,skin);
-            BagVisualFactory.Part(transform,"Helmet",PrimitiveType.Sphere,new Vector3(0,2.01f,-.04f),new Vector3(.36f,.20f,.36f),frame);
+            BagVisualFactory.Part(transform,"Helmet",PrimitiveType.Sphere,new Vector3(0,2.01f,-.04f),new Vector3(.43f,.32f,.44f),red);
+            BagVisualFactory.Part(transform,"HelmetBlueStripe",PrimitiveType.Sphere,new Vector3(0,2.035f,-.04f),new Vector3(.14f,.33f,.45f),coat);
+            CourierVisuals.Part(transform,"DarkVisor",new Vector3(0,1.91f,.16f),new Vector3(.32f,.13f,.07f),tyre);
+            CourierVisuals.Part(transform,"RedFrontShield",new Vector3(0,.85f,.54f),new Vector3(.30f,.48f,.13f),red);
+            BagVisualFactory.Part(transform,"Headlamp",PrimitiveType.Sphere,new Vector3(0,1.05f,.65f),Vector3.one*.18f,steel);
             Bar("LeftArm",new Vector3(-.21f,1.6f,-.10f),new Vector3(-.23f,1.2f,.42f),.10f,skin);
             Bar("RightArm",new Vector3(.21f,1.6f,-.10f),new Vector3(.23f,1.2f,.42f),.10f,skin);
             legs=new GameObject("Pedalling").transform;legs.SetParent(transform,false);legs.localPosition=new Vector3(0,.8f,0);
@@ -83,6 +90,22 @@ namespace BurgerShop.Restaurant
             CourierVisuals.Part(legs,"RightLeg",new Vector3(.16f,0,.12f),new Vector3(.14f,.6f,.14f),tyre);
             rack=new GameObject("ParcelRack").transform;rack.SetParent(transform,false);rack.localPosition=new Vector3(0,.95f,-.68f);
             CourierVisuals.Part(rack,"Rack",Vector3.zero,new Vector3(.70f,.06f,.64f),steel);
+            if(HasCargoTrailer)
+            {
+                rack.localPosition=new Vector3(0,.59f,-1.55f);
+                rack.Find("Rack").localScale=new Vector3(1.12f,.10f,1.18f);
+                rack.Find("Rack").GetComponent<Renderer>().sharedMaterial=green;
+                foreach(int side in new[]{-1,1})
+                {
+                    CourierVisuals.Part(rack,"CargoSide",new Vector3(side*.55f,.13f,0),new Vector3(.09f,.28f,1.2f),green);
+                    CourierVisuals.Part(rack,"CargoEnd",new Vector3(0,.13f,side*.56f),new Vector3(1.12f,.28f,.09f),green);
+                    var wheel=BagVisualFactory.Part(rack,"TrailerWheel",PrimitiveType.Cylinder,new Vector3(side*.66f,-.29f,0),new Vector3(.48f,.08f,.48f),tyre);
+                    wheel.transform.localRotation=Quaternion.Euler(0,0,90);
+                    var hub=BagVisualFactory.Part(rack,"TrailerHub",PrimitiveType.Cylinder,new Vector3(side*.75f,-.29f,0),new Vector3(.24f,.015f,.24f),coat);
+                    hub.transform.localRotation=Quaternion.Euler(0,0,90);
+                }
+                Bar("TowBar",new Vector3(0,.5f,-.65f),new Vector3(0,.5f,-1.4f),.09f,frame);
+            }
             var bubble=new GameObject("CourierOrderBubble").transform;bubble.SetParent(transform,false);bubble.localPosition=Vector3.up*2.45f;
             order=ShopFixtures.CreateStationLabel(bubble,"CourierOrderQuantity",bubble.position,"x"+Quantity);
         }
@@ -98,7 +121,7 @@ namespace BurgerShop.Restaurant
             Vector3 target=stop;
             if(Leaving)
             {
-                Vector3[] exit={new Vector3(-13,0,26),new Vector3(-13,0,30),new Vector3(16,0,30)};
+                var exit=CourierRoad.ExitPath;
                 target=exit[exitStep];
                 if(Arrived(target)){exitStep++;if(exitStep==exit.Length){Finished=true;return;}target=exit[exitStep];}
             }

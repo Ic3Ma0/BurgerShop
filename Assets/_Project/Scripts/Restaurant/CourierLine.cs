@@ -26,6 +26,7 @@ namespace BurgerShop.Restaurant
         RestaurantWallet wallet;PartsWallet parts;BurgerInventory player;CashFloor cash;
         float work,transfer,spawn,handoff,cooldown,partPickup;
         bool paused,unfocused;
+        int spawnedRiders;
         public int InputCount=>raw.Count;
         public int OutputCount=>output.Count;
         public int ProcessingCount=>inProcess!=null?1:0;
@@ -45,16 +46,13 @@ namespace BurgerShop.Restaurant
             dark=RuntimeMaterials.Create(new Color(.22f,.27f,.32f));gold=RuntimeMaterials.Create(new Color(1,.65f,.08f));road=RuntimeMaterials.Create(new Color(.16f,.18f,.20f));
             area.gameObject.AddComponent<BurgerVisual>().OwnMaterials(blue,white,dark,gold,road);
             CourierVisuals.Part(area,"CourierFloor",new Vector3(0,-.1f,20.5f),new Vector3(30,.2f,11),white,true);
-            CourierVisuals.Part(area,"BicycleRoad",new Vector3(0,-.07f,28.5f),new Vector3(30,.14f,6),road,true);
+            CourierRoad.Build(area,road,white);
             foreach(var t in GetComponentsInChildren<Transform>())if(t.name=="Wall+Z")t.gameObject.SetActive(false);
             foreach(int side in new[]{-1,1})
             {
                 CourierVisuals.Part(area,"OldNorthWall",new Vector3(side*8.4f,.75f,15),new Vector3(13.2f,1.5f,.4f),dark,true);
                 CourierVisuals.Part(area,"CourierSideWall",new Vector3(side*15,.6f,20.5f),new Vector3(.3f,1.2f,11),blue,true);
             }
-            for(int i=-12;i<=12;i+=3)
-                CourierVisuals.Part(area,"RoadDash",new Vector3(i,.02f,28),new Vector3(1.2f,.025f,.08f),white);
-            CourierVisuals.Part(area,"BikeStopLine",Stop+new Vector3(-1,.03f,0),new Vector3(.10f,.03f,2.2f),white);
             machine=new GameObject("BlueParcelMachine").transform;machine.SetParent(area,false);machine.position=Machine;
             CourierVisuals.Part(machine,"MachineBody",new Vector3(0,1.05f,0),new Vector3(2.5f,2.1f,1.6f),blue,true);
             CourierVisuals.Part(machine,"WhiteFrame",new Vector3(0,1.05f,-.86f),new Vector3(2.1f,1.8f,.16f),white);
@@ -126,7 +124,7 @@ namespace BurgerShop.Restaurant
             spawn+=dt;
             if(queue.Count<3&&spawn>=8)
             {
-                spawn=0;queue.Add(BicycleCourier.Create(area,new Vector3(14,0,26),OrderQuantity));
+                spawn=0;queue.Add(BicycleCourier.Create(area,new Vector3(14,0,26),OrderQuantity,(spawnedRiders++%2)==1));
             }
             for(int i=0;i<queue.Count;i++)queue[i].Advance(dt,Stop+Vector3.right*(i*4));
             if(receiving==null&&Front!=null&&Front.Arrived(Stop)&&stock.Count>0&&cooldown<=0&&wallet.CanCompleteSale())
