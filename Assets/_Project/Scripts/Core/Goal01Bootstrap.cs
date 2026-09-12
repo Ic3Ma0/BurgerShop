@@ -288,8 +288,6 @@ namespace BurgerShop.Core
 
             HudChrome.BuildTopBand(uiRoot);
             StarProgressHud.Build(uiRoot, goals);
-            TaskCapsuleHud.Build(uiRoot, goals);
-            CreateCarryHud(uiRoot, inventory, pickup, upgrade, hiring, trashBag);
             CreateCustomerHud(uiRoot, customers);
             SalesHud.Build(uiRoot, wallet);
             CreateUpgradeHud(uiRoot, upgrade);
@@ -343,14 +341,6 @@ namespace BurgerShop.Core
                 new Vector2(0.5f, 1f), new Vector2(0f, -320f), new Vector2(1000f, 70f), 22,
                 new Color(0.68f, 0.88f, 1f), TextAnchor.UpperCenter, false, true);
             text.gameObject.AddComponent<CustomerQueueHud>().Configure(customers, text);
-        }
-
-        static void CreateCarryHud(Transform canvas, BurgerInventory inventory, BurgerPickupZone pickup, GrillUpgradeZone upgrade, WorkerHiringZone hiring, TrashInventory trashBag)
-        {
-            Text text = HudChrome.Label(canvas, "CarryStatus", new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(24f, -88f), new Vector2(420f, 70f), 22,
-                Color.white, TextAnchor.UpperLeft, false, true);
-            text.gameObject.AddComponent<CarryHud>().Configure(inventory, pickup, text, upgrade, hiring, trashBag);
         }
 
         static Material CreateLit(Color color) => RuntimeMaterials.Create(color);
