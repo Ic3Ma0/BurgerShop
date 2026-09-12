@@ -15,6 +15,7 @@ namespace BurgerShop.Persistence
         ShopExpansion expansion;
         StaffUpgradeBoard staffUpgrades;
         SessionGoalTracker goals;
+        GrillUpgradeZone colaUpgrade;
         LocalSaveStore store;
         string lastChecksum;
         float elapsed;
@@ -45,7 +46,7 @@ namespace BurgerShop.Persistence
 
         public void Configure(RestaurantWallet earnings, GrillUpgradeZone grill, WorkerHiringZone staff,
             BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades, SessionGoalTracker tracker,
-            string directory = null)
+            string directory = null, GrillUpgradeZone cola = null)
         {
             wallet = earnings;
             upgrade = grill;
@@ -57,6 +58,7 @@ namespace BurgerShop.Persistence
             staffUpgrades = upgrades;
             if (goals != null) goals.ProgressChanged -= RequestSave;
             goals = tracker;
+            colaUpgrade = cola;
             if (goals != null) goals.ProgressChanged += RequestSave;
             if (directory == null)
             {
@@ -82,6 +84,7 @@ namespace BurgerShop.Persistence
                 if (data.version >= 7)
                     expansion?.RestoreInvestments(data.tableInvestment, data.grillInvestment, data.counterInvestment,
                         data.boxingInvestment, data.driveThruInvestment);
+                colaUpgrade?.RestoreLevel(data.ResolvedColaLevel);
                 lastChecksum = data.Checksum();
                 RestoredRank = data.ResolvedShopRank;
                 RestoredGoalIndex = data.ResolvedGoalIndex;
@@ -95,7 +98,7 @@ namespace BurgerShop.Persistence
             }
             goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, data?.ResolvedUpgradeStars ?? 0);
             GetComponent<BagLine>()?.Restore(data);
-            GetComponent<GrowthUpgrades>()?.Restore(data?.facilityLevels, data?.grillLevel ?? 1, data?.ResolvedExtraGrillLevel ?? 0);
+            GetComponent<GrowthUpgrades>()?.Restore(data?.facilityLevels, data?.grillLevel ?? 1, data?.ResolvedExtraGrillLevel ?? 0, data?.ResolvedColaLevel ?? 1);
             if (goals != null)
                 expansion?.ApplyRank(goals.Rank);
             Status = LoadResult == SaveLoadResult.Loaded ? "PROGRESS RESTORED"
@@ -157,7 +160,8 @@ namespace BurgerShop.Persistence
                 bagCounterBuilt = GetComponent<BagLine>()?.CounterBuilt ?? false,
                 bagMachineInvestment = GetComponent<BagLine>()?.MachinePad?.Invested ?? 0,
                 bagTableInvestment = GetComponent<BagLine>()?.TablePad?.Invested ?? 0,
-                bagCounterInvestment = GetComponent<BagLine>()?.CounterPad?.Invested ?? 0
+                bagCounterInvestment = GetComponent<BagLine>()?.CounterPad?.Invested ?? 0,
+                colaLevel = colaUpgrade != null ? colaUpgrade.Level : 1
             };
             string checksum = data.Checksum();
             if (checksum == lastChecksum) return true;

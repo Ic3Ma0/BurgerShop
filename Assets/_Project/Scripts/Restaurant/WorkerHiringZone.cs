@@ -28,6 +28,10 @@ namespace BurgerShop.Restaurant
         BoxingStation boxing;
         DriveThruLane driveThru;
         StaffUpgradeBoard upgrades;
+        ProductionStation colaGrill;
+        Transform colaPickup;
+        BurgerServingZone colaServing;
+        CounterDropZone colaDrop;
         float heldTime;
         bool purchasedThisVisit;
         SupplyLine nextSupply = SupplyLine.Dining;
@@ -57,6 +61,11 @@ namespace BurgerShop.Restaurant
         public int BoxingSupplyDeficit => driveThru == null || boxing == null || !driveThru.isActiveAndEnabled || !boxing.isActiveAndEnabled ? 0
             : Mathf.Max(0, SupplyBuffer - boxing.OutputCount - boxing.ProcessingCount - boxing.PackageCount
                 - HeldBoxes() - ReservedFor(SupplyLine.Boxing) - boxing.InputCount);
+        public int ColaSupplyDeficit => colaServing == null || !colaServing.isActiveAndEnabled ? 0
+            : Mathf.Max(0, Mathf.Max(SupplyBuffer - colaServing.TotalStock, colaServing.ActiveOrderStockDeficit)
+                - ReservedFor(SupplyLine.Cola));
+        public BurgerServingZone ColaServing => colaServing;
+        public CounterDropZone ColaDrop => colaDrop;
 
         int ReservedFor(SupplyLine line)
         {
@@ -74,13 +83,13 @@ namespace BurgerShop.Restaurant
         public bool TryAssignSupply(RestaurantWorker worker)
         {
             if(worker==null)return false;
-            int[] deficits={DiningSupplyDeficit,BoxingSupplyDeficit,BagAvailableFor(worker)?BagSupplyDeficit:0};
-            int start=nextSupply==SupplyLine.Dining?0:nextSupply==SupplyLine.Boxing?1:2;
-            for(int n=0;n<3;n++)
+            int[] deficits={AnyGrillHasStock()?DiningSupplyDeficit:0,AnyGrillHasStock()?BoxingSupplyDeficit:0,AnyGrillHasStock()&&BagAvailableFor(worker)?BagSupplyDeficit:0,AnyColaHasStock()?ColaSupplyDeficit:0};
+            int start=(int)nextSupply-1;
+            for(int n=0;n<4;n++)
             {
-                int index=(start+n)%3;if(deficits[index]<=0)continue;
+                int index=(start+n)%4;if(deficits[index]<=0)continue;
                 worker.AssignSupply((SupplyLine)(index+1),Mathf.Min(worker.Inventory.Capacity,deficits[index]));
-                nextSupply=(SupplyLine)((index+1)%3+1);return true;
+                nextSupply=(SupplyLine)((index+1)%4+1);return true;
             }
             return false;
         }
@@ -204,6 +213,15 @@ namespace BurgerShop.Restaurant
 
         public void RegisterDriveThru(DriveThruLane lane) => driveThru = lane;
 
+        public void RegisterCola(ProductionStation station, Transform pickup, BurgerServingZone cashier,
+            CounterDropZone dropZone)
+        {
+            colaGrill = station;
+            colaPickup = pickup;
+            colaServing = cashier;
+            colaDrop = dropZone;
+        }
+
         public bool MayGoWindow(RestaurantWorker worker)
         {
             for (int i = 0; i < workers.Count; i++)
@@ -223,8 +241,17 @@ namespace BurgerShop.Restaurant
             return grill != null && grill.isActiveAndEnabled && grill.Stock > 0;
         }
 
-        public bool TryGetCollectTarget(out ProductionStation station, out Transform pickup)
+        public bool AnyColaHasStock() =>
+            colaGrill != null && colaGrill.isActiveAndEnabled && colaGrill.Stock > 0;
+
+        public bool TryGetCollectTarget(RestaurantWorker worker, out ProductionStation station, out Transform pickup)
         {
+            if (worker != null && worker.SupplyTarget == SupplyLine.Cola)
+            {
+                station = colaGrill;
+                pickup = colaPickup;
+                return station != null && pickup != null;
+            }
             station = grill;
             pickup = pickupPoint;
             for (int i = 0; i < kitchens.Count; i++)
@@ -343,6 +370,17 @@ namespace BurgerShop.Restaurant
                 RestaurantWorker other = workers[i];
                 if (other == null || other == worker || !other.isActiveAndEnabled) continue;
                 if (other.Job == WorkerJob.Serve) return false;
+            }
+            return true;
+        }
+
+        public bool MayGoServeCola(RestaurantWorker worker)
+        {
+            for (int i = 0; i < workers.Count; i++)
+            {
+                RestaurantWorker other = workers[i];
+                if (other == null || other == worker || !other.isActiveAndEnabled) continue;
+                if (other.Job == WorkerJob.ServeCola) return false;
             }
             return true;
         }

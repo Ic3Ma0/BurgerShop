@@ -26,7 +26,7 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
-            Object.FindFirstObjectByType<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
+            MainKitchen<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
             previousStep = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
             previousBackground = InputSystem.settings.backgroundBehavior;
@@ -38,8 +38,8 @@ namespace BurgerShop.Tests.EditMode
             input = new Goal03InputDriver(keyboard);
             yield return null;
             BurgerInventory inventory = Object.FindFirstObjectByType<PlayerMotor>().GetComponent<BurgerInventory>();
-            BurgerServingZone serving = Object.FindFirstObjectByType<BurgerServingZone>();
-            BurgerPickupZone pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
+            BurgerServingZone serving = MainKitchen<BurgerServingZone>();
+            BurgerPickupZone pickup = MainKitchen<BurgerPickupZone>();
             RestaurantWallet wallet = Object.FindFirstObjectByType<RestaurantWallet>();
             WorkerHiringZone hiring = Object.FindFirstObjectByType<WorkerHiringZone>();
             Assert.That(GameObject.Find("StaffHiringSpot"), Is.Null);

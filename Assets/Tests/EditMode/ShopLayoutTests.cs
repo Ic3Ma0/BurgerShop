@@ -84,6 +84,15 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopLayout.BoostDoorX, Is.EqualTo(11f));
             Assert.That(ShopLayout.HrDoorZ, Is.EqualTo(ShopLayout.Aisle.z));
             Assert.That(ShopLayout.HiringSpot, Is.EqualTo(new Vector3(2f, 0.02f, 0f)));
+            Assert.That(ShopLayout.Cola, Is.EqualTo(new Vector3(9f, 0f, 3f)));
+            Assert.That(ShopLayout.ColaUpgrade, Is.EqualTo(new Vector3(9f, 0.02f, 5.4f)));
+            Assert.That(Vector3.Distance(ShopLayout.ColaPickup, new Vector3(10.15f, 0.015f, 0.8f)), Is.LessThan(.0001f));
+            Assert.That(ShopLayout.ColaCounter, Is.EqualTo(new Vector3(3f, 0f, -3f)));
+            Assert.That(ShopLayout.ColaServingCircle, Is.EqualTo(new Vector3(6.6f, 0.02f, -3f)));
+            Assert.That(ShopLayout.ColaQueueEntry, Is.EqualTo(new Vector3(3f, 0f, -13f)));
+            Assert.That(ShopLayout.ColaQueueSlots[0], Is.EqualTo(new Vector3(3f, 0f, -5.5f)));
+            Assert.That(ShopLayout.ColaQueueSlots[1], Is.EqualTo(new Vector3(3f, 0f, -8.5f)));
+            Assert.That(ShopLayout.ColaQueueSlots[2], Is.EqualTo(new Vector3(3f, 0f, -11.5f)));
         }
 
         [Test]
@@ -115,6 +124,14 @@ namespace BurgerShop.Tests.EditMode
             AssertFar("counters", ShopLayout.Counter, ShopLayout.ExtraCounter, min);
             AssertFar("white-circles", ShopLayout.ServingCircle, ShopLayout.ExtraServingCircle, min);
             AssertFar("grill-upgrades", ShopLayout.UpgradeSpot, ShopLayout.ExtraGrillUpgrade, min);
+            AssertFar("cola-vs-starter-grill", ShopLayout.Cola, ShopLayout.Grill, min);
+            AssertFar("cola-vs-extra-grill", ShopLayout.Cola, ShopLayout.ExtraGrill, min);
+            AssertFar("cola-vs-burger-counter", ShopLayout.Cola, ShopLayout.Counter, min);
+            AssertFar("cola-counter-vs-burger-counter", ShopLayout.ColaCounter, ShopLayout.Counter, min);
+            AssertFar("cola-white-vs-burger-white", ShopLayout.ColaServingCircle, ShopLayout.ServingCircle, min);
+            AssertFar("cola-vs-entrance", ShopLayout.Cola, ShopLayout.Entrance, min);
+            AssertFar("cola-counter-vs-entrance", ShopLayout.ColaCounter, ShopLayout.Entrance, min);
+            AssertFar("cola-upgrade-on-own-machine", ShopLayout.ColaUpgrade, ShopLayout.Cola, 2f);
             AssertFar("starter-upgrade-on-own-grill", ShopLayout.UpgradeSpot, ShopLayout.Grill, 2f);
             Assert.That(ShopLayout.Horizontal(ShopLayout.UpgradeSpot, ShopLayout.Grill), Is.LessThan(3f));
             Assert.That(ShopLayout.Horizontal(ShopLayout.ExtraGrillUpgrade, ShopLayout.ExtraGrill), Is.LessThan(3f));
@@ -154,6 +171,11 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopLayout.GrillPickup.z, Is.LessThan(ShopLayout.Grill.z));
             Assert.That(ShopLayout.ServingCircle.x, Is.GreaterThan(ShopLayout.Counter.x));
             Assert.That(ShopLayout.ExtraServingCircle.x, Is.GreaterThan(ShopLayout.ExtraCounter.x));
+            Assert.That(ShopLayout.ColaServingCircle.x, Is.GreaterThan(ShopLayout.ColaCounter.x));
+            Assert.That(ShopLayout.ColaUpgrade.z, Is.GreaterThan(ShopLayout.Cola.z));
+            Assert.That(ShopLayout.ColaPickup.z, Is.LessThan(ShopLayout.Cola.z));
+            Assert.That(ShopLayout.Cola.x, Is.GreaterThan(0f));
+            Assert.That(ShopLayout.ColaQueueSlots[0].z, Is.LessThan(ShopLayout.ColaCounter.z));
             Assert.That(ShopLayout.Tables[0].x, Is.LessThan(0f));
             Assert.That(ShopLayout.DriveThruWindow.z, Is.EqualTo(-ShopLayout.WallHalf).Within(1f));
             Assert.That(ShopLayout.DriveThruQueue[0].z, Is.LessThan(-ShopLayout.WallHalf));

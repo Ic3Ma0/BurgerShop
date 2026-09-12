@@ -83,7 +83,7 @@ namespace BurgerShop.Tests.EditMode
                 var store=new LocalSaveStore(dir);Assert.That(store.Save(old),Is.True);
                 var persistence=root.AddComponent<RestaurantPersistence>();persistence.Configure(wallet,grill.Upgrade,hiring,null,expansion,null,goals,dir);
                 Assert.That(goals.Rank,Is.EqualTo(4));Assert.That(goals.Stars,Is.EqualTo(8));Assert.That(goals.GoalProgress,Is.EqualTo(2));
-                Assert.That(persistence.Flush(),Is.True);store.Load(out var saved);Assert.That(saved.version,Is.EqualTo(9));Assert.That(saved.ResolvedUpgradeStars,Is.EqualTo(8));
+                Assert.That(persistence.Flush(),Is.True);store.Load(out var saved);Assert.That(saved.version,Is.EqualTo(RestaurantSaveData.CurrentVersion));Assert.That(saved.ResolvedUpgradeStars,Is.EqualTo(8));
                 persistence.Configure(wallet,grill.Upgrade,hiring,null,expansion,null,goals,dir);Assert.That(goals.Stars,Is.EqualTo(8));
                 goals.Restore(1,0,0,3);Assert.That(persistence.Flush(),Is.True);store.Load(out saved);
                 Assert.That(saved.ResolvedShopRank,Is.EqualTo(1)); // Existing ownership must not silently rank up a v9 save.

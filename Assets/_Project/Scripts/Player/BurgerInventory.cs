@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace BurgerShop.Player
 {
-    public enum CarriedItemKind { Burger, Boxed, EmptyBag, Bagged }
+    public enum CarriedItemKind { Burger, Boxed, EmptyBag, Bagged, Cola }
     public sealed class BurgerInventory : MonoBehaviour
     {
         [SerializeField, Min(1)] int capacity = 4;
@@ -26,6 +26,7 @@ namespace BurgerShop.Player
                 return loose;
             }
         }
+        public int ColaCount => CountKind(CarriedItemKind.Cola);
         public int BoxedCount => CountKind(CarriedItemKind.Boxed) + incomingBoxes;
         public int EmptyBagCount => CountKind(CarriedItemKind.EmptyBag);
         public int BaggedCount => CountKind(CarriedItemKind.Bagged);
@@ -61,8 +62,9 @@ namespace BurgerShop.Player
             if (IsFull || station == null || !station.TryTakeBurger(out Transform burger))
                 return false;
 
+            bool drink = station.Product == KitchenProduct.Cola;
             if (burger == null)
-                burger = BurgerVisualFactory.Create(carryAnchor, Count);
+                burger = drink ? ColaVisualFactory.Create(carryAnchor, Count) : BurgerVisualFactory.Create(carryAnchor, Count);
             else
                 burger.SetParent(carryAnchor, false);
 
@@ -70,7 +72,7 @@ namespace BurgerShop.Player
             burger.localRotation = Quaternion.identity;
             burger.localScale = Vector3.one;
             burgers.Add(burger);
-            boxed.Add(CarriedItemKind.Burger);
+            boxed.Add(drink ? CarriedItemKind.Cola : CarriedItemKind.Burger);
             CountChanged?.Invoke(Count);
             return true;
         }
@@ -125,6 +127,14 @@ namespace BurgerShop.Player
 
         // Transfer ownership of the existing visual to the customer without duplicating it.
         public bool TryTakeBurger(out Transform burger) => TryTake(CarriedItemKind.Burger, out burger);
+
+        public bool TryTakeCola(out Transform cup) => TryTake(CarriedItemKind.Cola, out cup);
+        public bool TryTakeCola()
+        {
+            if (!TryTakeCola(out var cup)) return false;
+            if (cup != null) BurgerVisual.Release(cup.gameObject);
+            return true;
+        }
 
         public bool TryTakeBoxed(out Transform box) => TryTake(CarriedItemKind.Boxed, out box);
 

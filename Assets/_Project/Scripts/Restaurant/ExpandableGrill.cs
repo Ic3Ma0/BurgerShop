@@ -94,6 +94,13 @@ namespace BurgerShop.Restaurant
                 ShopLayout.UpgradeSpot, "GrillUpgradeSpot", new[] { 30, 60 }, new[] { 3f, 2f, 1.5f });
         }
 
+        public static ExpandableGrill CreateColaStarter(Transform parent, BurgerInventory player, RestaurantWallet wallet)
+        {
+            return Create(parent, ShopLayout.Cola, player, wallet, "ColaMachine", "ColaPickupSpot",
+                ShopLayout.ColaUpgrade, "ColaUpgradeSpot", new[] { 30, 60 }, new[] { 3f, 2f, 1.5f },
+                KitchenProduct.Cola);
+        }
+
         public static ExpandableGrill Create(Transform parent, Vector3 position, BurgerInventory player,
             RestaurantWallet wallet)
         {
@@ -105,26 +112,34 @@ namespace BurgerShop.Restaurant
 
         public static ExpandableGrill Create(Transform parent, Vector3 position, BurgerInventory player,
             RestaurantWallet wallet, string rootName, string pickupName, Vector3 upgradeWorld,
-            string upgradeSpotName, int[] costs, float[] cookSeconds)
+            string upgradeSpotName, int[] costs, float[] cookSeconds, KitchenProduct product = KitchenProduct.Burger)
         {
             Transform root = new GameObject(rootName).transform;
             root.SetParent(parent, false);
             root.position = position;
 
-            Transform[] kits =
-            {
-                BuildLook(root, 1, new Color(0.22f, 0.26f, 0.30f), new Color(0.08f, 0.09f, 0.10f), 1, 0, 1),
-                BuildLook(root, 2, new Color(0.72f, 0.38f, 0.14f), new Color(0.95f, 0.42f, 0.10f), 2, 1, 2),
-                BuildLook(root, 3, new Color(0.78f, 0.14f, 0.16f), new Color(0.82f, 0.84f, 0.88f), 3, 2, 4)
-            };
+            bool cola = product == KitchenProduct.Cola;
+            Transform[] kits = cola
+                ? new[]
+                {
+                    BuildLook(root, 1, new Color(0.16f, 0.42f, 0.72f), new Color(0.72f, 0.10f, 0.14f), 1, 0, 1),
+                    BuildLook(root, 2, new Color(0.08f, 0.55f, 0.68f), new Color(0.82f, 0.16f, 0.18f), 2, 1, 2),
+                    BuildLook(root, 3, new Color(0.06f, 0.22f, 0.48f), new Color(0.90f, 0.12f, 0.16f), 3, 2, 4)
+                }
+                : new[]
+                {
+                    BuildLook(root, 1, new Color(0.22f, 0.26f, 0.30f), new Color(0.08f, 0.09f, 0.10f), 1, 0, 1),
+                    BuildLook(root, 2, new Color(0.72f, 0.38f, 0.14f), new Color(0.95f, 0.42f, 0.10f), 2, 1, 2),
+                    BuildLook(root, 3, new Color(0.78f, 0.14f, 0.16f), new Color(0.82f, 0.84f, 0.88f), 3, 2, 4)
+                };
 
-            Transform output = new GameObject("BurgerOutput").transform;
+            Transform output = new GameObject(cola ? "ColaOutput" : "BurgerOutput").transform;
             output.SetParent(root, false);
-            TextMesh label = NewLabel(root, "GrillStatus", StatusLocal(1),
-                new Color(1f, 0.92f, 0.72f), 36, 0.09f);
+            TextMesh label = NewLabel(root, cola ? "ColaStatus" : "GrillStatus", StatusLocal(1),
+                cola ? new Color(0.82f, 0.92f, 1f) : new Color(1f, 0.92f, 0.72f), 36, 0.09f);
             ProductionStation station = root.gameObject.AddComponent<ProductionStation>();
             station.Configure(output, kits[0].Find("ProgressFill"), label, cookSeconds[0],
-                ProductionStation.CapacityForLevel(1));
+                ProductionStation.CapacityForLevel(1), product);
 
             GameObject spot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             spot.name = pickupName;
@@ -155,7 +170,7 @@ namespace BurgerShop.Restaurant
             visuals.HidePersistentMax = true;
             GrillUpgradeZone upgrade = root.gameObject.AddComponent<GrillUpgradeZone>();
             upgrade.Configure(station, wallet, player, upgradeSpot.transform, upgradeLabel, null, visuals,
-                costs, cookSeconds);
+                costs, cookSeconds, product);
 
             ExpandableGrill visual = root.gameObject.AddComponent<ExpandableGrill>();
             visual.UpgradeSpot = upgradeSpot.transform;

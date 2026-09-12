@@ -15,6 +15,7 @@ namespace BurgerShop.Restaurant
         StationUpgradeFeedback feedback;
         int[] costs = { 30, 60 };
         float[] seconds = { 3f, 2f, 1.5f };
+        KitchenProduct product = KitchenProduct.Burger;
         [SerializeField, Min(0.1f)] float radius = 1f;
         [SerializeField, Min(0.1f)] float holdSeconds = 1.5f;
         float heldTime;
@@ -22,6 +23,9 @@ namespace BurgerShop.Restaurant
         public event System.Action<int, bool> LevelApplied;
         public ProductionStation Station => station;
         public int Level { get; private set; } = 1;
+        public KitchenProduct Product => product;
+        public string ProductNoun => product == KitchenProduct.Cola ? "COLA" : "GRILL";
+        public string ItemNoun => product == KitchenProduct.Cola ? "cup" : "burger";
         public int MaxLevel => seconds != null && seconds.Length > 0 ? seconds.Length : 3;
         public bool IsMaxLevel => Level >= MaxLevel;
         public int NextCost => IsMaxLevel || costs == null || Level < 1 || Level > costs.Length ? 0 : costs[Level - 1];
@@ -46,7 +50,7 @@ namespace BurgerShop.Restaurant
 
         public void Configure(ProductionStation target, RestaurantWallet earnings, BurgerInventory carrier,
             Transform point, TextMesh label = null, Transform[] indicators = null, StationUpgradeFeedback visuals = null,
-            int[] levelCosts = null, float[] productionSeconds = null)
+            int[] levelCosts = null, float[] productionSeconds = null, KitchenProduct kind = KitchenProduct.Burger)
         {
             station = target;
             wallet = earnings;
@@ -55,6 +59,7 @@ namespace BurgerShop.Restaurant
             markerLabel = label;
             levelIndicators = indicators;
             feedback = visuals;
+            product = kind;
             if (levelCosts != null && levelCosts.Length >= 1) costs = (int[])levelCosts.Clone();
             if (productionSeconds != null && productionSeconds.Length >= 1) seconds = (float[])productionSeconds.Clone();
             heldTime = 0f;
@@ -139,7 +144,7 @@ namespace BurgerShop.Restaurant
         void RefreshVisuals()
         {
             if (markerLabel != null)
-                markerLabel.text = IsMaxLevel ? $"GRILL LV {Level}\nMAX LEVEL" : $"UPGRADE\n{NextCost} COINS";
+                markerLabel.text = IsMaxLevel ? $"{ProductNoun} LV {Level}\nMAX LEVEL" : $"UPGRADE\n{NextCost} COINS";
             if (levelIndicators != null)
                 for (int i = 0; i < levelIndicators.Length; i++)
                     if (levelIndicators[i] != null) levelIndicators[i].gameObject.SetActive(i < Level - 1);

@@ -3,6 +3,8 @@ using UnityEngine;
 
 namespace BurgerShop.Restaurant
 {
+    public enum KitchenProduct { Burger, Cola }
+
     public sealed class ProductionStation : MonoBehaviour
     {
         public static readonly int[] LevelCaps = { 4, 6, 8 };
@@ -13,10 +15,12 @@ namespace BurgerShop.Restaurant
         Transform outputAnchor;
         Transform progressFill;
         TextMesh statusText;
+        KitchenProduct product = KitchenProduct.Burger;
         float elapsed;
         bool maxedTier;
 
         public int Stock { get; private set; }
+        public KitchenProduct Product => product;
         public int Capacity => capacity;
         public Transform OutputAnchor => outputAnchor;
         public string StatusCopy => statusText != null ? statusText.text : "";
@@ -28,11 +32,13 @@ namespace BurgerShop.Restaurant
         public static int CapacityForLevel(int level) =>
             LevelCaps[Mathf.Clamp(level, 1, LevelCaps.Length) - 1];
 
-        public void Configure(Transform output, Transform fill, TextMesh label, float seconds = 3f, int maxStock = 4)
+        public void Configure(Transform output, Transform fill, TextMesh label, float seconds = 3f, int maxStock = 4,
+            KitchenProduct kind = KitchenProduct.Burger)
         {
             outputAnchor = output;
             progressFill = fill;
             statusText = label;
+            product = kind;
             productionSeconds = Mathf.Max(0.1f, seconds);
             capacity = Mathf.Max(1, maxStock);
             RefreshVisuals();
@@ -85,7 +91,7 @@ namespace BurgerShop.Restaurant
             while (elapsed >= productionSeconds && Stock < capacity)
             {
                 elapsed -= productionSeconds;
-                AddBurger();
+                AddItem();
             }
 
             if (Stock >= capacity)
@@ -125,11 +131,16 @@ namespace BurgerShop.Restaurant
             return true;
         }
 
-        void AddBurger()
+        void AddItem()
         {
             Stock++;
             if (outputAnchor != null)
-                BurgerVisualFactory.Create(outputAnchor, Stock - 1);
+            {
+                if (product == KitchenProduct.Cola)
+                    ColaVisualFactory.Create(outputAnchor, Stock - 1);
+                else
+                    BurgerVisualFactory.Create(outputAnchor, Stock - 1);
+            }
             StockChanged?.Invoke(Stock);
         }
 
@@ -145,9 +156,12 @@ namespace BurgerShop.Restaurant
             }
 
             if (statusText != null)
+            {
+                string noun = product == KitchenProduct.Cola ? "COLA" : "GRILL";
                 statusText.text = maxedTier
-                    ? $"GRILL {Stock}/{capacity}  MAX"
-                    : $"GRILL {Stock}/{capacity}";
+                    ? $"{noun} {Stock}/{capacity}  MAX"
+                    : $"{noun} {Stock}/{capacity}";
+            }
         }
 
         void FaceLabelTowardsCamera()
@@ -219,6 +233,51 @@ namespace BurgerShop.Restaurant
             CreateLayer(box, "Lid", PrimitiveType.Cube, new Vector3(0f, 0.28f, 0f), new Vector3(0.66f, 0.06f, 0.66f), lid);
             CreateLayer(box, "Band", PrimitiveType.Cube, new Vector3(0f, 0.20f, 0f), new Vector3(0.68f, 0.05f, 0.18f), stripe);
             return box;
+        }
+
+        static void CreateLayer(Transform parent, string name, PrimitiveType primitive, Vector3 position, Vector3 scale, Material material)
+        {
+            GameObject layer = GameObject.CreatePrimitive(primitive);
+            layer.name = name;
+            layer.transform.SetParent(parent, false);
+            layer.transform.localPosition = position;
+            layer.transform.localScale = scale;
+            Renderer renderer = layer.GetComponent<Renderer>();
+            if (renderer != null)
+                renderer.sharedMaterial = material;
+            Collider collider = layer.GetComponent<Collider>();
+            if (collider != null)
+            {
+                collider.enabled = false;
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(collider);
+                else
+                    UnityEngine.Object.DestroyImmediate(collider);
+            }
+        }
+
+        static Material CreateMaterial(Color color) => BurgerShop.Core.RuntimeMaterials.Create(color);
+    }
+
+    static class ColaVisualFactory
+    {
+        public static Transform Create(Transform parent, int index)
+        {
+            Transform cup = new GameObject($"Cola_{index + 1}").transform;
+            cup.SetParent(parent, false);
+            cup.localPosition = new Vector3(0f, index * 0.34f, 0f);
+
+            Material body = CreateMaterial(new Color(0.72f, 0.10f, 0.14f));
+            Material stripe = CreateMaterial(new Color(0.96f, 0.96f, 0.98f));
+            Material straw = CreateMaterial(new Color(0.90f, 0.90f, 0.92f));
+            Material lid = CreateMaterial(new Color(0.18f, 0.18f, 0.20f));
+            cup.gameObject.AddComponent<BurgerVisual>().OwnMaterials(body, stripe, straw, lid);
+
+            CreateLayer(cup, "Cup", PrimitiveType.Cylinder, new Vector3(0f, 0.16f, 0f), new Vector3(0.38f, 0.16f, 0.38f), body);
+            CreateLayer(cup, "Stripe", PrimitiveType.Cylinder, new Vector3(0f, 0.16f, 0f), new Vector3(0.40f, 0.035f, 0.40f), stripe);
+            CreateLayer(cup, "Lid", PrimitiveType.Cylinder, new Vector3(0f, 0.30f, 0f), new Vector3(0.36f, 0.03f, 0.36f), lid);
+            CreateLayer(cup, "Straw", PrimitiveType.Cylinder, new Vector3(0.08f, 0.42f, 0f), new Vector3(0.05f, 0.12f, 0.05f), straw);
+            return cup;
         }
 
         static void CreateLayer(Transform parent, string name, PrimitiveType primitive, Vector3 position, Vector3 scale, Material material)

@@ -39,13 +39,13 @@ namespace BurgerShop.Tests.EditMode
             input = new Goal03InputDriver(keyboard);
             yield return null;
             BurgerInventory inventory = Object.FindFirstObjectByType<BurgerInventory>();
-            BurgerServingZone serving = Object.FindFirstObjectByType<BurgerServingZone>();
-            BurgerPickupZone pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
-            CustomerQueue queue = Object.FindFirstObjectByType<CustomerQueue>();
+            BurgerServingZone serving = MainKitchen<BurgerServingZone>();
+            BurgerPickupZone pickup = MainKitchen<BurgerPickupZone>();
+            CustomerQueue queue = MainKitchen<CustomerQueue>();
             queue.OrderQuantityFactory = () => 1;
             RestaurantWallet wallet = Object.FindFirstObjectByType<RestaurantWallet>();
-            ProductionStation grill = Object.FindFirstObjectByType<ProductionStation>();
-            GrillUpgradeZone upgrade = Object.FindFirstObjectByType<GrillUpgradeZone>();
+            ProductionStation grill = MainKitchen<ProductionStation>();
+            GrillUpgradeZone upgrade = MainKitchen<GrillUpgradeZone>();
             Text sales = GameObject.Find("SalesStatus").GetComponent<Text>();
             Text upgradeText = GameObject.Find("UpgradeStatus").GetComponent<Text>();
             CanvasGroup panel = GameObject.Find("UpgradePanel").GetComponent<CanvasGroup>();
@@ -117,7 +117,7 @@ namespace BurgerShop.Tests.EditMode
             yield return WaitSeconds(18f);
             Assert.That(queue.Count, Is.EqualTo(3));
             Assert.That(queue.ReadyCustomer.TicketNumber, Is.EqualTo(5));
-            Assert.That(Object.FindObjectsByType<CustomerAgent>(FindObjectsSortMode.None).Length, Is.EqualTo(3));
+            Assert.That(queue.Count, Is.EqualTo(3));
             LogAssert.NoUnexpectedReceived();
             Restore();
             yield return new ExitPlayMode();

@@ -10,20 +10,23 @@ namespace BurgerShop.Restaurant
         [SerializeField, Min(0.1f)] float radius = 1.05f;
         [SerializeField, Min(0.05f)] float dropInterval = 0.35f;
         bool boxed;
+        KitchenProduct product = KitchenProduct.Burger;
         float cooldown;
 
         public CounterStock Stock => stock;
         public Vector3 DropPosition => dropPoint != null ? dropPoint.position : transform.position;
         public bool AcceptsBoxes => boxed;
+        public KitchenProduct Product => product;
 
         public void Configure(CounterStock counter, Transform point, float dropRadius = 1.05f, float interval = 0.25f,
-            bool acceptBoxes = false)
+            bool acceptBoxes = false, KitchenProduct kind = KitchenProduct.Burger)
         {
             stock = counter;
             dropPoint = point;
             radius = Mathf.Max(0.1f, dropRadius);
             dropInterval = Mathf.Max(0.35f, interval);
             boxed = acceptBoxes;
+            product = kind;
             cooldown = 0f;
         }
 
@@ -45,11 +48,22 @@ namespace BurgerShop.Restaurant
         {
             if (!isActiveAndEnabled || cooldown > 0f || stock == null || !stock.isActiveAndEnabled
                 || carrier == null || !carrier.isActiveAndEnabled
-                || (boxed ? carrier.BoxedCount : carrier.LooseCount) <= 0
+                || HeldMatching(carrier) <= 0
                 || !IsInRangeOf(carrier.transform)) return false;
-            if (boxed ? !stock.TryPlaceBoxedFrom(carrier) : !stock.TryPlaceFrom(carrier)) return false;
+            bool placed = boxed ? stock.TryPlaceBoxedFrom(carrier)
+                : product == KitchenProduct.Cola ? stock.TryPlaceColaFrom(carrier)
+                : stock.TryPlaceFrom(carrier);
+            if (!placed) return false;
             cooldown = dropInterval;
             return true;
+        }
+
+        int HeldMatching(BurgerInventory carrier)
+        {
+            if (carrier == null) return 0;
+            if (boxed) return carrier.BoxedCount;
+            if (product == KitchenProduct.Cola) return carrier.ColaCount;
+            return carrier.LooseCount;
         }
     }
 }

@@ -50,7 +50,9 @@ namespace BurgerShop.Customer
         public int PaidAmount { get; private set; }
         public event Action<CustomerAgent> Removed;
 
-        internal static CustomerAgent Create(Transform parent, int ticket, Vector3 entrance, int quantity = 1, CustomerKind kind = CustomerKind.Normal)
+        public KitchenProduct Product { get; private set; }
+
+        internal static CustomerAgent Create(Transform parent, int ticket, Vector3 entrance, int quantity = 1, CustomerKind kind = CustomerKind.Normal, KitchenProduct product = KitchenProduct.Burger)
         {
             GameObject root = new GameObject($"Customer_{ticket}");
             root.transform.SetParent(parent, false);
@@ -58,6 +60,7 @@ namespace BurgerShop.Customer
             CustomerAgent agent = root.AddComponent<CustomerAgent>();
             agent.TicketNumber = ticket;
             agent.Kind = kind;
+            agent.Product = product;
             if (kind == CustomerKind.BigEater) quantity = 10;
             agent.Order = new CustomerOrder(quantity, kind == CustomerKind.BigEater ? 10 : 4);
             Color[] shirts = { new Color(0.23f, 0.52f, 0.91f), new Color(0.70f, 0.35f, 0.69f), new Color(0.28f, 0.70f, 0.69f) };
@@ -80,8 +83,10 @@ namespace BurgerShop.Customer
             agent.orderBubble.SetParent(root.transform, false);
             agent.orderBubble.localPosition = new Vector3(0f, 2.25f, 0f);
             Part(agent.orderBubble, "Background", PrimitiveType.Cube, Vector3.zero, new Vector3(1.15f, 0.55f, 0.035f), bubble);
-            Transform icon = BurgerVisualFactory.Create(agent.orderBubble, 0);
-            icon.name = "BurgerIcon";
+            Transform icon = product == KitchenProduct.Cola
+                ? ColaVisualFactory.Create(agent.orderBubble, 0)
+                : BurgerVisualFactory.Create(agent.orderBubble, 0);
+            icon.name = product == KitchenProduct.Cola ? "ColaIcon" : "BurgerIcon";
             icon.localPosition = new Vector3(-0.28f, -0.12f, -0.18f);
             icon.localScale = Vector3.one * 0.65f;
             TextMesh label = new GameObject("OrderQuantity").AddComponent<TextMesh>();
@@ -178,7 +183,8 @@ namespace BurgerShop.Customer
                 burgerStart = burger.localPosition;
             }
             orderBubble.Find("Background").gameObject.SetActive(false);
-            orderBubble.Find("BurgerIcon").gameObject.SetActive(false);
+            Transform foodIcon = orderBubble.Find("BurgerIcon") ?? orderBubble.Find("ColaIcon");
+            if (foodIcon != null) foodIcon.gameObject.SetActive(false);
             TextMesh receipt = orderBubble.GetComponentInChildren<TextMesh>(true);
             receipt.transform.localPosition = Vector3.zero;
             receipt.color = new Color(1f, 0.78f, 0.12f);

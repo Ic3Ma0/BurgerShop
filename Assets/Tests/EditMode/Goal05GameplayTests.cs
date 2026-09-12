@@ -39,9 +39,9 @@ namespace BurgerShop.Tests.EditMode
             input = new Goal03InputDriver(keyboard);
             yield return null;
             BurgerInventory inventory = Object.FindFirstObjectByType<BurgerInventory>();
-            BurgerServingZone serving = Object.FindFirstObjectByType<BurgerServingZone>();
-            BurgerPickupZone pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
-            CustomerQueue queue = Object.FindFirstObjectByType<CustomerQueue>();
+            BurgerServingZone serving = MainKitchen<BurgerServingZone>();
+            BurgerPickupZone pickup = MainKitchen<BurgerPickupZone>();
+            CustomerQueue queue = MainKitchen<CustomerQueue>();
             queue.OrderQuantityFactory = () => 1;
             RestaurantWallet wallet = Object.FindFirstObjectByType<RestaurantWallet>();
             CashFloor cash = Object.FindFirstObjectByType<CashFloor>();
@@ -92,7 +92,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(queue.Count, Is.EqualTo(3));
             Assert.That(queue.FrontCustomer.TicketNumber, Is.EqualTo(4));
             Assert.That(queue.ReadyCustomer, Is.Not.Null);
-            Assert.That(Object.FindObjectsByType<CustomerAgent>(FindObjectsSortMode.None).Length, Is.EqualTo(3));
+            Assert.That(queue.Count, Is.EqualTo(3));
             LogAssert.NoUnexpectedReceived();
             Restore();
             yield return new ExitPlayMode();

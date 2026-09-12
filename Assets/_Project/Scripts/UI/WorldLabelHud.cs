@@ -54,7 +54,7 @@ namespace BurgerShop.UI
                     if(pad!=null)foreach(Transform child in pad)if(child.name.StartsWith("FacilityIcon"))foreach(var r in child.GetComponentsInChildren<Renderer>())r.enabled=false;
                 }
                 bool order=n=="OrderQuantity"||n=="BagOrderQuantity";
-                if(order || n=="CounterStockCount" || n=="PackageStockCount")
+                if(order || n=="CounterStockCount" || n=="ColaStockCount" || n=="PackageStockCount")
                     foreach(var r in source.transform.parent.GetComponentsInChildren<Renderer>(true))r.enabled=false;
                 var card=HudChrome.Panel(transform,"Card_"+n,Vector2.zero,Vector2.one*.5f,Vector2.zero,new Vector2(240,80),HudChrome.Cream);
                 var text=HudChrome.Label(card.transform,"Value",Vector2.zero,Vector2.one,Vector2.one*.5f,Vector2.zero,Vector2.zero,28,HudChrome.Ink,TextAnchor.MiddleLeft,true,false);
@@ -64,7 +64,7 @@ namespace BurgerShop.UI
                 entries.Add(new Entry{Id=source.GetInstanceID(),Source=source,Card=card,Text=text,Icon=icon,Order=order,Customer=source.GetComponentInParent<CustomerAgent>()});
             }
         }
-        static FoodIcon ChooseIcon(string n) => n=="BagMachineLabel"?FoodIcon.EmptyBag:n.Contains("Bag")?FoodIcon.Bagged: n.Contains("Box")||n.Contains("Package")||n.Contains("Window") ? FoodIcon.Box : n.Contains("Boost")||n.Contains("Hr")?FoodIcon.Speed:n.Contains("Trash")?FoodIcon.Clean:n.Contains("Unlock")||n.Contains("Buy")?FoodIcon.Lock:FoodIcon.Burger;
+        static FoodIcon ChooseIcon(string n) => n.Contains("Cola")?FoodIcon.Cola:n=="BagMachineLabel"?FoodIcon.EmptyBag:n.Contains("Bag")?FoodIcon.Bagged: n.Contains("Box")||n.Contains("Package")||n.Contains("Window") ? FoodIcon.Box : n.Contains("Boost")||n.Contains("Hr")?FoodIcon.Speed:n.Contains("Trash")?FoodIcon.Clean:n.Contains("Unlock")||n.Contains("Buy")?FoodIcon.Lock:FoodIcon.Burger;
         void LateUpdate() => RefreshNow();
         public void RefreshNow()
         {
@@ -101,6 +101,7 @@ namespace BurgerShop.UI
             if(!detailed&&e.Source.name=="UpgradeMarker")visible=false;
             if(e.Source.name=="BagOrderQuantity")e.Icon.sprite=FoodIcons.Get(FoodIcon.Bagged);
             else if(e.Customer!=null && !e.Customer.CanAcceptOrder)e.Icon.sprite=FoodIcons.Get(FoodIcon.Phone);
+            else if(e.Customer!=null&&e.Customer.Product==KitchenProduct.Cola)e.Icon.sprite=FoodIcons.Get(FoodIcon.Cola);
             else if(e.Order)e.Icon.sprite=FoodIcons.Get(e.Source.transform.parent.name=="CarOrderBubble"?FoodIcon.Box:FoodIcon.Burger);
             var size=e.Order?new Vector2(e.Customer!=null && e.Customer.Kind!=CustomerKind.Normal?264:144,72):string.IsNullOrEmpty(copy)?new Vector2(56,56):new Vector2(e.Source.name=="BoxingLabel"?360:256,copy.Contains("\n")?104:72);
             // Never put world labels over the top HUD or fixed joystick.

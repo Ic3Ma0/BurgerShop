@@ -29,7 +29,7 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
-            Object.FindFirstObjectByType<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
+            MainKitchen<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
             previousStep = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
             previousBackground = InputSystem.settings.backgroundBehavior;
@@ -41,11 +41,11 @@ namespace BurgerShop.Tests.EditMode
             input = new Goal03InputDriver(keyboard);
             yield return null;
             var inventory = Object.FindFirstObjectByType<PlayerMotor>().GetComponent<BurgerInventory>();
-            var serving = Object.FindFirstObjectByType<BurgerServingZone>();
-            var pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
+            var serving = MainKitchen<BurgerServingZone>();
+            var pickup = MainKitchen<BurgerPickupZone>();
             var wallet = Object.FindFirstObjectByType<RestaurantWallet>();
             var hiring = Object.FindFirstObjectByType<WorkerHiringZone>();
-            var upgrade = Object.FindFirstObjectByType<GrillUpgradeZone>();
+            var upgrade = MainKitchen<GrillUpgradeZone>();
             var persistence = Object.FindFirstObjectByType<RestaurantPersistence>();
             Assert.That(persistence.LoadResult, Is.EqualTo(SaveLoadResult.NewGame));
             yield return WaitSeconds(16f);
@@ -86,20 +86,20 @@ namespace BurgerShop.Tests.EditMode
 
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
-            Object.FindFirstObjectByType<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
+            MainKitchen<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
             previousStep = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
             yield return null;
             expected = JsonUtility.FromJson<RestaurantSaveData>(SessionState.GetString("BurgerShop.Tests.ExpectedProgress", ""));
             wallet = Object.FindFirstObjectByType<RestaurantWallet>();
             hiring = Object.FindFirstObjectByType<WorkerHiringZone>();
-            upgrade = Object.FindFirstObjectByType<GrillUpgradeZone>();
+            upgrade = MainKitchen<GrillUpgradeZone>();
             persistence = Object.FindFirstObjectByType<RestaurantPersistence>();
             Assert.That(persistence.LoadResult, Is.EqualTo(SaveLoadResult.Loaded));
             Assert.That(wallet.Coins, Is.EqualTo(expected.coins), "Restoring staff and upgrades must not charge again.");
             Assert.That(wallet.CompletedSales, Is.EqualTo(expected.completedSales));
             Assert.That(upgrade.Level, Is.EqualTo(2));
-            Assert.That(Object.FindFirstObjectByType<ProductionStation>().ProductionSeconds, Is.EqualTo(2f));
+            Assert.That(MainKitchen<ProductionStation>().ProductionSeconds, Is.EqualTo(2f));
             Assert.That(hiring.IsHired, Is.True);
             Assert.That(hiring.Worker.CompletedDeliveries, Is.EqualTo(expected.workerDeliveries));
             Assert.That(Object.FindObjectsByType<RestaurantWorker>(FindObjectsSortMode.None).Length, Is.EqualTo(1));

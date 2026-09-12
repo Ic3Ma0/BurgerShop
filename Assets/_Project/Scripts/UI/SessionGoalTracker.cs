@@ -49,7 +49,7 @@ namespace BurgerShop.UI
         public void Configure(BurgerInventory carrier, ProductionStation station, CounterStock stock,
             CustomerQueue customers, RestaurantWallet earnings, BurgerServingZone cashier,
             DiningArea hall = null, TrashInventory trashBag = null, WorkerHiringZone staff = null,
-            BoostUpgradeZone playerBoost = null, ShopExpansion shop = null)
+            BoostUpgradeZone playerBoost = null, ShopExpansion shop = null, BurgerServingZone colaCashier = null, ProductionStation cola = null)
         {
             inventory = carrier;
             grill = station;
@@ -121,7 +121,7 @@ namespace BurgerShop.UI
             }
 
             ShopGoal goal = rankGoals[goalIndex];
-            int carried = inventory != null ? inventory.Count : 0;
+            int carried = inventory != null ? inventory.LooseCount + inventory.BoxedCount : 0;
             int boxed = inventory != null ? inventory.BoxedCount : 0;
             int sales = wallet != null ? wallet.CompletedSales : 0;
             if (lastSales < 0) lastSales = sales;
@@ -229,7 +229,7 @@ namespace BurgerShop.UI
 
         void ShowLoop()
         {
-            int carried = inventory != null ? inventory.Count : 0;
+            int carried = inventory != null ? inventory.LooseCount + inventory.BoxedCount : 0;
             int stock = StockCount();
             bool ready = queue != null && queue.ReadyCustomer != null;
             if (hiring != null && !hiring.IsFull && wallet != null && wallet.Coins >= hiring.HireCost)
@@ -323,7 +323,7 @@ namespace BurgerShop.UI
 
         void SnapshotCounts(bool keepLast = false)
         {
-            int carried = inventory != null ? inventory.Count : 0;
+            int carried = inventory != null ? inventory.LooseCount + inventory.BoxedCount : 0;
             int stock = StockCount();
             int sales = wallet != null ? wallet.CompletedSales : 0;
             int boxed = inventory != null ? inventory.BoxedCount : 0;

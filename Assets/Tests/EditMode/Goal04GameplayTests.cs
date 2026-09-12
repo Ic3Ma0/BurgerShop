@@ -21,7 +21,7 @@ namespace BurgerShop.Tests.EditMode
             previousCaptureDeltaTime = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
             yield return null;
-            CustomerQueue queue = Object.FindFirstObjectByType<CustomerQueue>();
+            CustomerQueue queue = MainKitchen<CustomerQueue>();
             queue.OrderQuantityFactory = () => 1;
             Assert.That(queue, Is.Not.Null);
             Assert.That(queue.Capacity, Is.EqualTo(3));
@@ -39,7 +39,7 @@ namespace BurgerShop.Tests.EditMode
             AssertWaitingQueue(queue, 1);
             Assert.That(hud.text, Does.Contain("3/3").And.Contain("1 BURGER"));
             yield return WaitGameSeconds(8f);
-            Assert.That(Object.FindObjectsByType<CustomerAgent>(FindObjectsSortMode.None).Length, Is.EqualTo(3));
+            Assert.That(queue.Count, Is.EqualTo(3));
 
             // Exercise the Goal 05 handoff API, without simulating payment or delivery.
             for (int ticket = 1; ticket <= 3; ticket++)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BurgerShop.Restaurant;
 using UnityEngine;
 
 namespace BurgerShop.Customer
@@ -25,6 +26,7 @@ namespace BurgerShop.Customer
         CustomerAgent departingCustomer;
 
         public Func<int> OrderQuantityFactory { get; set; } = OrderQuantities.Dining;
+        public KitchenProduct Product { get; set; } = KitchenProduct.Burger;
 
         public int Count => customers.Count;
         public int Capacity => slotDistance?.Length ?? 0;
@@ -103,8 +105,8 @@ namespace BurgerShop.Customer
             var wallet = FindFirstObjectByType<BurgerShop.Economy.RestaurantWallet>();
             bool occupied = customers.Exists(c => c.Kind != CustomerKind.Normal);
             CustomerKind kind = CustomerKindFactory != null ? CustomerKindFactory() : specials.Next(
-                goals != null && goals.Rank >= 2 && wallet != null && wallet.CompletedSales >= 5, occupied, UnityEngine.Random.value);
-            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, route[0], OrderQuantityFactory(), kind);
+                Product == KitchenProduct.Burger && goals != null && goals.Rank >= 2 && wallet != null && wallet.CompletedSales >= 5, occupied, UnityEngine.Random.value);
+            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, route[0], OrderQuantityFactory(), kind, Product);
             arriving.AssignSlot(Count);
             arriving.Removed += OnCustomerRemoved;
             customers.Add(arriving);

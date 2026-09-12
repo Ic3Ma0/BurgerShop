@@ -8,6 +8,18 @@ namespace BurgerShop.Tests.EditMode
 {
     public abstract class SaveIsolatedGameplayTest
     {
+        protected static T MainKitchen<T>() where T : UnityEngine.Component
+        {
+            foreach(var item in UnityEngine.Object.FindObjectsByType<T>(UnityEngine.FindObjectsSortMode.None))
+            {
+                if(item is BurgerShop.Customer.CustomerQueue q && q.Product == BurgerShop.Restaurant.KitchenProduct.Burger && q.transform.parent.name != "BagLine") return item;
+                if(item is BurgerShop.Restaurant.BurgerServingZone zone && zone.DropZone != null && zone.DropZone.Product == BurgerShop.Restaurant.KitchenProduct.Burger) return item;
+                if(item is BurgerShop.Restaurant.ProductionStation station && station.Product == BurgerShop.Restaurant.KitchenProduct.Burger && UnityEngine.Vector3.Distance(station.transform.position, BurgerShop.Restaurant.ShopLayout.Grill) < .1f) return item;
+                if(item is BurgerShop.Restaurant.GrillUpgradeZone upgrade && UnityEngine.Vector3.Distance(upgrade.UpgradePosition, BurgerShop.Restaurant.ShopLayout.UpgradeSpot) < .1f) return item;
+                if(item is BurgerShop.Restaurant.BurgerPickupZone pickup && BurgerShop.Restaurant.ShopLayout.Horizontal(pickup.PickupPosition, BurgerShop.Restaurant.ShopLayout.GrillPickup) < .1f) return item;
+            }
+            return null;
+        }
         protected string SaveDirectory => SessionState.GetString(RestaurantPersistence.EditorDirectoryKey, "");
         const string PreviousKey = "BurgerShop.Tests.PreviousSaveDirectory";
         const string TestKey = "BurgerShop.Tests.SaveOwner";

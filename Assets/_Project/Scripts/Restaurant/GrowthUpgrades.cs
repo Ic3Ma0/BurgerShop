@@ -28,7 +28,7 @@ namespace BurgerShop.Restaurant
         public BurgerInventory Player { get; private set; }
         public IEnumerable<Offer> Offers=>offers.Values;
         public int Level(string id)=>levels.TryGetValue(id,out int n)?n:1;
-        public static bool ValidId(string id)=>id=="grill-main"||id=="grill-extra"||id=="table-0"||id=="table-1"||id=="table-2"||id=="table-extra"||id=="counter-main"||id=="counter-extra"||id=="boxing"||id=="bag-machine"||id=="bag-table"||id=="bag-counter";
+        public static bool ValidId(string id)=>id=="cola-machine"||id=="grill-main"||id=="grill-extra"||id=="table-0"||id=="table-1"||id=="table-2"||id=="table-extra"||id=="counter-main"||id=="counter-extra"||id=="boxing"||id=="bag-machine"||id=="bag-table"||id=="bag-counter";
         public void Configure(RestaurantWallet earnings,SessionGoalTracker tracker,BurgerInventory player,ShopExpansion shop)
         {
             wallet=earnings;goals=tracker;Player=player;expansion=shop;
@@ -82,16 +82,16 @@ namespace BurgerShop.Restaurant
         }
         public void RecordGrill(GrillUpgradeZone grill)
         {
-            string id=ShopLayout.Horizontal(grill.UpgradePosition,ShopLayout.ExtraGrillUpgrade)<1?"grill-extra":"grill-main";
+            string id=ShopLayout.Horizontal(grill.UpgradePosition,ShopLayout.ColaUpgrade)<1?"cola-machine":ShopLayout.Horizontal(grill.UpgradePosition,ShopLayout.ExtraGrillUpgrade)<1?"grill-extra":"grill-main";
             if(grill.Level<=Level(id))return;
             levels[id]=grill.Level;goals?.AddUpgradeStars();
             GetComponent<Persistence.RestaurantPersistence>()?.Flush();
         }
-        public void Restore(FacilityLevelRecord[] records,int mainGrill,int extraGrill)
+        public void Restore(FacilityLevelRecord[] records,int mainGrill,int extraGrill,int colaLevel=1)
         {
             levels.Clear();
             if(records!=null)foreach(var row in records)levels[row.id]=row.level;
-            levels["grill-main"]=mainGrill;levels["grill-extra"]=Mathf.Max(1,extraGrill);
+            levels["cola-machine"]=colaLevel;levels["grill-main"]=mainGrill;levels["grill-extra"]=Mathf.Max(1,extraGrill);
             Discover();foreach(var offer in offers.Values)offer.Apply(Level(offer.Id));
         }
         public FacilityLevelRecord[] Capture()

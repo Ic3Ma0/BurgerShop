@@ -8,7 +8,7 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 9;
+        public const int CurrentVersion = 10;
 
         public int version;
         public long coins;
@@ -34,6 +34,8 @@ namespace BurgerShop.Persistence
         public int counterInvestment;
         public int boxingInvestment;
         public int driveThruInvestment;
+        public int colaLevel = 1;
+        public int ResolvedColaLevel => version >= 10 ? colaLevel : 1;
         public int shopRank = 1;
         public int goalIndex;
         public int goalProgress;
@@ -105,6 +107,7 @@ namespace BurgerShop.Persistence
                     || boxingInvestment < 0 || boxingInvestment > Restaurant.ShopExpansion.BoxingCost
                     || driveThruInvestment < 0 || driveThruInvestment > Restaurant.ShopExpansion.DriveThruCost)
                     return false;
+                if (version >= 10 && (colaLevel < 1 || colaLevel > 3)) return false;
                 if (version < 8) return true;
                 if(version >= 9 && (upgradeStars < 0 || !ValidFacilityLevels() || !ValidBagLine()))return false;
                 return shopRank >= Restaurant.ShopRanks.Min && shopRank <= Restaurant.ShopRanks.Max
@@ -203,7 +206,7 @@ namespace BurgerShop.Persistence
                     playerCarryTier.ToString(CultureInfo.InvariantCulture),
                     boughtBoxingStation ? "1" : "0",
                     boughtDriveThru ? "1" : "0");
-            // Versions 1-6 must retain their original checksum byte sequence.
+            // Versions 1-7 must retain their original checksum byte sequence.
             if (version >= 7)
                 value += "|" + string.Join("|", tableInvestment.ToString(CultureInfo.InvariantCulture),
                     grillInvestment.ToString(CultureInfo.InvariantCulture), counterInvestment.ToString(CultureInfo.InvariantCulture),
@@ -218,6 +221,7 @@ namespace BurgerShop.Persistence
                 value += "|"+bagMachineInvestment.ToString(CultureInfo.InvariantCulture)+"|"+bagTableInvestment.ToString(CultureInfo.InvariantCulture)+"|"+bagCounterInvestment.ToString(CultureInfo.InvariantCulture);
                 if(facilityLevels!=null)foreach(var row in facilityLevels)value += "|"+row.id+":"+row.level.ToString(CultureInfo.InvariantCulture);
             }
+            if(version >= 10) value += "|" + colaLevel.ToString(CultureInfo.InvariantCulture);
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }

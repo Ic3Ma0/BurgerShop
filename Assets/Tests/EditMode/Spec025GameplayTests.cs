@@ -50,7 +50,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(crew.TotalDeliveries, Is.EqualTo(7)); Assert.That(crew.TotalClears, Is.EqualTo(3));
             Assert.That(player.BoostLevel, Is.EqualTo(2));
             foreach (var upgrade in Object.FindObjectsByType<GrillUpgradeZone>(FindObjectsSortMode.None))
-                Assert.That(upgrade.Level, Is.EqualTo(ShopLayout.Horizontal(upgrade.UpgradePosition, ShopLayout.UpgradeSpot) < 0.1f ? 3 : 2));
+                Assert.That(upgrade.Level, Is.EqualTo(upgrade.Product == KitchenProduct.Cola ? 1 : ShopLayout.Horizontal(upgrade.UpgradePosition, ShopLayout.UpgradeSpot) < 0.1f ? 3 : 2));
             Assert.That(expansion.HasExtraGrill && expansion.HasExtraTable, Is.True);
             StartInput();
             yield return WalkTo(player.transform, ShopLayout.GrillPickup);
@@ -112,12 +112,12 @@ namespace BurgerShop.Tests.EditMode
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
             Time.captureDeltaTime = 1f / 60;
-            var queue = Object.FindFirstObjectByType<CustomerQueue>(); queue.OrderQuantityFactory = () => 3;
-            var serving = Object.FindFirstObjectByType<BurgerServingZone>();
+            var queue = MainKitchen<CustomerQueue>(); queue.OrderQuantityFactory = () => 3;
+            var serving = MainKitchen<BurgerServingZone>();
             var expansion = Object.FindFirstObjectByType<ShopExpansion>();
             expansion.Restore(false, false, false, 0, true, true);
             var lane = expansion.DriveThru; lane.OrderQuantityFactory = () => 2;
-            var grill = Object.FindFirstObjectByType<ProductionStation>();
+            var grill = MainKitchen<ProductionStation>();
             // Adequate source supply is an explicit AC-05 setup, not a release balance change.
             grill.SetCapacity(8); grill.SetProductionSeconds(0.1f);
             yield return WaitSeconds(12f);
@@ -151,7 +151,7 @@ namespace BurgerShop.Tests.EditMode
                 output = box.OutputCount, pack = box.PackageCount, deliveries = crew.TotalDeliveries, clears = crew.TotalClears
             }, true));
             Assert.That(serving.CompletedOrders, Is.GreaterThan(0)); Assert.That(lane.CompletedOrders, Is.GreaterThan(0));
-            Assert.That(crew.TotalDeliveries, Is.EqualTo(serving.CompletedOrders + lane.CompletedOrders));
+            Assert.That(crew.TotalDeliveries, Is.EqualTo(serving.CompletedOrders + lane.CompletedOrders + (crew.ColaServing != null ? crew.ColaServing.CompletedOrders : 0)));
             var player = Object.FindFirstObjectByType<PlayerMotor>(); player.enabled = false;
             player.transform.position = ShopLayout.BoxingCircle + Vector3.up;
             Camera.main.GetComponent<CameraFollow>().Snap();

@@ -46,15 +46,15 @@ namespace BurgerShop.Tests.EditMode
             InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
             testKeyboard = InputSystem.AddDevice<Keyboard>();
 
-            ProductionStation station = Object.FindFirstObjectByType<ProductionStation>();
+            ProductionStation station = MainKitchen<ProductionStation>();
             BurgerInventory inventory = Object.FindFirstObjectByType<BurgerInventory>();
-            BurgerPickupZone pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
+            BurgerPickupZone pickup = MainKitchen<BurgerPickupZone>();
             Assert.That(station, Is.Not.Null);
             Assert.That(inventory, Is.Not.Null);
             Assert.That(pickup, Is.Not.Null);
             Transform output = station.transform.Find("BurgerOutput");
             Transform stack = inventory.transform.Find("CarryStack");
-            Text hud = GameObject.Find("CarryStatus").GetComponent<Text>();
+            Assert.That(GameObject.Find("CarryStatus"), Is.Null);
             inputDriver = new Goal03InputDriver(testKeyboard);
 
             float deadline = Time.time + 4f;
@@ -88,7 +88,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(output.childCount, Is.Zero);
             Assert.That(stack.childCount, Is.EqualTo(4));
             yield return null;
-            Assert.That(hud.text, Does.Contain("4/4").And.Contain("FULL"));
+            Assert.That(inventory.IsFull, Is.True);
             Assert.That(stack.GetComponentsInChildren<Collider>(), Is.Empty);
 
             station.Advance(12f);
