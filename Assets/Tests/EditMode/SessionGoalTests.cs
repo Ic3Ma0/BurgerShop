@@ -65,7 +65,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(tracker.Progress, Is.Zero);
             Assert.That(tracker.Required, Is.EqualTo(1));
             Assert.That(tracker.IsCelebrating, Is.False);
-            Assert.That(tracker.Stars, Is.EqualTo(1));
+            Assert.That(tracker.Stars, Is.EqualTo(0));
+            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.1  0/3"));
             tracker.Advance(2f);
             Assert.That(tracker.IsCelebrating, Is.False);
             Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
@@ -73,7 +74,7 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void PickupStockAndServeAdvanceTheCapsuleAndStars()
+        public void PickupThenThreeSalesFillRankOneStars()
         {
             tracker.Advance(2f);
             grill.Advance(12f);
@@ -82,25 +83,21 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
             Assert.That(tracker.Progress, Is.EqualTo(1));
             Assert.That(tracker.IsCelebrating, Is.True);
+            Assert.That(tracker.Stars, Is.EqualTo(1));
+            tracker.Advance(2f);
+            Assert.That(tracker.Title, Is.EqualTo("Serve customers"));
+            Assert.That(tracker.Progress, Is.Zero);
+            Assert.That(tracker.Required, Is.EqualTo(3));
+            for (int n = 0; n < 3; n++)
+            {
+                Assert.That(wallet.RecordCompletedSale(), Is.True);
+                tracker.Advance(0.01f);
+            }
+            Assert.That(tracker.IsCelebrating, Is.True);
             Assert.That(tracker.Stars, Is.EqualTo(2));
             tracker.Advance(2f);
-            Assert.That(tracker.Title, Is.EqualTo("Move to burger counter"));
-            inventory.transform.position = serving.ServingPosition;
-            serving.Advance(0.01f);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Move to burger counter"));
-            Assert.That(tracker.Progress, Is.EqualTo(1));
-            Assert.That(tracker.Stars, Is.EqualTo(3));
-            tracker.Advance(2f);
-            for (int i = 0; i < 1200; i++) queue.Advance(1f / 60f);
-            serving.Advance(1f);
-            serving.Advance(BurgerServingZone.HandoffDuration);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Serve a customer"));
-            Assert.That(tracker.Progress, Is.EqualTo(1));
-            Assert.That(wallet.CompletedSales, Is.EqualTo(1));
-            Assert.That(wallet.Coins, Is.Zero);
-            Assert.That(tracker.Stars, Is.EqualTo(4));
+            Assert.That(tracker.Title, Is.EqualTo("Install a table"));
+            Assert.That(wallet.CompletedSales, Is.EqualTo(3));
         }
 
         [Test]
@@ -125,6 +122,7 @@ namespace BurgerShop.Tests.EditMode
             staff.Configure(grill, serving, wallet, inventory, root.transform, root.transform, Vector3.zero, serving.DropZone);
             wallet.RestoreProgress(50, 0);
             tracker.Configure(inventory, grill, stock, queue, wallet, serving, DiningArea.Wrap(table), trash, staff);
+            tracker.Restore(ShopRanks.Max, 0, 0);
             tracker.Advance(2f);
             Assert.That(tracker.Title, Is.EqualTo("Open the HR office"));
             inventory.transform.position = ShopLayout.HrHirePoint + Vector3.up;
@@ -147,6 +145,7 @@ namespace BurgerShop.Tests.EditMode
             boost.Configure(wallet, inventory, motor, point);
             wallet.RestoreProgress(50, 0);
             tracker.Configure(inventory, grill, stock, queue, wallet, serving, DiningArea.Wrap(table), trash, null, boost);
+            tracker.Restore(ShopRanks.Max, 0, 0);
             tracker.Advance(2f);
             Assert.That(tracker.Title, Is.EqualTo("Open the boost room"));
             inventory.transform.position = ShopLayout.BoostPoint + Vector3.up;

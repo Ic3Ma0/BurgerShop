@@ -69,11 +69,11 @@ namespace BurgerShop.UI
                 if (tracker.Stars > shown) punch.Play();
                 shown = tracker.Stars;
             }
-            label.text = $"{tracker.Stars}/{SessionGoalTracker.MaxStars}";
+            label.text = tracker.StarLabel;
             punch.Advance(deltaTime);
             label.rectTransform.localScale = new Vector3(punch.Scale, punch.Scale, 1f);
             if (fillRect != null)
-                HudChrome.SetHorizontalFill(fillRect, tracker.Stars / (float)SessionGoalTracker.MaxStars);
+                HudChrome.SetHorizontalFill(fillRect, tracker.IsMaxRank ? 1f : tracker.StarCap <= 0 ? 0f : tracker.Stars / (float)tracker.StarCap);
         }
     }
 }

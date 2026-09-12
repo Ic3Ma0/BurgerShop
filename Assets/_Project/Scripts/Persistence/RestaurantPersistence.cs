@@ -1,5 +1,6 @@
 using BurgerShop.Economy;
 using BurgerShop.Restaurant;
+using BurgerShop.UI;
 using UnityEngine;
 
 namespace BurgerShop.Persistence
@@ -13,6 +14,7 @@ namespace BurgerShop.Persistence
         BoostUpgradeZone boost;
         ShopExpansion expansion;
         StaffUpgradeBoard staffUpgrades;
+        SessionGoalTracker goals;
         LocalSaveStore store;
         string lastChecksum;
         float elapsed;
@@ -22,6 +24,9 @@ namespace BurgerShop.Persistence
         public SaveLoadResult LoadResult { get; private set; }
         public string Status { get; private set; } = "NEW GAME - AUTOSAVE ON";
         public string FilePath => store?.FilePath;
+        public int RestoredRank { get; private set; } = ShopRanks.Min;
+        public int RestoredGoalIndex { get; private set; }
+        public int RestoredGoalProgress { get; private set; }
 
         public void Configure(RestaurantWallet earnings, GrillUpgradeZone grill, WorkerHiringZone staff, string directory = null)
             => Configure(earnings, grill, staff, null, null, null, directory);
@@ -36,6 +41,11 @@ namespace BurgerShop.Persistence
 
         public void Configure(RestaurantWallet earnings, GrillUpgradeZone grill, WorkerHiringZone staff,
             BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades, string directory = null)
+            => Configure(earnings, grill, staff, playerBoost, shop, upgrades, null, directory);
+
+        public void Configure(RestaurantWallet earnings, GrillUpgradeZone grill, WorkerHiringZone staff,
+            BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades, SessionGoalTracker tracker,
+            string directory = null)
         {
             wallet = earnings;
             upgrade = grill;
@@ -45,6 +55,9 @@ namespace BurgerShop.Persistence
             expansion = shop;
             if (expansion != null) expansion.PurchaseCompleted += RequestSave;
             staffUpgrades = upgrades;
+            if (goals != null) goals.ProgressChanged -= RequestSave;
+            goals = tracker;
+            if (goals != null) goals.ProgressChanged += RequestSave;
             if (directory == null)
             {
                 directory = Application.persistentDataPath;
@@ -70,7 +83,19 @@ namespace BurgerShop.Persistence
                     expansion?.RestoreInvestments(data.tableInvestment, data.grillInvestment, data.counterInvestment,
                         data.boxingInvestment, data.driveThruInvestment);
                 lastChecksum = data.Checksum();
+                RestoredRank = data.ResolvedShopRank;
+                RestoredGoalIndex = data.ResolvedGoalIndex;
+                RestoredGoalProgress = data.ResolvedGoalProgress;
             }
+            else
+            {
+                RestoredRank = ShopRanks.Min;
+                RestoredGoalIndex = 0;
+                RestoredGoalProgress = 0;
+            }
+            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress);
+            if (goals != null)
+                expansion?.ApplyRank(goals.Rank);
             Status = LoadResult == SaveLoadResult.Loaded ? "PROGRESS RESTORED"
                 : LoadResult == SaveLoadResult.RecoveredBackup ? "BACKUP RESTORED"
                 : LoadResult == SaveLoadResult.NewerVersion ? "NEWER SAVE - SAVING DISABLED"
@@ -118,8 +143,18 @@ namespace BurgerShop.Persistence
                 grillInvestment = expansion?.GrillPad?.Invested ?? 0,
                 counterInvestment = expansion?.CounterPad?.Invested ?? 0,
                 boxingInvestment = expansion?.BoxingPad?.Invested ?? 0,
-                driveThruInvestment = expansion?.DriveThruPad?.Invested ?? 0
+                driveThruInvestment = expansion?.DriveThruPad?.Invested ?? 0,
+                shopRank = goals != null ? goals.Rank : RestoredRank,
+                goalIndex = goals != null ? goals.GoalIndex : RestoredGoalIndex,
+                goalProgress = goals != null ? goals.GoalProgress : RestoredGoalProgress
             };
+            if (expansion != null)
+                data.shopRank = Mathf.Max(data.shopRank, ShopRanks.Implied(expansion.HasExtraTable,
+                    expansion.TablePad != null ? expansion.TablePad.Invested : 0,
+                    expansion.HasBoxing, expansion.BoxingPad != null ? expansion.BoxingPad.Invested : 0,
+                    expansion.HasExtraGrill, expansion.GrillPad != null ? expansion.GrillPad.Invested : 0,
+                    expansion.HasExtraCounter, expansion.CounterPad != null ? expansion.CounterPad.Invested : 0,
+                    expansion.HasDriveThru, expansion.DriveThruPad != null ? expansion.DriveThruPad.Invested : 0));
             string checksum = data.Checksum();
             if (checksum == lastChecksum) return true;
             if (!store.Save(data)) { Status = "SAVE FAILED - RETRYING"; return false; }
@@ -130,7 +165,11 @@ namespace BurgerShop.Persistence
         }
 
         void RequestSave() => saveRequested = true;
-        void OnDestroy() { if (expansion != null) expansion.PurchaseCompleted -= RequestSave; }
+        void OnDestroy()
+        {
+            if (expansion != null) expansion.PurchaseCompleted -= RequestSave;
+            if (goals != null) goals.ProgressChanged -= RequestSave;
+        }
         void OnApplicationPause(bool paused) { if (paused) Flush(); }
         void OnApplicationFocus(bool focused) { if (!focused) Flush(); }
         void OnApplicationQuit() => Flush();

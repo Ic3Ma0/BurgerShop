@@ -316,6 +316,44 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(data.driveThruInvestment, Is.EqualTo(50));
         }
 
+        [Test]
+        public void Version8RoundTripRestoresShopRankAndDoesNotBreakV7Checksums()
+        {
+            var v7 = ProgressV6(500); v7.version = 7;
+            v7.tableInvestment = 10;
+            Assert.That(store.Save(v7), Is.True);
+            Assert.That(new LocalSaveStore(directory).Load(out var loaded), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(loaded.version, Is.EqualTo(7));
+            Assert.That(loaded.ResolvedShopRank, Is.EqualTo(1));
+            var v8 = ProgressV6(80, true, true);
+            v8.version = 8;
+            v8.boughtExtraTable = true;
+            v8.shopRank = 4;
+            v8.goalIndex = 1;
+            v8.goalProgress = 2;
+            v8.tableInvestment = 150;
+            v8.boxingInvestment = 150;
+            v8.driveThruInvestment = 250;
+            Assert.That(v8.IsValid, Is.True);
+            Assert.That(store.Save(v8), Is.True);
+            Assert.That(new LocalSaveStore(directory).Load(out loaded), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(loaded.version, Is.EqualTo(8));
+            Assert.That(loaded.shopRank, Is.EqualTo(4));
+            Assert.That(loaded.ResolvedShopRank, Is.EqualTo(6));
+            Assert.That(loaded.goalIndex, Is.EqualTo(1));
+            Assert.That(loaded.goalProgress, Is.EqualTo(2));
+            Assert.That(loaded.coins, Is.EqualTo(80));
+        }
+
+        [Test]
+        public void Version8RejectsRankOutsideOneToSix()
+        {
+            var data = ProgressV6(); data.version = 8; data.shopRank = 0;
+            Assert.That(data.IsValid, Is.False);
+            data = ProgressV6(); data.version = 8; data.shopRank = 7;
+            Assert.That(data.IsValid, Is.False);
+        }
+
         [Test] public void Version2RejectsHiredCountOutsideZeroToThree()
         {
             var data = ProgressV2();

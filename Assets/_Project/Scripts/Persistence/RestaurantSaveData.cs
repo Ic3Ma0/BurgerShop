@@ -8,7 +8,7 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         public int version;
         public long coins;
@@ -34,6 +34,9 @@ namespace BurgerShop.Persistence
         public int counterInvestment;
         public int boxingInvestment;
         public int driveThruInvestment;
+        public int shopRank = 1;
+        public int goalIndex;
+        public int goalProgress;
 
         public int ResolvedHiredCount => version >= 2
             ? hiredWorkerCount
@@ -50,6 +53,22 @@ namespace BurgerShop.Persistence
         public int ResolvedPlayerCarryTier => version >= 5 ? playerCarryTier : ResolvedBoostLevel;
         public bool ResolvedBoughtBoxingStation => version >= 6 && boughtBoxingStation;
         public bool ResolvedBoughtDriveThru => version >= 6 && boughtDriveThru;
+        public int ResolvedShopRank
+        {
+            get
+            {
+                int implied = Restaurant.ShopRanks.Implied(ResolvedBoughtExtraTable, version >= 7 ? tableInvestment : 0,
+                    ResolvedBoughtBoxingStation, version >= 7 ? boxingInvestment : 0,
+                    ResolvedBoughtExtraGrill, version >= 7 ? grillInvestment : 0,
+                    ResolvedBoughtExtraCounter, version >= 7 ? counterInvestment : 0,
+                    ResolvedBoughtDriveThru, version >= 7 ? driveThruInvestment : 0);
+                if (version >= 8 && shopRank >= Restaurant.ShopRanks.Min)
+                    return Math.Max(implied, Math.Min(Restaurant.ShopRanks.Max, shopRank));
+                return implied;
+            }
+        }
+        public int ResolvedGoalIndex => version >= 8 ? Math.Max(0, goalIndex) : 0;
+        public int ResolvedGoalProgress => version >= 8 ? Math.Max(0, goalProgress) : 0;
 
         public bool IsValid
         {
@@ -74,11 +93,15 @@ namespace BurgerShop.Persistence
                 if (playerSpeedTier < 0 || playerSpeedTier > 5 || playerCarryTier < 0 || playerCarryTier > 5)
                     return false;
                 if (version < 7) return true;
-                return tableInvestment >= 0 && tableInvestment <= Restaurant.ShopExpansion.TableCost
-                    && grillInvestment >= 0 && grillInvestment <= Restaurant.ShopExpansion.GrillCost
-                    && counterInvestment >= 0 && counterInvestment <= Restaurant.ShopExpansion.CounterCost
-                    && boxingInvestment >= 0 && boxingInvestment <= Restaurant.ShopExpansion.BoxingCost
-                    && driveThruInvestment >= 0 && driveThruInvestment <= Restaurant.ShopExpansion.DriveThruCost;
+                if (tableInvestment < 0 || tableInvestment > Restaurant.ShopExpansion.TableCost
+                    || grillInvestment < 0 || grillInvestment > Restaurant.ShopExpansion.GrillCost
+                    || counterInvestment < 0 || counterInvestment > Restaurant.ShopExpansion.CounterCost
+                    || boxingInvestment < 0 || boxingInvestment > Restaurant.ShopExpansion.BoxingCost
+                    || driveThruInvestment < 0 || driveThruInvestment > Restaurant.ShopExpansion.DriveThruCost)
+                    return false;
+                if (version < 8) return true;
+                return shopRank >= Restaurant.ShopRanks.Min && shopRank <= Restaurant.ShopRanks.Max
+                    && goalIndex >= 0 && goalProgress >= 0;
             }
         }
 
@@ -160,6 +183,9 @@ namespace BurgerShop.Persistence
                 value += "|" + string.Join("|", tableInvestment.ToString(CultureInfo.InvariantCulture),
                     grillInvestment.ToString(CultureInfo.InvariantCulture), counterInvestment.ToString(CultureInfo.InvariantCulture),
                     boxingInvestment.ToString(CultureInfo.InvariantCulture), driveThruInvestment.ToString(CultureInfo.InvariantCulture));
+            if (version >= 8)
+                value += "|" + string.Join("|", shopRank.ToString(CultureInfo.InvariantCulture),
+                    goalIndex.ToString(CultureInfo.InvariantCulture), goalProgress.ToString(CultureInfo.InvariantCulture));
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }

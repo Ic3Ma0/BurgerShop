@@ -59,7 +59,8 @@ namespace BurgerShop.Restaurant
                 FacilityUnlockZone[] pads = { TablePad, BoxingPad, GrillPad, CounterPad, DriveThruPad };
                 string[] names = { "a table", "a boxing table", "a grill", "a counter", "a drive-thru" };
                 for (int i = 0; i < pads.Length; i++)
-                    if (pads[i] != null && !pads[i].IsPurchased && (wallet.Coins > 0 || pads[i].Invested > 0))
+                    if (pads[i] != null && pads[i].RankVisible && !pads[i].IsPurchased
+                        && (wallet.Coins > 0 || pads[i].Invested > 0))
                         return $"Install {names[i]} - Remaining {pads[i].Remaining}";
                 return null;
             }
@@ -133,6 +134,20 @@ namespace BurgerShop.Restaurant
             CounterPad?.RestoreInvestment(counter);
             BoxingPad?.RestoreInvestment(box);
             DriveThruPad?.RestoreInvestment(lane);
+        }
+
+        public void ApplyRank(int rank)
+        {
+            SetPad(TablePad, ShopRanks.PadUnlocked(rank, "TABLE"));
+            SetPad(BoxingPad, ShopRanks.PadUnlocked(rank, "BOX"));
+            SetPad(GrillPad, ShopRanks.PadUnlocked(rank, "GRILL"));
+            SetPad(CounterPad, ShopRanks.PadUnlocked(rank, "COUNTER"));
+            SetPad(DriveThruPad, ShopRanks.PadUnlocked(rank, "LANE"));
+        }
+
+        static void SetPad(FacilityUnlockZone pad, bool unlocked)
+        {
+            pad?.SetRankVisible(unlocked);
         }
 
         void UnlockTable()

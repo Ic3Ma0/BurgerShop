@@ -32,7 +32,8 @@ namespace BurgerShop.Restaurant
         public float Progress => Cost > 0 ? (float)Invested / Cost : 0f;
         public long MissingCoins => wallet != null ? Math.Max(0, Remaining - wallet.Coins) : Remaining;
         public Vector3 PadPosition => pad != null ? pad.position : transform.position;
-        public bool IsAvailable => isActiveAndEnabled && !IsPurchased && wallet != null && wallet.isActiveAndEnabled
+        public bool RankVisible { get; private set; } = true;
+        public bool IsAvailable => isActiveAndEnabled && RankVisible && !IsPurchased && wallet != null && wallet.isActiveAndEnabled
             && player != null && player.isActiveAndEnabled && !paused && !unfocused;
         public bool IsInRange => player != null && !IsPurchased && DistanceSquared <= Radius * Radius;
         float DistanceSquared
@@ -80,6 +81,19 @@ namespace BurgerShop.Restaurant
             ResetEntry();
             if (Remaining == 0) Complete();
             RefreshMarker();
+        }
+
+        public void SetRankVisible(bool visible)
+        {
+            RankVisible = visible || Invested > 0;
+            if (IsPurchased)
+            {
+                if (pad != null) pad.gameObject.SetActive(false);
+                if (marker != null) marker.gameObject.SetActive(false);
+                return;
+            }
+            if (pad != null) pad.gameObject.SetActive(RankVisible);
+            if (marker != null) marker.gameObject.SetActive(RankVisible);
         }
 
         FacilityUnlockZone Nearest()
@@ -135,7 +149,7 @@ namespace BurgerShop.Restaurant
         void LateUpdate()
         {
             if (marker == null) return;
-            marker.gameObject.SetActive(!IsPurchased);
+            marker.gameObject.SetActive(!IsPurchased && RankVisible);
             if (Camera.main != null) marker.transform.rotation = Camera.main.transform.rotation;
         }
 
@@ -143,7 +157,7 @@ namespace BurgerShop.Restaurant
         {
             if (marker == null) return;
             marker.text = IsPurchased ? "BUILT!" : $"{Title}\nRemaining {Remaining}";
-            marker.gameObject.SetActive(!IsPurchased);
+            marker.gameObject.SetActive(!IsPurchased && RankVisible);
         }
     }
 }

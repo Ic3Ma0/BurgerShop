@@ -73,7 +73,7 @@ namespace BurgerShop.Tests.EditMode
             Text title = capsule.transform.Find("TaskTitle").GetComponent<Text>();
             Text progress = capsule.transform.Find("TaskProgress").GetComponent<Text>();
             Text coins = sales.GetComponent<Text>();
-            Assert.That(starValue.text, Is.EqualTo("1/15"));
+            Assert.That(starValue.text, Is.EqualTo("Lv.1  0/3"));
             Assert.That(title.text, Is.EqualTo("Pick up a burger"));
             Assert.That(progress.text, Is.EqualTo("0/1"));
             Assert.That(coins.text, Is.EqualTo("0"));

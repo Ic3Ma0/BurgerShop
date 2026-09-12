@@ -4,6 +4,7 @@ using BurgerShop.Economy;
 using BurgerShop.Persistence;
 using BurgerShop.Player;
 using BurgerShop.Restaurant;
+using BurgerShop.UI;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace BurgerShop.Tests.EditMode
             var wallet = Object.FindFirstObjectByType<RestaurantWallet>();
             var persistence = Object.FindFirstObjectByType<RestaurantPersistence>();
             motor.enabled = false;
+            Object.FindFirstObjectByType<SessionGoalTracker>().Restore(3, 0, 0);
+            expansion.ApplyRank(3);
             wallet.RestoreProgress(120, 0);
             player.transform.position = expansion.GrillPad.PadPosition + Vector3.up;
             for (int frame = 0; frame < 120; frame++) yield return null;

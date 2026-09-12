@@ -1,3 +1,4 @@
+using System;
 using BurgerShop.Customer;
 using BurgerShop.Economy;
 using BurgerShop.Player;
@@ -8,7 +9,6 @@ namespace BurgerShop.UI
 {
     public sealed class SessionGoalTracker : MonoBehaviour
     {
-        public const int MaxStars = 15;
         BurgerInventory inventory;
         ProductionStation grill;
         CounterStock counter;
@@ -24,23 +24,27 @@ namespace BurgerShop.UI
         int lastInventory = -1;
         int lastCounter = -1;
         int lastSales = -1;
-        bool pickedUp;
-        bool stocked;
-        bool sawTable;
-        bool sawGrill;
-        bool sawCounter;
-        bool sawBoxing;
-        bool sawDriveThru;
-        bool boxedBurger;
-        bool stockedPackage;
         int lastBoxed = -1;
         int lastPackage = -1;
+        [NonSerialized] int rank = ShopRanks.Min;
+        [NonSerialized] int goalIndex;
+        [NonSerialized] int goalProgress;
+        [NonSerialized] ShopGoal[] rankGoals = Array.Empty<ShopGoal>();
 
-        public string Title { get; private set; } = "Install a table";
-        public int Progress { get; private set; } = 1;
+        public event Action ProgressChanged;
+
+        public string Title { get; private set; } = "Pick up a burger";
+        public int Progress { get; private set; }
         public int Required { get; private set; } = 1;
         public bool IsCelebrating { get; private set; }
-        public int Stars { get; private set; } = 1;
+        public bool IsRankingUp { get; private set; }
+        public int Rank => rank;
+        public int GoalIndex => goalIndex;
+        public int GoalProgress => goalProgress;
+        public int Stars { get; private set; }
+        public int StarCap => ShopRanks.StarCap(Rank);
+        public bool IsMaxRank => ShopRanks.IsMax(Rank);
+        public string StarLabel => IsMaxRank ? "MAX" : $"Lv.{Rank}  {Stars}/{StarCap}";
 
         public void Configure(BurgerInventory carrier, ProductionStation station, CounterStock stock,
             CustomerQueue customers, RestaurantWallet earnings, BurgerServingZone cashier,
@@ -58,20 +62,29 @@ namespace BurgerShop.UI
             hiring = staff;
             boost = playerBoost;
             expansion = shop;
-            lastInventory = inventory != null ? inventory.Count : 0;
-            lastCounter = StockCount();
-            lastSales = wallet != null ? wallet.CompletedSales : 0;
-            sawTable = expansion != null && expansion.HasExtraTable;
-            sawGrill = expansion != null && expansion.HasExtraGrill;
-            sawCounter = expansion != null && expansion.HasExtraCounter;
-            sawBoxing = expansion != null && expansion.HasBoxing;
-            sawDriveThru = expansion != null && expansion.HasDriveThru;
-            lastBoxed = inventory != null ? inventory.BoxedCount : 0;
-            lastPackage = PackageCount();
+            SnapshotCounts();
             celebrateLeft = 0f;
             IsCelebrating = false;
-            RefreshStars();
-            Evaluate();
+            IsRankingUp = false;
+            if (rank < ShopRanks.Min) rank = ShopRanks.Min;
+            ReloadGoals();
+            expansion?.ApplyRank(rank);
+            PaintCurrent();
+        }
+
+        public void Restore(int nextRank, int nextGoalIndex, int nextGoalProgress)
+        {
+            rank = Mathf.Clamp(nextRank, ShopRanks.Min, ShopRanks.Max);
+            ReloadGoals();
+            goalIndex = rankGoals.Length == 0 ? 0 : Mathf.Clamp(nextGoalIndex, 0, Mathf.Max(0, rankGoals.Length - 1));
+            goalProgress = Mathf.Max(0, nextGoalProgress);
+            Stars = IsMaxRank ? StarCap : goalIndex;
+            SnapshotCounts();
+            celebrateLeft = 0f;
+            IsCelebrating = false;
+            IsRankingUp = false;
+            expansion?.ApplyRank(Rank);
+            PaintCurrent();
         }
 
         void LateUpdate() => Advance(Time.deltaTime);
@@ -79,96 +92,150 @@ namespace BurgerShop.UI
         public void Advance(float deltaTime)
         {
             if (deltaTime < 0f) return;
-            DetectMilestones();
-            RefreshStars();
-            if (IsCelebrating)
+            if (IsCelebrating || IsRankingUp)
             {
+                SnapshotCounts(true);
                 celebrateLeft -= deltaTime;
                 if (celebrateLeft > 0f) return;
                 IsCelebrating = false;
+                if (IsRankingUp)
+                {
+                    IsRankingUp = false;
+                    PaintCurrent();
+                    return;
+                }
+                AdvanceAfterGoal();
+                return;
             }
-            Evaluate();
+            DetectMilestones();
+            if (!IsCelebrating && !IsRankingUp)
+                PaintCurrent();
         }
 
         void DetectMilestones()
         {
-            int carried = inventory != null ? inventory.Count : 0;
-            int stock = StockCount();
-            int sales = wallet != null ? wallet.CompletedSales : 0;
-            if (!pickedUp && carried > lastInventory && lastInventory >= 0)
-                Complete("Pick up a burger");
-            if (!stocked && stock > lastCounter && lastCounter >= 0)
-                Complete("Move to burger counter");
-            int packagesNow = PackageCount();
-            if (sales > lastSales)
-                Complete(expansion != null && expansion.HasDriveThru && lastPackage >= 0 && packagesNow < lastPackage
-                    ? "Sell a combo" : "Serve a customer");
-            if (expansion != null)
+            if (IsMaxRank || goalIndex < 0 || goalIndex >= rankGoals.Length)
             {
-                if (expansion.HasExtraTable && !sawTable) Complete("Install a table");
-                if (expansion.HasExtraGrill && !sawGrill) Complete("Install a grill");
-                if (expansion.HasExtraCounter && !sawCounter) Complete("Install a counter");
-                if (expansion.HasBoxing && !sawBoxing) Complete("Install a boxing table");
-                if (expansion.HasDriveThru && !sawDriveThru) Complete("Install a drive-thru");
-                sawTable = expansion.HasExtraTable;
-                sawGrill = expansion.HasExtraGrill;
-                sawCounter = expansion.HasExtraCounter;
-                sawBoxing = expansion.HasBoxing;
-                sawDriveThru = expansion.HasDriveThru;
+                SnapshotCounts(true);
+                return;
             }
-            int boxed = inventory != null ? inventory.BoxedCount : 0;
-            int packages = PackageCount();
-            if (!boxedBurger && boxed > lastBoxed && lastBoxed >= 0)
-                Complete("Box the burger");
-            if (!stockedPackage && packages > lastPackage && lastPackage >= 0)
-                Complete("Stock the package counter");
-            if (carried > 0) pickedUp = true;
-            if (stock > 0) stocked = true;
-            if (boxed > 0) boxedBurger = true;
-            if (packages > 0) stockedPackage = true;
-            lastInventory = carried;
-            lastCounter = stock;
-            lastBoxed = boxed;
-            lastPackage = packages;
-            lastSales = sales;
-        }
 
-        int PackageCount() => expansion != null && expansion.Boxing != null ? expansion.Boxing.PackageCount : 0;
-
-        int StockCount()
-        {
-            if (serving != null) return serving.TotalStock;
-            return counter != null ? counter.Count : 0;
-        }
-
-        void Complete(string title)
-        {
-            Title = title;
-            Progress = Required = 1;
-            IsCelebrating = true;
-            celebrateLeft = .6f;
-            if (title == "Pick up a burger") pickedUp = true;
-            if (title == "Move to burger counter") stocked = true;
-            if (title == "Box the burger") boxedBurger = true;
-            if (title == "Stock the package counter") stockedPackage = true;
-        }
-
-        void Evaluate()
-        {
+            ShopGoal goal = rankGoals[goalIndex];
             int carried = inventory != null ? inventory.Count : 0;
-            int stock = StockCount();
-            bool ready = queue != null && queue.ReadyCustomer != null;
+            int boxed = inventory != null ? inventory.BoxedCount : 0;
+            int sales = wallet != null ? wallet.CompletedSales : 0;
+            if (lastSales < 0) lastSales = sales;
+            if (lastInventory < 0) lastInventory = carried;
+            if (lastBoxed < 0) lastBoxed = boxed;
 
+            int gained = 0;
+            if (goal.Kind == ShopGoalKind.PickupBurger && carried > lastInventory)
+                gained = 1;
+            else if (goal.Kind == ShopGoalKind.ServeCustomers && sales > lastSales)
+                gained = sales - lastSales;
+            else if (goal.Kind == ShopGoalKind.BoxBurger && boxed > lastBoxed)
+                gained = 1;
+            else if (goal.Kind == ShopGoalKind.InstallTable && expansion != null && expansion.HasExtraTable)
+                gained = goal.Required;
+            else if (goal.Kind == ShopGoalKind.InstallBoxing && expansion != null && expansion.HasBoxing)
+                gained = goal.Required;
+            else if (goal.Kind == ShopGoalKind.InstallGrill && expansion != null && expansion.HasExtraGrill)
+                gained = goal.Required;
+            else if (goal.Kind == ShopGoalKind.InstallCounter && expansion != null && expansion.HasExtraCounter)
+                gained = goal.Required;
+            else if (goal.Kind == ShopGoalKind.InstallDriveThru && expansion != null && expansion.HasDriveThru)
+                gained = goal.Required;
+
+            SnapshotCounts(true);
+            if (gained <= 0) return;
+            goalProgress = Mathf.Min(goal.Required, goalProgress + gained);
+            Progress = goalProgress;
+            Required = goal.Required;
+            Title = goal.Title;
+            if (goalProgress >= goal.Required)
+                CompleteCurrent();
+            else
+                ProgressChanged?.Invoke();
+        }
+
+        void CompleteCurrent()
+        {
+            ShopGoal goal = rankGoals[goalIndex];
+            Title = goal.Title;
+            Progress = Required = goal.Required;
+            Stars = Mathf.Min(goalIndex + 1, StarCap);
+            IsCelebrating = true;
+            celebrateLeft = 0.6f;
+            ProgressChanged?.Invoke();
+        }
+
+        void AdvanceAfterGoal()
+        {
+            goalIndex++;
+            goalProgress = 0;
+            if (goalIndex >= rankGoals.Length)
+            {
+                if (rank < ShopRanks.Max)
+                {
+                    rank++;
+                    goalIndex = 0;
+                    ReloadGoals();
+                    Stars = 0;
+                    expansion?.ApplyRank(rank);
+                    IsRankingUp = true;
+                    celebrateLeft = 0.9f;
+                    Title = rank >= ShopRanks.Max ? "Shop MAX" : "Shop Rank " + rank;
+                    Progress = Required = 1;
+                    FeedbackDirector.Current?.Success(
+                        inventory != null ? inventory.transform.position : Vector3.zero,
+                        "Rank Up!",
+                        inventory != null ? inventory.transform : null);
+                    ProgressChanged?.Invoke();
+                    return;
+                }
+                goalIndex = 0;
+                ReloadGoals();
+            }
+            Stars = goalIndex;
+            PaintCurrent();
+            ProgressChanged?.Invoke();
+        }
+
+        void PaintCurrent()
+        {
+            if (TryShowChore())
+                return;
+            if (!IsMaxRank && goalIndex >= 0 && goalIndex < rankGoals.Length)
+            {
+                ShopGoal goal = rankGoals[goalIndex];
+                Title = goal.Title;
+                Required = goal.Required;
+                Progress = Mathf.Clamp(goalProgress, 0, Required);
+                return;
+            }
+            ShowLoop();
+        }
+
+        bool TryShowChore()
+        {
             if (trash != null && trash.Count > 0)
             {
                 Show("Take trash to the bin", 0, 1);
-                return;
+                return true;
             }
             if (dining != null && dining.HasTrashOnTables)
             {
                 Show("Clear the table", 0, 1);
-                return;
+                return true;
             }
+            return false;
+        }
+
+        void ShowLoop()
+        {
+            int carried = inventory != null ? inventory.Count : 0;
+            int stock = StockCount();
+            bool ready = queue != null && queue.ReadyCustomer != null;
             if (hiring != null && !hiring.IsFull && wallet != null && wallet.Coins >= hiring.HireCost)
             {
                 if (!hiring.HasVisitedOffice)
@@ -194,7 +261,6 @@ namespace BurgerShop.UI
                     Show("Upgrade carry", 0, 1);
                 return;
             }
-
             if (expansion != null && expansion.HasBoxing)
             {
                 if (carried > 0 && inventory != null && inventory.LooseCount > 0)
@@ -249,11 +315,29 @@ namespace BurgerShop.UI
             Required = Mathf.Max(1, required);
         }
 
-        void RefreshStars()
+        void ReloadGoals() => rankGoals = ShopRanks.Goals(rank);
+
+        int PackageCount() => expansion != null && expansion.Boxing != null ? expansion.Boxing.PackageCount : 0;
+
+        int StockCount()
         {
+            if (serving != null) return serving.TotalStock;
+            return counter != null ? counter.Count : 0;
+        }
+
+        void SnapshotCounts(bool keepLast = false)
+        {
+            int carried = inventory != null ? inventory.Count : 0;
+            int stock = StockCount();
             int sales = wallet != null ? wallet.CompletedSales : 0;
-            int extra = (pickedUp ? 1 : 0) + (stocked ? 1 : 0) + sales;
-            Stars = Mathf.Clamp(1 + extra, 1, MaxStars);
+            int boxed = inventory != null ? inventory.BoxedCount : 0;
+            int packages = PackageCount();
+            if (!keepLast || lastInventory < 0) lastInventory = carried;
+            else lastInventory = carried;
+            lastCounter = stock;
+            lastSales = sales;
+            lastBoxed = boxed;
+            lastPackage = packages;
         }
     }
 }

@@ -309,6 +309,7 @@ namespace BurgerShop.Tests.EditMode
             var tracker = root.AddComponent<SessionGoalTracker>();
             tracker.Configure(player, root.GetComponent<ProductionStation>(), stock, queue, wallet, serving,
                 dining, null, null, null, expansion);
+            tracker.Restore(1, 2, 0);
             tracker.Advance(2f);
             Assert.That(tracker.Title, Does.StartWith("Install a table"));
             Hold(expansion.TablePad, 3f);
