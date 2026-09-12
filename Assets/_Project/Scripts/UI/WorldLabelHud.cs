@@ -61,6 +61,17 @@ namespace BurgerShop.UI
                 text.rectTransform.offsetMin=new Vector2(64,8);text.rectTransform.offsetMax=new Vector2(-16,-8);
                 text.horizontalOverflow=HorizontalWrapMode.Wrap;
                 var icon=HudChrome.Icon(card.transform,"Item",FoodIcons.Get(ChooseIcon(n)),new Vector2(0,.5f),Vector2.one*.5f,new Vector2(32,0),new Vector2(40,40),Color.white);
+                if(order)
+                {
+                    card.enabled=false;
+                    icon.rectTransform.sizeDelta=new Vector2(32,32);
+                    text.fontSize=26;
+                    text.rectTransform.offsetMin=new Vector2(38,0);
+                    text.rectTransform.offsetMax=Vector2.zero;
+                    text.horizontalOverflow=HorizontalWrapMode.Overflow;
+                    var outline=text.gameObject.AddComponent<Outline>();
+                    outline.effectColor=HudChrome.Cream;outline.effectDistance=new Vector2(1,-1);
+                }
                 entries.Add(new Entry{Id=source.GetInstanceID(),Source=source,Card=card,Text=text,Icon=icon,Order=order,Customer=source.GetComponentInParent<CustomerAgent>()});
             }
         }
@@ -103,7 +114,13 @@ namespace BurgerShop.UI
             else if(e.Customer!=null && !e.Customer.CanAcceptOrder)e.Icon.sprite=FoodIcons.Get(FoodIcon.Phone);
             else if(e.Customer!=null&&e.Customer.Product==KitchenProduct.Cola)e.Icon.sprite=FoodIcons.Get(FoodIcon.Cola);
             else if(e.Order)e.Icon.sprite=FoodIcons.Get(e.Source.transform.parent.name=="CarOrderBubble"?FoodIcon.Box:FoodIcon.Burger);
-            var size=e.Order?new Vector2(e.Customer!=null && e.Customer.Kind!=CustomerKind.Normal?264:144,72):string.IsNullOrEmpty(copy)?new Vector2(56,56):new Vector2(e.Source.name=="BoxingLabel"?360:256,copy.Contains("\n")?104:72);
+            if(e.Order)
+            {
+                copy=e.Customer!=null&&!e.Customer.CanAcceptOrder
+                    ? Mathf.CeilToInt(e.Customer.CallingRemaining)+"s"
+                    : copy.StartsWith("x")?copy.Substring(1):copy;
+            }
+            var size=e.Order?new Vector2(92,40):string.IsNullOrEmpty(copy)?new Vector2(56,56):new Vector2(e.Source.name=="BoxingLabel"?360:256,copy.Contains("\n")?104:72);
             // Never put world labels over the top HUD or fixed joystick.
             if(local.y>space.rect.height-328||local.y<64||local.x<0||local.x>space.rect.width)visible=false;
             local.x=Mathf.Clamp(local.x,size.x/2+16,space.rect.width-size.x/2-16);
@@ -114,7 +131,7 @@ namespace BurgerShop.UI
             if(!visible)return;
             occupied.Add(rect);VisibleCount++;
             e.Card.rectTransform.anchoredPosition=local;e.Card.rectTransform.sizeDelta=size;
-            e.Icon.rectTransform.anchoredPosition=new Vector2(string.IsNullOrEmpty(copy)?28:32,0);
+            e.Icon.rectTransform.anchoredPosition=new Vector2(e.Order?18:string.IsNullOrEmpty(copy)?28:32,0);
             if(e.Previous!=null && e.Previous!=copy && Time.time>=e.NextPulse && (e.Order || e.Source.name.Contains("StockCount") || e.Source.name=="BoxingLabel"))
             { UiPressPulse.Pulse(e.Icon.transform,.06f,.12f); e.NextPulse=Time.time+.15f; }
             e.Previous=copy;e.Text.text=copy;

@@ -6,6 +6,12 @@ namespace BurgerShop.UI
 {
     public sealed class TaskCapsuleHud : MonoBehaviour
     {
+        // Retired from gameplay; also suppress instances retained across an editor script reload.
+        void OnEnable()
+        {
+            if(Application.isPlaying) gameObject.SetActive(false);
+        }
+
         const int SparkCount = 6;
         SessionGoalTracker tracker;
         Text title;
