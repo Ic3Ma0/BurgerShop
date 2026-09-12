@@ -20,7 +20,7 @@ namespace BurgerShop.UI
         WorkerHiringZone hiring;
         BoostUpgradeZone boost;
         ShopExpansion expansion;
-        float celebrateLeft = 1.5f;
+        float celebrateLeft;
         int lastInventory = -1;
         int lastCounter = -1;
         int lastSales = -1;
@@ -39,7 +39,7 @@ namespace BurgerShop.UI
         public string Title { get; private set; } = "Install a table";
         public int Progress { get; private set; } = 1;
         public int Required { get; private set; } = 1;
-        public bool IsCelebrating { get; private set; } = true;
+        public bool IsCelebrating { get; private set; }
         public int Stars { get; private set; } = 1;
 
         public void Configure(BurgerInventory carrier, ProductionStation station, CounterStock stock,
@@ -68,14 +68,13 @@ namespace BurgerShop.UI
             sawDriveThru = expansion != null && expansion.HasDriveThru;
             lastBoxed = inventory != null ? inventory.BoxedCount : 0;
             lastPackage = PackageCount();
-            celebrateLeft = 1.5f;
-            Title = "Install a table";
-            Progress = Required = 1;
-            IsCelebrating = true;
+            celebrateLeft = 0f;
+            IsCelebrating = false;
             RefreshStars();
+            Evaluate();
         }
 
-        void LateUpdate() => Advance(Time.unscaledDeltaTime);
+        void LateUpdate() => Advance(Time.deltaTime);
 
         public void Advance(float deltaTime)
         {
@@ -147,7 +146,7 @@ namespace BurgerShop.UI
             Title = title;
             Progress = Required = 1;
             IsCelebrating = true;
-            celebrateLeft = 1.35f;
+            celebrateLeft = .6f;
             if (title == "Pick up a burger") pickedUp = true;
             if (title == "Move to burger counter") stocked = true;
             if (title == "Box the burger") boxedBurger = true;

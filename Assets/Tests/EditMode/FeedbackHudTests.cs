@@ -75,17 +75,15 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void SpendingFlashesGoldInsteadOfErrorRed()
+        public void SpendingUpdatesTheAuthoritativeNumberWithoutIncomeFeedback()
         {
             wallet.CollectCoins(30);
             sales.Advance(0.4f);
             wallet.TrySpend(30);
             sales.Advance(0.08f);
             Text label = sales.GetComponent<Text>();
-            Assert.That(label.text, Does.Contain("-30"));
-            Assert.That(label.color.g, Is.GreaterThan(0.8f));
-            Assert.That(label.color.r, Is.GreaterThan(0.8f));
-            Assert.That(label.color.b, Is.LessThan(0.8f));
+            Assert.That(label.text, Is.EqualTo("0"));
+            Assert.That(label.color, Is.EqualTo(HudChrome.Ink));
             Assert.That(sales.IsPunching, Is.True);
             sales.Advance(0.4f);
             Assert.That(sales.IsPunching, Is.False);

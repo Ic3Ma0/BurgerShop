@@ -54,10 +54,12 @@ namespace BurgerShop.UI
                 return;
             }
             popup.SetVisible(true);
-            popup.PaintOption(true, "Speed", board.SpeedIsMax, board.SpeedCost, board.CanAffordSpeed,
-                StatUpgradePopup.ReadyLeft);
-            popup.PaintOption(false, "Carry", board.CarryIsMax, board.CarryCost, board.CanAffordCarry,
-                StatUpgradePopup.ReadyRight);
+            popup.PaintStat(true, "Speed", board.SpeedTier,
+                Mathf.RoundToInt(Player.PlayerBoost.MoveSpeed(board.SpeedTier) / Player.PlayerBoost.BaseMoveSpeed * 100) + "%",
+                Mathf.RoundToInt(Player.PlayerBoost.MoveSpeed(board.SpeedTier + 1) / Player.PlayerBoost.BaseMoveSpeed * 100) + "%",
+                board.SpeedIsMax, board.SpeedCost, board.Coins);
+            popup.PaintStat(false, "Carry", board.CarryTier, Player.PlayerBoost.CarryCapacity(board.CarryTier).ToString(),
+                Player.PlayerBoost.CarryCapacity(board.CarryTier + 1).ToString(), board.CarryIsMax, board.CarryCost, board.Coins);
         }
     }
 }

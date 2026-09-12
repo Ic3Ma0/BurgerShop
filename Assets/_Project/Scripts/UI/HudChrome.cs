@@ -16,13 +16,18 @@ namespace BurgerShop.UI
         static Sprite bill;
         static Sprite check;
 
-        public static readonly Color HeaderBlue = new Color(0.27f, 0.58f, 0.93f, 0.94f);
-        public static readonly Color TrackNavy = new Color(0.10f, 0.20f, 0.34f, 0.92f);
-        public static readonly Color FillGreen = new Color(0.30f, 0.84f, 0.46f, 1f);
-        public static readonly Color CapsuleIdle = new Color(0.97f, 0.99f, 1f, 0.97f);
-        public static readonly Color CapsuleDone = new Color(0.20f, 0.80f, 0.46f, 0.96f);
-        public static readonly Color TitleIdle = new Color(0.14f, 0.22f, 0.30f, 1f);
-        public static readonly Color CoinGreen = new Color(0.32f, 0.78f, 0.42f, 1f);
+        public static readonly Color Cream = new Color32(255,245,230,255);
+        public static readonly Color Ink = new Color32(62,43,37,255);
+        public static readonly Color Tomato = new Color32(217,75,61,255);
+        public static readonly Color Gold = new Color32(255,200,87,255);
+        public static readonly Color Green = new Color32(38,132,91,255);
+        public static readonly Color HeaderBlue = Cream;
+        public static readonly Color TrackNavy = new Color32(232,216,195,255);
+        public static readonly Color FillGreen = Green;
+        public static readonly Color CapsuleIdle = Cream;
+        public static readonly Color CapsuleDone = Green;
+        public static readonly Color TitleIdle = Ink;
+        public static readonly Color CoinGreen = Gold;
 
         public static Font Font()
         {
@@ -38,7 +43,7 @@ namespace BurgerShop.UI
 
         public static Sprite Rounded()
         {
-            if (rounded == null) rounded = MakeRounded(64, 28f);
+            if (rounded == null) rounded = MakeRounded(64, 24f);
             return rounded;
         }
 
@@ -127,23 +132,17 @@ namespace BurgerShop.UI
         public static void Style(Text text, int size, Color color, TextAnchor align, bool bold, bool darkOutline)
         {
             text.font = Font();
-            text.fontSize = size;
+            text.fontSize = Mathf.Max(28,size);
             text.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
             text.alignment = align;
             text.color = color;
             text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
             text.verticalOverflow = VerticalWrapMode.Overflow;
-            Outline outline = text.GetComponent<Outline>() ?? text.gameObject.AddComponent<Outline>();
-            outline.effectColor = darkOutline
-                ? new Color(0.05f, 0.10f, 0.16f, 0.82f)
-                : new Color(1f, 1f, 1f, 0.35f);
-            outline.effectDistance = new Vector2(1.4f, -1.4f);
-            Shadow shadow = text.GetComponent<Shadow>() ?? text.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = darkOutline
-                ? new Color(0f, 0f, 0f, 0.45f)
-                : new Color(0f, 0f, 0f, 0.16f);
-            shadow.effectDistance = new Vector2(0f, -2f);
+            Outline outline = text.GetComponent<Outline>();
+            if (outline != null) outline.enabled = false;
+            Shadow shadow = text.GetComponent<Shadow>();
+            if (shadow != null) shadow.enabled = false;
         }
 
         public static Image Panel(Transform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 pos, Vector2 size, Color color, float round = 1f)
@@ -158,7 +157,14 @@ namespace BurgerShop.UI
             Image image = go.GetComponent<Image>();
             image.sprite = Rounded();
             image.type = Image.Type.Sliced;
-            image.pixelsPerUnitMultiplier = round;
+            image.pixelsPerUnitMultiplier = 1f;
+            if(size.y>=56f && color.a>0f)
+            {
+                var shadow=go.AddComponent<Shadow>();
+                shadow.effectColor=new Color(Ink.r,Ink.g,Ink.b,.16f);
+                shadow.effectDistance=new Vector2(0,-4);
+                shadow.useGraphicAlpha=true;
+            }
             image.color = color;
             image.raycastTarget = false;
             return image;
@@ -219,7 +225,7 @@ namespace BurgerShop.UI
             rect.anchoredPosition = Vector2.zero;
             rect.sizeDelta = new Vector2(0f, 92f);
             Image image = go.GetComponent<Image>();
-            image.color = HeaderBlue;
+            image.color = Color.clear;
             image.raycastTarget = false;
             return image;
         }

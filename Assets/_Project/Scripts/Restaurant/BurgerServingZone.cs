@@ -245,6 +245,7 @@ namespace BurgerShop.Restaurant
                 customer.BeginDeparture(flyingBurger, exitRoute, amount, dining, true);
                 wallet.RecordCompletedSale();
                 CompletedOrders++;
+                UI.FeedbackDirector.Current?.World(customer.transform.position,"",.45f,flightServer != null ? flightServer.transform : null);
                 Transform used = ownedCounter < servePoints.Count ? servePoints[ownedCounter] : servingPoint;
                 if (used != null) cash?.DropAt(CashFloor.CounterDropPosition(used.position), amount);
                 else cash?.DropAtCounter(amount);

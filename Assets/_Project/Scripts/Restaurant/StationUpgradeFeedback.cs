@@ -4,7 +4,7 @@ namespace BurgerShop.Restaurant
 {
     public sealed class StationUpgradeFeedback : MonoBehaviour
     {
-        public const float PunchDuration = 0.32f;
+        public const float PunchDuration = 0.30f;
         public const float PopupDuration = 0.8f;
         public const int DefaultMaxLevel = 3;
 
@@ -24,7 +24,7 @@ namespace BurgerShop.Restaurant
         public int VisualLevel { get; private set; } = 1;
         public bool IsPunching => punchElapsed >= 0f && punchElapsed < PunchDuration;
         public bool IsPopupPlaying => popupElapsed >= 0f && popupElapsed < PopupDuration;
-        public float PunchScale => !IsPunching ? 1f : 1f + 0.16f * Mathf.Sin(Mathf.Clamp01(punchElapsed / PunchDuration) * Mathf.PI);
+        public float PunchScale => !IsPunching ? 1f : 1f + 0.08f * Mathf.Sin(Mathf.Clamp01(punchElapsed / PunchDuration) * Mathf.PI);
         public string PopupText => popup != null ? popup.text : "";
         public bool HidePersistentMax
         {
@@ -100,12 +100,14 @@ namespace BurgerShop.Restaurant
             popupElapsed = 0f;
             if (popup != null)
             {
-                popup.text = "LV" + VisualLevel;
+                popup.text = "Level Up!";
                 popup.color = popupColor;
                 popup.transform.localPosition = popupRest;
                 popup.transform.localScale = Vector3.one * 0.35f;
                 popup.gameObject.SetActive(true);
             }
+            UI.VisualMeshPulse.Play(station);
+            UI.FeedbackDirector.Current?.Success(station.position,"Level Up!");
             ApplyPunch();
             ApplyPopup();
         }
@@ -151,12 +153,7 @@ namespace BurgerShop.Restaurant
 
         void ApplyPunch()
         {
-            if (station == null) return;
-            float t = Mathf.Clamp01(punchElapsed / PunchDuration);
-            float wave = Mathf.Sin(t * Mathf.PI);
-            station.localScale = restScale * (1f + 0.16f * wave);
-            float shake = (1f - t) * 0.045f * Mathf.Sin(punchElapsed * 52f);
-            station.localPosition = restPosition + new Vector3(shake, 0f, -shake * 0.4f);
+            // Rendering is pulsed by VisualMeshPulse; physical transforms remain immutable.
         }
 
         void ApplyPopup()

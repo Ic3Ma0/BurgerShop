@@ -6,7 +6,7 @@ namespace BurgerShop.UI
 {
     public sealed class TaskCapsuleHud : MonoBehaviour
     {
-        const int SparkCount = 14;
+        const int SparkCount = 6;
         SessionGoalTracker tracker;
         Text title;
         Text progress;
@@ -21,6 +21,7 @@ namespace BurgerShop.UI
         int shownProgress = int.MinValue;
         bool shownCelebrate;
         float punch;
+        float displayedFill, fillFrom, fillTarget, fillAge=.6f;
         readonly NumberPunch progressPunch = new NumberPunch();
 
         public bool IsProgressPunching => progressPunch.IsActive;
@@ -39,11 +40,7 @@ namespace BurgerShop.UI
         public static TaskCapsuleHud Build(Transform parent, SessionGoalTracker goals)
         {
             Image back = HudChrome.Panel(parent, "TaskCapsule", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -108f), new Vector2(620f, 104f), HudChrome.CapsuleIdle, 0.62f);
-            var shadow = back.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0.05f, 0.18f, 0.14f, 0.28f);
-            shadow.effectDistance = new Vector2(0f, -6f);
-
+                new Vector2(0f, -144f), new Vector2(760f, 160f), HudChrome.CapsuleIdle, 0.62f);
             Image badge = HudChrome.Icon(back.transform, "TaskBadge", HudChrome.Circle(), new Vector2(0f, 0.5f),
                 new Vector2(0.5f, 0.5f), new Vector2(52f, 4f), new Vector2(72f, 72f), new Color(0.20f, 0.78f, 0.48f, 1f));
             Image check = HudChrome.Icon(badge.transform, "TaskCheck", HudChrome.Check(), new Vector2(0.5f, 0.5f),
@@ -52,18 +49,18 @@ namespace BurgerShop.UI
                 new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(34f, 34f), Color.white);
 
             Text title = HudChrome.Label(back.transform, "TaskTitle", new Vector2(0f, 0.42f), new Vector2(1f, 1f),
-                new Vector2(0f, 1f), Vector2.zero, Vector2.zero, 28, HudChrome.TitleIdle, TextAnchor.MiddleLeft, true, false);
+                new Vector2(0f, 1f), Vector2.zero, Vector2.zero, 32, HudChrome.TitleIdle, TextAnchor.MiddleLeft, true, false);
             title.rectTransform.offsetMin = new Vector2(100f, 0f);
             title.rectTransform.offsetMax = new Vector2(-18f, -8f);
             title.horizontalOverflow = HorizontalWrapMode.Wrap;
 
             Image barBack = HudChrome.Panel(back.transform, "TaskBarBack", new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(100f, 16f), new Vector2(390f, 16f), new Color(0.82f, 0.90f, 0.86f, 1f), 0.45f);
+                new Vector2(100f, 16f), new Vector2(500f, 16f), new Color(0.82f, 0.90f, 0.86f, 1f), 0.45f);
             Image fill = HudChrome.Panel(barBack.transform, "TaskBarFill", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
                 Vector2.zero, new Vector2(80f, 16f), HudChrome.FillGreen, 0.45f);
 
             Text progress = HudChrome.Label(back.transform, "TaskProgress", new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(1f, 0f), new Vector2(-18f, 12f), new Vector2(88f, 28f), 22,
+                new Vector2(1f, 0f), new Vector2(-18f, 12f), new Vector2(120f, 40f), 28,
                 new Color(0.18f, 0.42f, 0.28f, 1f), TextAnchor.MiddleRight, true, false);
 
             var hud = back.gameObject.AddComponent<TaskCapsuleHud>();
@@ -104,7 +101,10 @@ namespace BurgerShop.UI
         public void Advance(float deltaTime)
         {
             Refresh(false);
-            TickSparks(Mathf.Max(0f, deltaTime));
+            float dt=Mathf.Max(0f,deltaTime);
+            fillAge+=dt;displayedFill=Mathf.Lerp(fillFrom,fillTarget,Mathf.Clamp01(fillAge/.6f));
+            if(fillRect!=null)HudChrome.SetHorizontalFill(fillRect,displayedFill);
+            TickSparks(dt);
         }
 
         void Refresh(bool force)
@@ -113,12 +113,10 @@ namespace BurgerShop.UI
             bool changed = force || shownTitle != tracker.Title || shownProgress != tracker.Progress || shownCelebrate != tracker.IsCelebrating;
             if (!changed)
             {
-                if (fillRect != null)
-                    HudChrome.SetHorizontalFill(fillRect, tracker.Required <= 0 ? 0f : (float)tracker.Progress / tracker.Required);
                 return;
             }
 
-            bool justFinished = tracker.IsCelebrating && !shownCelebrate;
+            bool justFinished = !force && tracker.IsCelebrating && !shownCelebrate;
             bool progressUp = !force && tracker.Progress > shownProgress && shownProgress != int.MinValue;
             shownTitle = tracker.Title;
             shownProgress = tracker.Progress;
@@ -126,8 +124,10 @@ namespace BurgerShop.UI
             if (progressUp) progressPunch.Play();
             title.text = tracker.Title;
             if (progress != null) progress.text = $"{tracker.Progress}/{tracker.Required}";
-            if (fillRect != null)
-                HudChrome.SetHorizontalFill(fillRect, tracker.Required <= 0 ? 0f : (float)tracker.Progress / tracker.Required);
+            fillTarget=tracker.Required<=0?0f:(float)tracker.Progress/tracker.Required;
+            fillFrom=displayedFill;fillAge=justFinished?0f:.6f;
+            if(!justFinished)displayedFill=fillTarget;
+            if(fillRect!=null)HudChrome.SetHorizontalFill(fillRect,displayedFill);
 
             bool done = tracker.IsCelebrating;
             if (background != null) background.color = done ? HudChrome.CapsuleDone : HudChrome.CapsuleIdle;
@@ -143,8 +143,9 @@ namespace BurgerShop.UI
                 iconBadge.color = done ? new Color(0.12f, 0.62f, 0.36f, 1f) : IconColor(tracker.Title);
             if (checkIcon != null) checkIcon.enabled = done;
             if (glyphIcon != null) glyphIcon.enabled = !done;
-            if (justFinished)
+            if (justFinished && (FeedbackDirector.Current==null||FeedbackDirector.Current.DecorationsEnabled))
             {
+                FeedbackDirector.Current?.RequestSound(FeedbackSound.Task);
                 punch = 1f;
                 Burst();
             }
@@ -191,7 +192,7 @@ namespace BurgerShop.UI
                 float speed = Random.Range(90f, 240f);
                 spark.Velocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed;
                 spark.Spin = Random.Range(-220f, 220f);
-                spark.MaxLife = spark.Life = Random.Range(0.7f, 1.25f);
+                spark.MaxLife = spark.Life = 0.6f;
                 spark.Rect.anchoredPosition = new Vector2(Random.Range(-40f, 40f), Random.Range(-10f, 24f));
                 spark.Rect.localScale = Vector3.one * Random.Range(0.55f, 1.15f);
                 if (spark.Group != null) spark.Group.alpha = 1f;

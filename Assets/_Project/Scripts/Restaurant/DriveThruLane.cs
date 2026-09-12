@@ -184,6 +184,7 @@ namespace BurgerShop.Restaurant
                 {
                     wallet.RecordCompletedSale();
                     CompletedOrders++;
+                    UI.FeedbackDirector.Current?.World(car.transform.position,"",.45f,car.LastServer != null ? car.LastServer.transform : null);
                     cash?.DropAt(CashPosition, ComboPrice * car.Order.Quantity);
                     car.LastServer?.GetComponent<RestaurantWorker>()?.RecordCompletedOrder(true);
                 }

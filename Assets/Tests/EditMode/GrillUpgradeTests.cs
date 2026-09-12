@@ -277,7 +277,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(extras[0].gameObject.activeSelf, Is.True);
             Assert.That(extras[1].gameObject.activeSelf, Is.False);
             Assert.That(feedback.ActivePartCount, Is.EqualTo(1));
-            Assert.That(feedback.PopupText, Is.EqualTo("LV2"));
+            Assert.That(feedback.PopupText, Is.EqualTo("Level Up!"));
             Assert.That(feedback.IsPopupPlaying, Is.True);
             Assert.That(feedback.IsPunching, Is.True);
             upgrade.Advance(0.08f);
@@ -299,7 +299,7 @@ namespace BurgerShop.Tests.EditMode
             Wait(1.5f);
             Assert.That(upgrade.IsMaxLevel, Is.True);
             Assert.That(extras[1].gameObject.activeSelf, Is.True);
-            Assert.That(feedback.PopupText, Is.EqualTo("LV3"));
+            Assert.That(feedback.PopupText, Is.EqualTo("Level Up!"));
             Assert.That(feedback.ShowsMax, Is.True);
             upgrade.Advance(1f);
             Assert.That(feedback.IsPopupPlaying, Is.False);

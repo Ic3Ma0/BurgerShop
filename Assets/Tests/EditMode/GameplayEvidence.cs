@@ -33,6 +33,8 @@ namespace BurgerShop.Tests.EditMode
                     canvases[i].planeDistance = 1f;
                 }
                 Canvas.ForceUpdateCanvases();
+                foreach(var hud in Object.FindObjectsByType<BurgerShop.UI.WorldLabelHud>(FindObjectsSortMode.None))hud.RefreshNow();
+                foreach(var hud in Object.FindObjectsByType<BurgerShop.UI.CarryHud>(FindObjectsSortMode.None))hud.Refresh(0);
                 camera.Render();
                 RenderTexture.active = target;
                 pixels.ReadPixels(new Rect(0, 0, 720, 1280), 0, 0);

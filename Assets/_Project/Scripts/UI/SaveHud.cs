@@ -11,7 +11,7 @@ namespace BurgerShop.UI
         public void Configure(RestaurantPersistence save, Text text) { persistence = save; label = text; }
         void LateUpdate()
         {
-            if (persistence != null && label != null) label.text = persistence.Status;
+            if (persistence != null && label != null) label.text = persistence.LoadResult == SaveLoadResult.NewerVersion || persistence.LoadResult == SaveLoadResult.Unreadable || persistence.LoadResult == SaveLoadResult.Unavailable ? persistence.Status : "";
         }
     }
 }

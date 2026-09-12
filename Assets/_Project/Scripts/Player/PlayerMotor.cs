@@ -9,8 +9,10 @@ namespace BurgerShop.Player
     public sealed class PlayerMotor : MonoBehaviour
     {
         [SerializeField] float moveSpeed = PlayerBoost.BaseMoveSpeed;
-        [SerializeField] float rotationSharpness = 16f;
-        [SerializeField] float moveDeadzone = 0.12f;
+        [SerializeField] float rotationSharpness = 24f;
+        bool suspended;
+        public Vector2 LastInput { get; private set; }
+        public Vector3 CommandedVelocity { get; private set; }
 
         CharacterController _controller;
         InputAction _moveAction;
@@ -45,10 +47,12 @@ namespace BurgerShop.Player
             if (_cameraTransform == null && Camera.main != null)
                 _cameraTransform = Camera.main.transform;
 
-            Vector2 input = ReadMoveInput();
+            Vector2 input = suspended ? Vector2.zero : ReadMoveInput();
+            LastInput = input;
             Vector3 world = ToCameraRelativeXZ(input, _cameraTransform);
 
-            if (world.sqrMagnitude > moveDeadzone * moveDeadzone)
+            CommandedVelocity = world * MoveSpeed;
+            if (world.sqrMagnitude > 0f)
             {
                 _controller.SimpleMove(world * MoveSpeed);
                 Quaternion target = Quaternion.LookRotation(world, Vector3.up);
@@ -63,10 +67,20 @@ namespace BurgerShop.Player
             }
         }
 
+        void OnApplicationPause(bool paused) { suspended=paused; LastInput=Vector2.zero; CommandedVelocity=Vector3.zero; }
+        void OnApplicationFocus(bool focused)
+        {
+#if UNITY_EDITOR
+            // The existing automated scene driver explicitly opts into background input.
+            if (InputSystem.settings.backgroundBehavior == InputSettings.BackgroundBehavior.IgnoreFocus) focused=true;
+#endif
+            suspended=!focused; LastInput=Vector2.zero; CommandedVelocity=Vector3.zero;
+        }
+
         Vector2 ReadMoveInput()
         {
             Vector2 joystick = VirtualJoystick.Value;
-            if (joystick.sqrMagnitude > moveDeadzone * moveDeadzone)
+            if (joystick.sqrMagnitude > 0f)
                 return Vector2.ClampMagnitude(joystick, 1f);
 
             if (_moveAction != null)
@@ -91,7 +105,7 @@ namespace BurgerShop.Player
 
         internal static Vector3 ToCameraRelativeXZ(Vector2 input, Transform cameraTransform)
         {
-            if (input.sqrMagnitude < 0.0001f)
+            if (input.sqrMagnitude == 0f)
                 return Vector3.zero;
 
             Vector3 forward = Vector3.forward;

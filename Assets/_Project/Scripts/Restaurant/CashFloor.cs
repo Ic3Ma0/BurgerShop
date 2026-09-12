@@ -110,17 +110,20 @@ namespace BurgerShop.Restaurant
             if (pile == null || pile.IsCollecting || wallet == null || !wallet.CanCollectCoins(pile.Value))
                 return false;
             CashPickup captured = pile;
-            captured.LaunchTo(collector, () => FinishCollect(captured));
+            Vector3 pickupOrigin=pile.transform.position;
+            captured.LaunchTo(collector, () => FinishCollect(captured,pickupOrigin));
             motion = captured.Motion;
             return motion != null;
         }
 
-        void FinishCollect(CashPickup pile)
+        void FinishCollect(CashPickup pile,Vector3 pickupOrigin)
         {
             piles.Remove(pile);
             int value = pile != null ? pile.Value : 0;
+            Vector3 position=pickupOrigin;
             if (pile != null) BurgerVisual.Release(pile.gameObject);
-            if (value > 0) wallet?.CollectCoins(value);
+            if (value > 0 && wallet != null && wallet.CollectCoins(value))
+                UI.FeedbackDirector.Current?.Cash(position,value);
         }
 
         CashPickup NearestInRange()

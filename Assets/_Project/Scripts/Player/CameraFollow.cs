@@ -9,7 +9,7 @@ namespace BurgerShop.Player
         [SerializeField] float height = 13f;
         [SerializeField] float yaw = 45f;
         [SerializeField] float lookAtHeight = 1.1f;
-        [SerializeField] float positionSmooth = 10f;
+        [SerializeField] float positionSmooth = 12f;
 
         public void SetTarget(Transform followTarget)
         {
@@ -33,10 +33,7 @@ namespace BurgerShop.Player
 
             float t = 1f - Mathf.Exp(-positionSmooth * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, DesiredPosition(), t);
-            Quaternion look = Quaternion.LookRotation(
-                target.position + Vector3.up * lookAtHeight - transform.position,
-                Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, look, t);
+
         }
 
         Vector3 DesiredPosition()

@@ -26,12 +26,15 @@ namespace BurgerShop.UI
             hud.transform.SetParent(parent, false);
             RectTransform rect = hud.GetComponent<RectTransform>();
             rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 1f);
-            rect.anchoredPosition = new Vector2(-18f, -12f);
-            rect.sizeDelta = new Vector2(210f, 58f);
+            rect.anchoredPosition = new Vector2(-56f, -40f);
+            rect.sizeDelta = new Vector2(352f, 64f);
             Text text = hud.GetComponent<Text>();
-            HudChrome.Style(text, 36, Color.white, TextAnchor.MiddleRight, true, true);
-            HudChrome.Icon(hud.transform, "CoinIcon", HudChrome.Bill(), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-                new Vector2(4f, 0f), new Vector2(52f, 34f), Color.white);
+            HudChrome.Style(text, 40, HudChrome.Ink, TextAnchor.MiddleRight, true, true);
+            HudChrome.Icon(hud.transform, "CoinIcon", FoodIcons.Get(FoodIcon.Coin), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(4f, 0f), new Vector2(48f, 48f), Color.white);
+            var card = HudChrome.Panel(parent, "CoinCard", Vector2.one, Vector2.one,
+                new Vector2(-32,-24), new Vector2(400, 96), HudChrome.Cream);
+            card.transform.SetSiblingIndex(hud.transform.GetSiblingIndex());
             var component = hud.AddComponent<SalesHud>();
             component.Configure(earnings, text);
             return component;
@@ -76,7 +79,7 @@ namespace BurgerShop.UI
             paymentUntil = 1.4f;
             if (lastPayment > 0)
             {
-                roll.Play(shownCoins, wallet.Coins);
+                roll.Play(roll.Value, wallet.Coins);
                 punch.Play();
             }
             else
@@ -90,11 +93,9 @@ namespace BurgerShop.UI
         void Paint()
         {
             if (label == null) return;
-            string flash = paymentUntil > 0f ? $"\n{(lastPayment > 0 ? "+" : "")}{lastPayment}" : "";
-            label.text = $"{roll.Value}{flash}";
-            label.color = paymentUntil > 0f && lastPayment < 0
-                ? new Color(1f, 0.94f, 0.62f, 1f)
-                : restColor;
+            string flash = "";
+            label.text = $"{roll.Value:N0}{flash}";
+            label.color = restColor;
             transform.localScale = new Vector3(punch.Scale, punch.Scale, 1f);
         }
     }

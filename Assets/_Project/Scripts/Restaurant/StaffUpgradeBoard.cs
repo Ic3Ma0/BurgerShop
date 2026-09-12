@@ -10,6 +10,7 @@ namespace BurgerShop.Restaurant
         WorkerHiringZone hiring;
         BurgerInventory player;
 
+        public long Coins => wallet != null ? wallet.Coins : 0;
         public int SpeedTier { get; private set; }
         public int CarryTier { get; private set; }
         public int SpeedCost => StaffBoost.CostForNextTier(SpeedTier);
@@ -67,6 +68,7 @@ namespace BurgerShop.Restaurant
             if (speed) SpeedTier++;
             else CarryTier++;
             ApplyToHired();
+            UI.FeedbackDirector.Current?.Success(player.transform.position,"Level Up!",player.transform);
             return true;
         }
     }

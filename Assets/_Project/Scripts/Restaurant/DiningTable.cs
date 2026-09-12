@@ -157,7 +157,15 @@ namespace BurgerShop.Restaurant
         public void NotifyTrashDisposed(int seatIndex)
         {
             if (outstanding == null || seatIndex < 0 || seatIndex >= outstanding.Length) return;
-            if (outstanding[seatIndex] > 0) outstanding[seatIndex]--;
+            if (outstanding[seatIndex] > 0)
+            {
+                outstanding[seatIndex]--;
+                if(OutstandingTrash==0 && HasAvailableSeat)
+                {
+                    UI.FeedbackDirector.Current?.World(Center,"",.35f);
+                    UI.TableCleanFlash.Play(transform);
+                }
+            }
         }
 
         public bool TryPickupTrash(TrashInventory bag)

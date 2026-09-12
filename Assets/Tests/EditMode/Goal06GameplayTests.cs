@@ -73,7 +73,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(wallet.CompletedSales, Is.EqualTo(3));
             Assert.That(grill.ProductionSeconds, Is.EqualTo(2f));
-            Assert.That(sales.text, Does.Contain("-30").And.Not.Contain("+-"));
+            Assert.That(sales.text, Is.EqualTo("0"));
             Assert.That(upgradeText.text, Does.Contain("Upgraded!").And.Contain("60 COINS"));
             ExpandableGrill visual = grill.GetComponent<ExpandableGrill>();
             Assert.That(visual, Is.Not.Null);

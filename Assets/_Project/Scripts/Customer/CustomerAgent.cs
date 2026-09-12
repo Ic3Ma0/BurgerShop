@@ -152,7 +152,7 @@ namespace BurgerShop.Customer
             TextMesh receipt = orderBubble.GetComponentInChildren<TextMesh>(true);
             receipt.transform.localPosition = Vector3.zero;
             receipt.color = new Color(1f, 0.78f, 0.12f);
-            receipt.text = $"+{payment}";
+            receipt.text = "";
             orderBubble.gameObject.SetActive(true);
             phase = Phase.Handoff;
             if (hall != null)

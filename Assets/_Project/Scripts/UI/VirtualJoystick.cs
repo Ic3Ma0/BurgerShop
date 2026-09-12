@@ -4,11 +4,10 @@ using UnityEngine.UI;
 
 namespace BurgerShop.UI
 {
-    public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
+    public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler, ICancelHandler
     {
         [SerializeField] RectTransform knob;
         [SerializeField] float range = 110f;
-        [SerializeField] float deadzone = 0.08f;
 
         RectTransform _pad;
         Canvas _canvas;
@@ -58,13 +57,21 @@ namespace BurgerShop.UI
                 knob.anchoredPosition = clamped;
 
             Vector2 raw = clamped / range;
-            Value = raw.magnitude < deadzone ? Vector2.zero : Vector2.ClampMagnitude(raw, 1f);
+            Value = MapInput(raw);
         }
 
         public void OnPointerUp(PointerEventData eventData)
         {
             if (activePointer == eventData.pointerId) Release();
         }
+
+        public static Vector2 MapInput(Vector2 raw)
+        {
+            float magnitude=Mathf.Min(1f,raw.magnitude);
+            return magnitude <= .10f ? Vector2.zero : raw.normalized*((magnitude-.10f)/.90f);
+        }
+        public void OnCancel(BaseEventData eventData) => Release();
+        public bool HasPointer => activePointer.HasValue;
 
         void ResetKnob()
         {

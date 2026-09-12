@@ -11,6 +11,7 @@ namespace BurgerShop.Restaurant
         PlayerMotor motor;
         TextMesh markerLabel;
 
+        public long Coins => wallet != null ? wallet.Coins : 0;
         public int SpeedTier { get; private set; }
         public int CarryTier { get; private set; }
         public int MaxLevel => PlayerBoost.MaxLevel;
@@ -85,6 +86,7 @@ namespace BurgerShop.Restaurant
             else CarryTier++;
             ApplyToPlayer();
             RefreshVisuals();
+            UI.FeedbackDirector.Current?.Success(player.transform.position,"Level Up!",player.transform);
             return true;
         }
 

@@ -132,7 +132,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(burger.GetComponentInChildren<Renderer>().sharedMaterial, Is.SameAs(material));
             Assert.That(customer.PaidAmount, Is.EqualTo(10));
             Assert.That(customer.IsDeparting, Is.True);
-            Assert.That(customer.transform.Find("OrderBubble").GetComponentInChildren<TextMesh>().text, Is.EqualTo("+10"));
+            Assert.That(customer.transform.Find("OrderBubble").GetComponentInChildren<TextMesh>().text, Is.Empty);
             serving.Advance(100f);
             serving.Advance(100f);
             Assert.That(wallet.CompletedSales, Is.EqualTo(1));

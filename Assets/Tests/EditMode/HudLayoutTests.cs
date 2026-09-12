@@ -67,23 +67,23 @@ namespace BurgerShop.Tests.EditMode
         public void TearDown() => Object.DestroyImmediate(root);
 
         [Test]
-        public void OpeningHudShowsStarCoinAndCelebratingCapsule()
+        public void OpeningHudShowsProgressWithoutFalseCelebration()
         {
             Text starValue = stars.transform.Find("StarBarBack/StarValue").GetComponent<Text>();
             Text title = capsule.transform.Find("TaskTitle").GetComponent<Text>();
             Text progress = capsule.transform.Find("TaskProgress").GetComponent<Text>();
             Text coins = sales.GetComponent<Text>();
             Assert.That(starValue.text, Is.EqualTo("1/15"));
-            Assert.That(title.text, Is.EqualTo("Install a table"));
-            Assert.That(progress.text, Is.EqualTo("1/1"));
+            Assert.That(title.text, Is.EqualTo("Pick up a burger"));
+            Assert.That(progress.text, Is.EqualTo("0/1"));
             Assert.That(coins.text, Is.EqualTo("0"));
             Assert.That(coins.text, Does.Not.Contain("SERVED").And.Not.Contain("COINS"));
-            Assert.That(capsule.GetComponent<Image>().color, Is.EqualTo(HudChrome.CapsuleDone));
-            Assert.That(capsule.transform.Find("TaskBadge/TaskCheck").GetComponent<Image>().enabled, Is.True);
+            Assert.That(capsule.GetComponent<Image>().color, Is.EqualTo(HudChrome.CapsuleIdle));
+            Assert.That(capsule.transform.Find("TaskBadge/TaskCheck").GetComponent<Image>().enabled, Is.False);
             Assert.That(sales.transform.Find("CoinIcon"), Is.Not.Null);
             Assert.That(stars.transform.Find("StarIcon").GetComponent<Image>().sprite, Is.EqualTo(HudChrome.Star()));
             Assert.That(title.fontStyle, Is.EqualTo(FontStyle.Bold));
-            Assert.That(title.GetComponent<Outline>(), Is.Not.Null);
+            Assert.That(title.GetComponent<Outline>(), Is.Null);
         }
 
         [Test]

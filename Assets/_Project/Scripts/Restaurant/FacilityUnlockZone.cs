@@ -127,6 +127,7 @@ namespace BurgerShop.Restaurant
             IsPurchased = true;
             PurchasedThisVisit = true;
             onUnlocked?.Invoke();
+            UI.FeedbackDirector.Current?.Success(PadPosition,"Built!",player != null ? player.transform : null);
             if (pad != null) pad.gameObject.SetActive(false);
             RefreshMarker();
         }

@@ -21,8 +21,8 @@ namespace BurgerShop.Editor
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel35;
-            PlayerSettings.Android.bundleVersionCode = 4;
-            PlayerSettings.bundleVersion = "0.2.0";
+            PlayerSettings.Android.bundleVersionCode = 5;
+            PlayerSettings.bundleVersion = "0.2.1";
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
             PlayerSettings.allowedAutorotateToPortrait = true;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
@@ -32,7 +32,7 @@ namespace BurgerShop.Editor
             EditorUserBuildSettings.buildAppBundle = false;
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
             AssetDatabase.SaveAssets();
-            string path = Path.GetFullPath("Builds/Android/BurgerShop-0.2.0-arm64.apk");
+            string path = Path.GetFullPath("Builds/Android/BurgerShop-0.2.1-arm64.apk");
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             var options = new BuildPlayerOptions
             {

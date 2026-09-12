@@ -63,9 +63,13 @@ namespace BurgerShop.Core
             goals.Configure(inventory, station, stock, customers, wallet, serving, dining, trashBag, hiring, boost, expansion);
             CreateJoystick(root, inventory, pickup, customers, wallet, upgrade, hiring, goals, trashBag, staffUpgrades,
                 boost);
+            InteractionFocus.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), inventory);
+            FeedbackDirector.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), inventory);
+            WorldLabelHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), player);
             expansion.BindUpgradeHud(Object.FindFirstObjectByType<UpgradeHud>());
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
             persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades);
+            goals.Configure(inventory, station, stock, customers, wallet, serving, dining, trashBag, hiring, boost, expansion);
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             root.gameObject.AddComponent<AndroidDiagnostics>().Configure(wallet, inventory, hiring, upgrade);
@@ -260,7 +264,7 @@ namespace BurgerShop.Core
             pad.sizeDelta = new Vector2(280f, 280f);
             Image padImage = padObject.GetComponent<Image>();
             padImage.sprite = circle;
-            padImage.color = new Color(1f, 1f, 1f, 0.22f);
+            padImage.color = new Color(1f, .96f, .90f, .55f);
             padImage.raycastTarget = true;
 
             GameObject knobObject = new GameObject("Knob", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -273,7 +277,7 @@ namespace BurgerShop.Core
             knob.sizeDelta = new Vector2(110f, 110f);
             Image knobImage = knobObject.GetComponent<Image>();
             knobImage.sprite = circle;
-            knobImage.color = new Color(1f, 0.92f, 0.78f, 0.9f);
+            knobImage.color = HudChrome.Tomato;
             knobImage.raycastTarget = false;
 
             padObject.AddComponent<VirtualJoystick>();
@@ -295,16 +299,16 @@ namespace BurgerShop.Core
         static void CreateStaffHud(Transform canvas, WorkerHiringZone hiring)
         {
             Text status = HudChrome.Label(canvas, "StaffStatus", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(-24f, 196f), new Vector2(440f, 36f), 22, new Color(0.86f, 0.98f, 1f), TextAnchor.LowerRight, true, true);
+                new Vector2(-24f, 196f), new Vector2(440f, 36f), 22, HudChrome.Ink, TextAnchor.LowerRight, true, true);
 
             Image background = HudChrome.Panel(canvas, "HiringPanel", new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(-24f, 36f), new Vector2(460f, 150f), new Color(0.05f, 0.17f, 0.22f, 0.94f), 0.9f);
+                new Vector2(-24f, 36f), new Vector2(460f, 150f), HudChrome.Cream, 0.9f);
             var group = background.gameObject.AddComponent<CanvasGroup>();
             group.blocksRaycasts = false;
             group.interactable = false;
             Text details = HudChrome.Label(background.transform, "HiringStatus", new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(18f, -16f), new Vector2(424f, 100f), 24,
-                new Color(0.86f, 0.98f, 1f), TextAnchor.UpperLeft, true, true);
+                new Vector2(0f, 1f), new Vector2(18f, -16f), new Vector2(424f, 100f), 28,
+                HudChrome.Ink, TextAnchor.UpperLeft, true, true);
             Image progress = HudChrome.Panel(background.transform, "HiringProgress", Vector2.zero, Vector2.zero,
                 new Vector2(18f, 16f), new Vector2(424f, 12f), new Color(0.23f, 0.83f, 0.94f), 0.4f);
             progress.type = Image.Type.Filled;
@@ -315,13 +319,13 @@ namespace BurgerShop.Core
         static void CreateUpgradeHud(Transform canvas, GrillUpgradeZone upgrade)
         {
             Image background = HudChrome.Panel(canvas, "UpgradePanel", new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(-24f, 36f), new Vector2(460f, 150f), new Color(0.16f, 0.10f, 0.24f, 0.94f), 0.9f);
+                new Vector2(-24f, 36f), new Vector2(460f, 150f), HudChrome.Cream, 0.9f);
             var group = background.gameObject.AddComponent<CanvasGroup>();
             group.blocksRaycasts = false;
             group.interactable = false;
             Text label = HudChrome.Label(background.transform, "UpgradeStatus", new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(18f, -16f), new Vector2(424f, 100f), 24,
-                new Color(0.95f, 0.91f, 1f), TextAnchor.UpperLeft, true, true);
+                new Vector2(0f, 1f), new Vector2(18f, -16f), new Vector2(424f, 100f), 28,
+                HudChrome.Ink, TextAnchor.UpperLeft, true, true);
             Image progress = HudChrome.Panel(background.transform, "UpgradeProgress", Vector2.zero, Vector2.zero,
                 new Vector2(18f, 16f), new Vector2(424f, 12f), new Color(0.73f, 0.53f, 1f), 0.4f);
             progress.type = Image.Type.Filled;

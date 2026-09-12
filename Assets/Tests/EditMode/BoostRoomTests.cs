@@ -149,7 +149,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(hud.Popup.TitleLabel.text, Is.EqualTo("Player upgrades"));
             Assert.That(hud.Popup.FirstLabel.text, Does.Contain("Speed").And.Contain("50"));
             Assert.That(hud.Popup.SecondLabel.text, Does.Contain("Carry").And.Contain("50"));
-            Assert.That(hud.Popup.CloseLabel.text, Is.EqualTo("X"));
+            Assert.That(hud.Popup.CloseLabel.text, Is.EqualTo("Close"));
             Enter();
             Assert.That(hud.IsVisible, Is.True);
         }

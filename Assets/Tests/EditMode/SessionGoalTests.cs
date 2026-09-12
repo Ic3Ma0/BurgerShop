@@ -59,12 +59,12 @@ namespace BurgerShop.Tests.EditMode
         public void TearDown() => Object.DestroyImmediate(root);
 
         [Test]
-        public void OpeningCelebratesThePreplacedTableThenAsksToPickUp()
+        public void OpeningDoesNotCelebratePreplacedFurniture()
         {
-            Assert.That(tracker.Title, Is.EqualTo("Install a table"));
-            Assert.That(tracker.Progress, Is.EqualTo(1));
+            Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
+            Assert.That(tracker.Progress, Is.Zero);
             Assert.That(tracker.Required, Is.EqualTo(1));
-            Assert.That(tracker.IsCelebrating, Is.True);
+            Assert.That(tracker.IsCelebrating, Is.False);
             Assert.That(tracker.Stars, Is.EqualTo(1));
             tracker.Advance(2f);
             Assert.That(tracker.IsCelebrating, Is.False);

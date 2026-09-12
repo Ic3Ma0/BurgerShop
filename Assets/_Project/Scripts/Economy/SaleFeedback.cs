@@ -1,4 +1,5 @@
 using BurgerShop.Restaurant;
+using BurgerShop.UI;
 using UnityEngine;
 
 namespace BurgerShop.Economy
@@ -39,15 +40,17 @@ namespace BurgerShop.Economy
         void PlayCoin(int amount)
         {
             if (!isActiveAndEnabled || source == null || coin == null) return;
+            if (FeedbackDirector.Current != null)
+            { if(FeedbackDirector.Current.RequestSound(FeedbackSound.Cash))CoinPlayCount++; return; }
             CoinPlayCount++;
-            source.PlayOneShot(coin, 1f);
         }
 
         void PlaySpend(int amount)
         {
             if (!isActiveAndEnabled || source == null || spend == null) return;
+            if (FeedbackDirector.Current != null)
+            { if(FeedbackDirector.Current.RequestSound(FeedbackSound.Spend))SpendPlayCount++; return; }
             SpendPlayCount++;
-            source.PlayOneShot(spend, 0.7f);
         }
 
         void OnDestroy()

@@ -28,7 +28,7 @@ namespace BurgerShop.Core
 
     public sealed class CoinRoll
     {
-        public const float Duration = 0.28f;
+        public const float Duration = 0.25f;
         long from;
         long to;
         float elapsed;

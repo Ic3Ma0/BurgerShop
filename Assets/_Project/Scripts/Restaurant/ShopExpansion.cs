@@ -204,6 +204,8 @@ namespace BurgerShop.Restaurant
             zone.Configure(wallet, player, pad, cost, title, () =>
             {
                 unlocked();
+                Transform look = title=="TABLE"?extraTable?.transform:title=="GRILL"?extraGrill?.transform:title=="COUNTER"?extraStock?.transform:title=="BOX"?boxing?.transform:driveThru?.transform;
+                UI.VisualMeshPulse.Play(look);
                 PurchaseCompleted?.Invoke();
             }, label);
             return zone;
