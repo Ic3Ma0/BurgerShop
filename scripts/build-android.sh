@@ -29,7 +29,7 @@ if [[ ! -d "$build_dir/Library" && -d "$project_dir/Library" ]]; then
 fi
 set +e
 "$unity_editor" -batchmode -quit -projectPath "$build_dir" -buildTarget Android \
-  -executeMethod BurgerShop.Editor.AndroidBuild.BuildApk -logFile "$project_dir/Logs/goal09-android-build.log"
+  -executeMethod BurgerShop.Editor.AndroidBuild.BuildApk -logFile "$project_dir/Logs/android-build.log"
 result=$?
 set -e
 if [[ -f "$build_dir/Logs/android-build-summary.json" ]]; then
@@ -39,6 +39,6 @@ if [[ -f "$build_dir/Logs/android-runtime-components.txt" ]]; then
   cp "$build_dir/Logs/android-runtime-components.txt" "$project_dir/Logs/android-runtime-components.txt"
 fi
 [[ "$result" == 0 ]] || { echo "Build failed; staging retained at $build_dir" >&2; exit "$result"; }
-cp "$build_dir/Builds/Android/BurgerShop-0.1.2-arm64.apk" "$project_dir/Builds/Android/"
-(cd "$project_dir/Builds/Android" && shasum -a 256 BurgerShop-0.1.2-arm64.apk > BurgerShop-0.1.2-arm64.apk.sha256)
-echo "$project_dir/Builds/Android/BurgerShop-0.1.2-arm64.apk"
+cp "$build_dir/Builds/Android/BurgerShop-0.2.0-arm64.apk" "$project_dir/Builds/Android/"
+(cd "$project_dir/Builds/Android" && shasum -a 256 BurgerShop-0.2.0-arm64.apk > BurgerShop-0.2.0-arm64.apk.sha256)
+echo "$project_dir/Builds/Android/BurgerShop-0.2.0-arm64.apk"

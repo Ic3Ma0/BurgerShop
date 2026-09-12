@@ -5,8 +5,8 @@ namespace BurgerShop.Player
     public sealed class CameraFollow : MonoBehaviour
     {
         [SerializeField] Transform target;
-        [SerializeField] float followDistance = 13f;
-        [SerializeField] float height = 11f;
+        [SerializeField] float followDistance = 16f;
+        [SerializeField] float height = 13f;
         [SerializeField] float yaw = 45f;
         [SerializeField] float lookAtHeight = 1.1f;
         [SerializeField] float positionSmooth = 10f;

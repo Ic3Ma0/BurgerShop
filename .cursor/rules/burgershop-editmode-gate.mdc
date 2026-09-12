@@ -1,0 +1,27 @@
+---
+description: Player-visible work must ship with passing EditMode tests that catch spatial/UI mistakes
+alwaysApply: true
+---
+
+# EditMode 交付闸门
+
+交付新的玩家可见功能（工位、家具、HUD、区域、顾客行为）前：写或改 `Assets/Tests/EditMode/` 测试，并在本机 Unity `6000.3.23f1` 跑完全部 EditMode，**全部通过才算完成**。真机测不了时在回复里写明；云端成功不能代替 Editor。
+
+不要只靠 Play 肉眼。能断言的就写进测试：朝向、座位、区域半径、HUD 文案。
+
+特别检查这些低级空间/UI 错误：
+- 朝向：椅子/角色 `forward` 必须面朝该面的对象（桌心、柜台），靠背在外侧
+- 左右镜像、靠再对调一次 yaw 碰运气
+- HUD 挡住虚拟摇杆
+- 颜色圈用途贴错（绿取餐 / 白收银 / 紫升级 / 青雇佣）
+
+```csharp
+// BAD — 肉眼看、或再对调一次 yaw
+chair.localRotation = Quaternion.Euler(0f, yaw, 0f);
+
+// GOOD — 朝向可测；反椅会让 Dot 变负、靠背更靠近桌心
+chair.localRotation = Quaternion.LookRotation(towardTable);
+Assert.That(Vector3.Dot(Flatten(chair.forward), Flatten(table.position - chair.position).normalized), Is.GreaterThan(0.9f));
+```
+
+存档测试不得碰真实 `persistentDataPath`。本条只补测试闸门，不要复制整份 `AGENTS.md`。

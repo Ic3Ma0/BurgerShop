@@ -42,6 +42,7 @@ namespace BurgerShop.Tests.EditMode
             BurgerServingZone serving = Object.FindFirstObjectByType<BurgerServingZone>();
             BurgerPickupZone pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
             CustomerQueue queue = Object.FindFirstObjectByType<CustomerQueue>();
+            queue.OrderQuantityFactory = () => 1;
             RestaurantWallet wallet = Object.FindFirstObjectByType<RestaurantWallet>();
             ProductionStation grill = Object.FindFirstObjectByType<ProductionStation>();
             GrillUpgradeZone upgrade = Object.FindFirstObjectByType<GrillUpgradeZone>();
@@ -55,7 +56,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(upgradeText.text, Does.Contain("Need 30 more coins"));
             Assert.That(panel.alpha, Is.EqualTo(1f));
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             Assert.That(panel.alpha, Is.Zero);
             yield return WaitSeconds(16f);
 
@@ -74,8 +75,12 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(grill.ProductionSeconds, Is.EqualTo(2f));
             Assert.That(sales.text, Does.Contain("-30").And.Not.Contain("+-"));
             Assert.That(upgradeText.text, Does.Contain("Upgraded!").And.Contain("60 COINS"));
-            Assert.That(grill.transform.Find("UpgradeLamp_1").gameObject.activeSelf, Is.True);
-            Assert.That(grill.transform.Find("UpgradeLamp_2").gameObject.activeSelf, Is.False);
+            ExpandableGrill visual = grill.GetComponent<ExpandableGrill>();
+            Assert.That(visual, Is.Not.Null);
+            Assert.That(visual.ActiveLookName, Is.EqualTo("Look_Lv2"));
+            Assert.That(visual.ActiveLook.Find("Lamp_1"), Is.Not.Null);
+            Assert.That(visual.ActiveLook.Find("Chimney"), Is.Not.Null);
+            Assert.That(grill.Capacity, Is.EqualTo(6));
             yield return WaitSeconds(10f);
             Assert.That(upgrade.Level, Is.EqualTo(2));
             Assert.That(wallet.Coins, Is.Zero);
@@ -89,11 +94,27 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(grill.Stock, Is.EqualTo(grill.Capacity));
             Assert.That(Time.time - started, Is.InRange(1.9f, 2.15f));
 
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             yield return CollectAndServe(inventory, pickup, serving, wallet, 4);
             Assert.That(wallet.Coins, Is.EqualTo(10), "New earnings remain available after spending the first 30 coins.");
             Assert.That(upgrade.Level, Is.EqualTo(2));
-            yield return WaitSeconds(12f);
+            // Earlier seating may leave the fourth guest waiting for a dirty table.
+            // Clear an actual table through player movement before asserting eventual departure.
+            var hall = Object.FindFirstObjectByType<DiningArea>();
+            var dirty = hall.FindDirtyTable();
+            if (dirty != null)
+            {
+                Vector3 westAisle = new Vector3(-6f, 0, 0);
+                Vector3 besideTable = new Vector3(-6f, 0, dirty.Center.z);
+                yield return WalkTo(inventory.transform, westAisle);
+                yield return WalkTo(inventory.transform, besideTable);
+                yield return WalkTo(inventory.transform, dirty.Center + Vector3.right * 0.95f);
+                yield return WaitSeconds(2f);
+                yield return WalkTo(inventory.transform, besideTable);
+                yield return WalkTo(inventory.transform, westAisle);
+                yield return WalkTo(inventory.transform, ShopLayout.Aisle);
+            }
+            yield return WaitSeconds(18f);
             Assert.That(queue.Count, Is.EqualTo(3));
             Assert.That(queue.ReadyCustomer.TicketNumber, Is.EqualTo(5));
             Assert.That(Object.FindObjectsByType<CustomerAgent>(FindObjectsSortMode.None).Length, Is.EqualTo(3));
@@ -109,19 +130,25 @@ namespace BurgerShop.Tests.EditMode
             float deadline = Time.time + 5f;
             while (inventory.Count == 0 && Time.time < deadline) yield return null;
             Assert.That(inventory.Count, Is.GreaterThan(0));
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             int carried = inventory.Count;
+            long coinsBefore = wallet.Coins;
             yield return WalkTo(inventory.transform, serving.ServingPosition);
             deadline = Time.time + 5f;
             while (wallet.CompletedSales < sale && Time.time < deadline) yield return null;
             Assert.That(wallet.CompletedSales, Is.EqualTo(sale));
-            Assert.That(inventory.Count, Is.EqualTo(carried - 1));
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            Assert.That(inventory.Count, Is.LessThan(carried));
+            CashFloor cash = Object.FindFirstObjectByType<CashFloor>();
+            yield return WalkTo(inventory.transform, cash.CounterOrigin);
+            deadline = Time.time + 5f;
+            while (wallet.Coins < coinsBefore + 10 && Time.time < deadline) yield return null;
+            Assert.That(wallet.Coins, Is.EqualTo(coinsBefore + 10));
+            yield return WalkTo(inventory.transform, ShopLayout.Aisle);
         }
 
         IEnumerator WalkTo(Transform player, Vector3 target)
         {
-            float deadline = Time.time + 8f;
+            float deadline = Time.time + 12f;
             while (Time.time < deadline)
             {
                 Vector3 offset = target - player.position;

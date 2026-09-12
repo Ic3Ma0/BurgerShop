@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BurgerShop.Restaurant;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +8,7 @@ namespace BurgerShop.UI
     public sealed class UpgradeHud : MonoBehaviour
     {
         GrillUpgradeZone upgrade;
+        readonly List<GrillUpgradeZone> extras = new List<GrillUpgradeZone>();
         Text label;
         Image progress;
         CanvasGroup panel;
@@ -17,36 +19,52 @@ namespace BurgerShop.UI
             label = text;
             progress = fill;
             panel = group;
+            if (label != null) label.raycastTarget = false;
+            HudChrome.Mute(fill);
             Refresh();
+        }
+
+        public void AddZone(GrillUpgradeZone zone)
+        {
+            if (zone == null || extras.Contains(zone)) return;
+            extras.Add(zone);
         }
 
         void LateUpdate() => Refresh();
 
-        void OnDestroy()
+        GrillUpgradeZone Active()
         {
-            // The bootstrap creates this sprite specifically for the progress bar.
-            if (progress != null && progress.sprite != null) BurgerVisual.Release(progress.sprite);
+            if (upgrade != null && upgrade.IsInRange) return upgrade;
+            for (int i = 0; i < extras.Count; i++)
+                if (extras[i] != null && extras[i].IsInRange) return extras[i];
+            return upgrade;
         }
 
         void Refresh()
         {
-            if (upgrade == null || label == null) return;
-            panel.alpha = upgrade.IsInRange ? 1f : 0f;
-            progress.fillAmount = upgrade.Progress;
-            if (upgrade.IsMaxLevel)
+            GrillUpgradeZone zone = Active();
+            if (zone == null || label == null) return;
+            if (panel != null)
             {
-                label.text = $"GRILL LV {upgrade.Level} - MAX\n{upgrade.CurrentProductionSeconds:0.0}s per burger\nFully upgraded";
+                panel.alpha = zone.IsInRange ? 1f : 0f;
+                panel.blocksRaycasts = false;
+                panel.interactable = false;
+            }
+            if (progress != null) progress.fillAmount = zone.Progress;
+            if (zone.IsMaxLevel)
+            {
+                label.text = $"GRILL LV {zone.Level} - MAX\n{zone.CurrentProductionSeconds:0.0}s per burger\nFully upgraded";
                 return;
             }
-            if (upgrade.PurchasedThisVisit)
+            if (zone.PurchasedThisVisit)
             {
-                label.text = $"GRILL LV {upgrade.Level} - Upgraded!\nNow {upgrade.CurrentProductionSeconds:0.0}s per burger\nNext: {upgrade.NextCost} COINS - leave and return";
+                label.text = $"GRILL LV {zone.Level} - Upgraded!\nNow {zone.CurrentProductionSeconds:0.0}s per burger\nNext: {zone.NextCost} COINS - leave and return";
                 return;
             }
-            string hint = !upgrade.IsAvailable ? "Upgrade unavailable"
-                : upgrade.MissingCoins > 0 ? $"Need {upgrade.MissingCoins} more coins"
-                : $"Stay here to upgrade - {Mathf.FloorToInt(upgrade.Progress * 100f)}%";
-            label.text = $"GRILL LV {upgrade.Level} > {upgrade.Level + 1}\n{upgrade.NextCost} COINS  |  {upgrade.CurrentProductionSeconds:0.0}s > {upgrade.NextProductionSeconds:0.0}s\n{hint}";
+            string hint = !zone.IsAvailable ? "Upgrade unavailable"
+                : zone.MissingCoins > 0 ? $"Need {zone.MissingCoins} more coins"
+                : $"Stay here to upgrade - {Mathf.FloorToInt(zone.Progress * 100f)}%";
+            label.text = $"GRILL LV {zone.Level} > {zone.Level + 1}\n{zone.NextCost} COINS  |  {zone.CurrentProductionSeconds:0.0}s > {zone.NextProductionSeconds:0.0}s\n{hint}";
         }
     }
 }

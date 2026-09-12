@@ -5,6 +5,8 @@ namespace BurgerShop.Restaurant
 {
     public sealed class ProductionStation : MonoBehaviour
     {
+        public static readonly int[] LevelCaps = { 4, 6, 8 };
+
         [SerializeField, Min(0.1f)] float productionSeconds = 3f;
         [SerializeField, Min(1)] int capacity = 4;
 
@@ -12,13 +14,19 @@ namespace BurgerShop.Restaurant
         Transform progressFill;
         TextMesh statusText;
         float elapsed;
+        bool maxedTier;
 
         public int Stock { get; private set; }
         public int Capacity => capacity;
+        public Transform OutputAnchor => outputAnchor;
+        public string StatusCopy => statusText != null ? statusText.text : "";
         public float ProductionSeconds => productionSeconds;
         public float NormalizedProgress => Stock >= capacity ? 1f : Mathf.Clamp01(elapsed / productionSeconds);
 
         public event Action<int> StockChanged;
+
+        public static int CapacityForLevel(int level) =>
+            LevelCaps[Mathf.Clamp(level, 1, LevelCaps.Length) - 1];
 
         public void Configure(Transform output, Transform fill, TextMesh label, float seconds = 3f, int maxStock = 4)
         {
@@ -27,6 +35,24 @@ namespace BurgerShop.Restaurant
             statusText = label;
             productionSeconds = Mathf.Max(0.1f, seconds);
             capacity = Mathf.Max(1, maxStock);
+            RefreshVisuals();
+        }
+
+        public void AttachOutput(Transform output) => outputAnchor = output;
+
+        public void AttachFill(Transform fill) => progressFill = fill;
+
+        public void SetCapacity(int maxStock)
+        {
+            if (maxStock < 1)
+                throw new ArgumentOutOfRangeException(nameof(maxStock));
+            capacity = maxStock;
+            RefreshVisuals();
+        }
+
+        public void SetMaxedTier(bool maxed)
+        {
+            maxedTier = maxed;
             RefreshVisuals();
         }
 
@@ -119,11 +145,9 @@ namespace BurgerShop.Restaurant
             }
 
             if (statusText != null)
-            {
-                statusText.text = Stock >= capacity
-                    ? $"GRILL  {Stock}/{capacity}  FULL"
-                    : $"GRILL  {Stock}/{capacity}  {Mathf.CeilToInt((1f - progress) * productionSeconds)}s";
-            }
+                statusText.text = maxedTier
+                    ? $"GRILL {Stock}/{capacity}  MAX"
+                    : $"GRILL {Stock}/{capacity}";
         }
 
         void FaceLabelTowardsCamera()
@@ -152,6 +176,49 @@ namespace BurgerShop.Restaurant
             CreateLayer(burger, "Cheese", PrimitiveType.Cube, new Vector3(0f, 0.22f, 0f), new Vector3(0.72f, 0.035f, 0.72f), cheese);
             CreateLayer(burger, "TopBun", PrimitiveType.Sphere, new Vector3(0f, 0.31f, 0f), new Vector3(0.58f, 0.22f, 0.58f), bun);
             return burger;
+        }
+
+        static void CreateLayer(Transform parent, string name, PrimitiveType primitive, Vector3 position, Vector3 scale, Material material)
+        {
+            GameObject layer = GameObject.CreatePrimitive(primitive);
+            layer.name = name;
+            layer.transform.SetParent(parent, false);
+            layer.transform.localPosition = position;
+            layer.transform.localScale = scale;
+            Renderer renderer = layer.GetComponent<Renderer>();
+            if (renderer != null)
+                renderer.sharedMaterial = material;
+            Collider collider = layer.GetComponent<Collider>();
+            if (collider != null)
+            {
+                collider.enabled = false;
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(collider);
+                else
+                    UnityEngine.Object.DestroyImmediate(collider);
+            }
+        }
+
+        static Material CreateMaterial(Color color) => BurgerShop.Core.RuntimeMaterials.Create(color);
+    }
+
+    static class BoxVisualFactory
+    {
+        public static Transform Create(Transform parent, int index)
+        {
+            Transform box = new GameObject($"Box_{index + 1}").transform;
+            box.SetParent(parent, false);
+            box.localPosition = new Vector3(0f, index * 0.34f, 0f);
+
+            Material board = CreateMaterial(new Color(0.93f, 0.82f, 0.62f));
+            Material stripe = CreateMaterial(new Color(0.72f, 0.38f, 0.12f));
+            Material lid = CreateMaterial(new Color(0.98f, 0.94f, 0.86f));
+            box.gameObject.AddComponent<BurgerVisual>().OwnMaterials(board, stripe, lid);
+
+            CreateLayer(box, "Body", PrimitiveType.Cube, new Vector3(0f, 0.14f, 0f), new Vector3(0.62f, 0.22f, 0.62f), board);
+            CreateLayer(box, "Lid", PrimitiveType.Cube, new Vector3(0f, 0.28f, 0f), new Vector3(0.66f, 0.06f, 0.66f), lid);
+            CreateLayer(box, "Band", PrimitiveType.Cube, new Vector3(0f, 0.20f, 0f), new Vector3(0.68f, 0.05f, 0.18f), stripe);
+            return box;
         }
 
         static void CreateLayer(Transform parent, string name, PrimitiveType primitive, Vector3 position, Vector3 scale, Material material)

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using BurgerShop.UI;
@@ -7,13 +8,25 @@ namespace BurgerShop.Player
     [RequireComponent(typeof(CharacterController))]
     public sealed class PlayerMotor : MonoBehaviour
     {
-        [SerializeField] float moveSpeed = 5.5f;
+        [SerializeField] float moveSpeed = PlayerBoost.BaseMoveSpeed;
         [SerializeField] float rotationSharpness = 16f;
         [SerializeField] float moveDeadzone = 0.12f;
 
         CharacterController _controller;
         InputAction _moveAction;
         Transform _cameraTransform;
+        int boostLevel;
+
+        public int BoostLevel => boostLevel;
+        public float MoveSpeed => PlayerBoost.MoveSpeed(boostLevel);
+
+        public void ApplyBoostLevel(int level)
+        {
+            if (level < 0 || level > PlayerBoost.MaxLevel)
+                throw new ArgumentOutOfRangeException(nameof(level));
+            boostLevel = level;
+            moveSpeed = MoveSpeed;
+        }
 
         void Awake()
         {
@@ -37,7 +50,7 @@ namespace BurgerShop.Player
 
             if (world.sqrMagnitude > moveDeadzone * moveDeadzone)
             {
-                _controller.SimpleMove(world * moveSpeed);
+                _controller.SimpleMove(world * MoveSpeed);
                 Quaternion target = Quaternion.LookRotation(world, Vector3.up);
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation,

@@ -12,16 +12,21 @@ namespace BurgerShop.Restaurant
         Transform upgradePoint;
         TextMesh markerLabel;
         Transform[] levelIndicators;
+        StationUpgradeFeedback feedback;
+        int[] costs = { 30, 60 };
+        float[] seconds = { 3f, 2f, 1.5f };
         [SerializeField, Min(0.1f)] float radius = 1f;
         [SerializeField, Min(0.1f)] float holdSeconds = 1.5f;
         float heldTime;
 
+        public event System.Action<int, bool> LevelApplied;
+        public ProductionStation Station => station;
         public int Level { get; private set; } = 1;
-        public int MaxLevel => 3;
+        public int MaxLevel => seconds != null && seconds.Length > 0 ? seconds.Length : 3;
         public bool IsMaxLevel => Level >= MaxLevel;
-        public int NextCost => IsMaxLevel ? 0 : Level == 1 ? 30 : 60;
-        public float CurrentProductionSeconds => station != null ? station.ProductionSeconds : 3f;
-        public float NextProductionSeconds => IsMaxLevel ? CurrentProductionSeconds : Level == 1 ? 2f : 1.5f;
+        public int NextCost => IsMaxLevel || costs == null || Level < 1 || Level > costs.Length ? 0 : costs[Level - 1];
+        public float CurrentProductionSeconds => station != null ? station.ProductionSeconds : SecondsFor(Level);
+        public float NextProductionSeconds => IsMaxLevel ? CurrentProductionSeconds : SecondsFor(Level + 1);
         public float Progress => Mathf.Clamp01(heldTime / holdSeconds);
         public bool PurchasedThisVisit { get; private set; }
         public long MissingCoins => wallet != null ? System.Math.Max(0, NextCost - wallet.Coins) : NextCost;
@@ -40,7 +45,8 @@ namespace BurgerShop.Restaurant
         }
 
         public void Configure(ProductionStation target, RestaurantWallet earnings, BurgerInventory carrier,
-            Transform point, TextMesh label = null, Transform[] indicators = null)
+            Transform point, TextMesh label = null, Transform[] indicators = null, StationUpgradeFeedback visuals = null,
+            int[] levelCosts = null, float[] productionSeconds = null)
         {
             station = target;
             wallet = earnings;
@@ -48,8 +54,13 @@ namespace BurgerShop.Restaurant
             upgradePoint = point;
             markerLabel = label;
             levelIndicators = indicators;
+            feedback = visuals;
+            if (levelCosts != null && levelCosts.Length >= 1) costs = (int[])levelCosts.Clone();
+            if (productionSeconds != null && productionSeconds.Length >= 1) seconds = (float[])productionSeconds.Clone();
             heldTime = 0f;
+            ApplyStationStats();
             RefreshVisuals();
+            feedback?.ShowLevel(Level);
         }
 
         void Update() => Advance(Time.deltaTime);
@@ -60,12 +71,15 @@ namespace BurgerShop.Restaurant
             Level = level;
             heldTime = 0f;
             PurchasedThisVisit = false;
-            station.SetProductionSeconds(level == 1 ? 3f : level == 2 ? 2f : 1.5f);
+            ApplyStationStats();
             RefreshVisuals();
+            feedback?.ShowLevel(Level);
+            LevelApplied?.Invoke(Level, false);
         }
 
         public void Advance(float deltaTime)
         {
+            feedback?.Advance(deltaTime);
             if (deltaTime <= 0f) return;
             if (!IsInRange)
             {
@@ -82,7 +96,6 @@ namespace BurgerShop.Restaurant
             heldTime += Mathf.Min(deltaTime, 0.1f);
             if (heldTime + 0.0001f < holdSeconds) return;
             int cost = NextCost;
-            float seconds = NextProductionSeconds;
             PurchasedThisVisit = true;
             heldTime = 0f;
             if (!wallet.TrySpend(cost))
@@ -91,8 +104,25 @@ namespace BurgerShop.Restaurant
                 return;
             }
             Level++;
-            station.SetProductionSeconds(seconds);
+            ApplyStationStats();
             RefreshVisuals();
+            feedback?.PlayUpgrade(Level);
+            LevelApplied?.Invoke(Level, true);
+        }
+
+        float SecondsFor(int level)
+        {
+            if (seconds == null || seconds.Length == 0) return 3f;
+            int index = Mathf.Clamp(level, 1, seconds.Length) - 1;
+            return seconds[index];
+        }
+
+        void ApplyStationStats()
+        {
+            if (station == null) return;
+            station.SetCapacity(ProductionStation.CapacityForLevel(Level));
+            station.SetProductionSeconds(SecondsFor(Level));
+            station.SetMaxedTier(IsMaxLevel);
         }
 
         void OnDisable() => heldTime = 0f;
