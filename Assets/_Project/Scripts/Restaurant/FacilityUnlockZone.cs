@@ -1,17 +1,15 @@
 using System;
-using System.Collections.Generic;
 using BurgerShop.Economy;
 using BurgerShop.Player;
 using UnityEngine;
 
 namespace BurgerShop.Restaurant
 {
-    public sealed class FacilityUnlockZone : MonoBehaviour
+    public sealed class FacilityUnlockZone : MonoBehaviour, IInvestZone
     {
         public const float EntryDelay = 0.3f;
         public const float ContributionInterval = 0.1f;
         public const int ContributionSize = 10;
-        static readonly List<FacilityUnlockZone> zones = new List<FacilityUnlockZone>();
         RestaurantWallet wallet;
         BurgerInventory player;
         Transform pad;
@@ -32,17 +30,20 @@ namespace BurgerShop.Restaurant
         public float Progress => Cost > 0 ? (float)Invested / Cost : 0f;
         public long MissingCoins => wallet != null ? Math.Max(0, Remaining - wallet.Coins) : Remaining;
         public Vector3 PadPosition => pad != null ? pad.position : transform.position;
+        public RestaurantWallet Wallet => wallet;
+        public BurgerInventory Player => player;
+        public bool IsSelected => selected;
         public bool RankVisible { get; private set; } = true;
         public bool IsAvailable => isActiveAndEnabled && RankVisible && !IsPurchased && wallet != null && wallet.isActiveAndEnabled
             && player != null && player.isActiveAndEnabled && !paused && !unfocused;
         public bool IsInRange => player != null && !IsPurchased && DistanceSquared <= Radius * Radius;
-        float DistanceSquared
+        public float DistanceSquared
         {
             get { Vector3 offset = player.transform.position - PadPosition; offset.y = 0f; return offset.sqrMagnitude; }
         }
 
-        void OnEnable() { if (!zones.Contains(this)) zones.Add(this); }
-        void OnDisable() { zones.Remove(this); ResetEntry(); }
+        void OnEnable() => InvestZoneRegistry.Register(this);
+        void OnDisable() { InvestZoneRegistry.Unregister(this); ResetEntry(); }
         void OnApplicationPause(bool value) { paused = value; ResetEntry(); }
         void OnApplicationFocus(bool value) { unfocused = !value; ResetEntry(); }
         void ResetEntry() { selected = false; untilContribution = EntryDelay; }
@@ -50,7 +51,7 @@ namespace BurgerShop.Restaurant
         public void Configure(RestaurantWallet earnings, BurgerInventory carrier, Transform point, int price,
             string title, Action unlocked, TextMesh label = null)
         {
-            if (isActiveAndEnabled && !zones.Contains(this)) zones.Add(this);
+            if (isActiveAndEnabled) InvestZoneRegistry.Register(this);
             wallet = earnings;
             player = carrier;
             pad = point;
@@ -96,19 +97,7 @@ namespace BurgerShop.Restaurant
             if (marker != null) marker.gameObject.SetActive(RankVisible);
         }
 
-        FacilityUnlockZone Nearest()
-        {
-            FacilityUnlockZone best = null;
-            float distance = float.MaxValue;
-            foreach (FacilityUnlockZone zone in zones)
-            {
-                if (zone == null || zone.wallet != wallet || zone.player != player || !zone.IsAvailable || !zone.IsInRange) continue;
-                float next = zone.DistanceSquared;
-                if (next < distance - 0.0001f || (Mathf.Abs(next - distance) <= 0.0001f && zone.selected))
-                { best = zone; distance = next; }
-            }
-            return best;
-        }
+        IInvestZone Nearest() => InvestZoneRegistry.Nearest(this);
 
         void Update() => Advance(Time.deltaTime);
         public void Advance(float deltaTime)

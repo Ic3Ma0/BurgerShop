@@ -48,10 +48,10 @@ namespace BurgerShop.Restaurant
             Material frame = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.32f, 0.24f, 0.16f));
             CreatePart("HrDoorFrameL", PrimitiveType.Cube,
                 new Vector3(ShopLayout.WallHalf, height * 0.5f, ShopLayout.HrDoorZ - ShopLayout.HrDoorHalf),
-                new Vector3(0.18f, height, 0.18f), frame, keepCollider: false);
+                new Vector3(0.18f, height, 0.18f), frame, keepCollider: true);
             CreatePart("HrDoorFrameR", PrimitiveType.Cube,
                 new Vector3(ShopLayout.WallHalf, height * 0.5f, ShopLayout.HrDoorZ + ShopLayout.HrDoorHalf),
-                new Vector3(0.18f, height, 0.18f), frame, keepCollider: false);
+                new Vector3(0.18f, height, 0.18f), frame, keepCollider: true);
 
             Material wood = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.55f, 0.38f, 0.22f));
             Material top = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.72f, 0.58f, 0.38f));
@@ -63,10 +63,10 @@ namespace BurgerShop.Restaurant
 
             CreatePart("Desk", PrimitiveType.Cube,
                 ShopLayout.HrDesk + new Vector3(0f, 0.72f, 0f),
-                new Vector3(1.55f, 0.1f, 0.78f), top, keepCollider: false);
+                new Vector3(1.55f, 0.1f, 0.78f), top, keepCollider: true);
             CreatePart("DeskLeg", PrimitiveType.Cube,
                 ShopLayout.HrDesk + new Vector3(0f, 0.34f, 0f),
-                new Vector3(1.35f, 0.68f, 0.12f), wood, keepCollider: false);
+                new Vector3(1.35f, 0.68f, 0.12f), wood, keepCollider: true);
 
             Transform chair = new GameObject("Chair").transform;
             chair.SetParent(transform, false);
@@ -75,13 +75,13 @@ namespace BurgerShop.Restaurant
             towardDesk.y = 0f;
             chair.rotation = Quaternion.LookRotation(towardDesk);
             CreateChild(chair, "Seat", PrimitiveType.Cube, new Vector3(0f, 0.38f, 0f),
-                new Vector3(0.62f, 0.12f, 0.58f), seat);
+                new Vector3(0.62f, 0.12f, 0.58f), seat, true);
             CreateChild(chair, "Back", PrimitiveType.Cube, new Vector3(0f, 0.72f, -0.24f),
-                new Vector3(0.62f, 0.55f, 0.1f), steel);
+                new Vector3(0.62f, 0.55f, 0.1f), steel, true);
             CreateChild(chair, "PostL", PrimitiveType.Cube, new Vector3(-0.22f, 0.18f, 0.18f),
-                new Vector3(0.08f, 0.36f, 0.08f), steel);
+                new Vector3(0.08f, 0.36f, 0.08f), steel, true);
             CreateChild(chair, "PostR", PrimitiveType.Cube, new Vector3(0.22f, 0.18f, 0.18f),
-                new Vector3(0.08f, 0.36f, 0.08f), steel);
+                new Vector3(0.08f, 0.36f, 0.08f), steel, true);
 
             CreatePart("Computer", PrimitiveType.Cube,
                 ShopLayout.HrDesk + new Vector3(0.15f, 0.86f, 0f),
@@ -92,13 +92,13 @@ namespace BurgerShop.Restaurant
 
             CreatePart("Shelf", PrimitiveType.Cube,
                 new Vector3(center.x, 1.15f, northZ - 0.35f),
-                new Vector3(2.2f, 1.6f, 0.28f), shelf, keepCollider: false);
+                new Vector3(2.2f, 1.6f, 0.28f), shelf, keepCollider: true);
             CreatePart("BoxA", PrimitiveType.Cube,
                 new Vector3(center.x - 2.4f, 0.28f, southZ + 1.1f),
-                new Vector3(0.55f, 0.55f, 0.55f), cardboard, keepCollider: false);
+                new Vector3(0.55f, 0.55f, 0.55f), cardboard, keepCollider: true);
             CreatePart("BoxB", PrimitiveType.Cube,
                 new Vector3(farX - 1.1f, 0.22f, southZ + 1.4f),
-                new Vector3(0.7f, 0.44f, 0.5f), cardboard, keepCollider: false);
+                new Vector3(0.7f, 0.44f, 0.5f), cardboard, keepCollider: true);
 
             GameObject hire = new GameObject("HrHirePoint");
             hire.transform.SetParent(transform, false);
@@ -141,14 +141,12 @@ namespace BurgerShop.Restaurant
             part.transform.localScale = scale;
             part.GetComponent<Renderer>().sharedMaterial = material;
             Collider collider = part.GetComponent<Collider>();
-            if (keepCollider) return part;
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(collider, keepCollider);
             return part;
         }
 
         static void CreateChild(Transform parent, string name, PrimitiveType type, Vector3 local,
-            Vector3 scale, Material material)
+            Vector3 scale, Material material, bool solid)
         {
             GameObject part = GameObject.CreatePrimitive(type);
             part.name = name;
@@ -156,9 +154,7 @@ namespace BurgerShop.Restaurant
             part.transform.localPosition = local;
             part.transform.localScale = scale;
             part.GetComponent<Renderer>().sharedMaterial = material;
-            Collider collider = part.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(part.GetComponent<Collider>(), solid);
         }
     }
 }

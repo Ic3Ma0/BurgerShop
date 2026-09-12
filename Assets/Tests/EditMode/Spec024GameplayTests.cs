@@ -18,6 +18,8 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
             Time.captureDeltaTime = 1f / 60;
             var player = Object.FindFirstObjectByType<PlayerMotor>(); player.enabled = false;
             var inventory = player.GetComponent<BurgerInventory>();
@@ -48,6 +50,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(persistence.Flush(), Is.True);
             yield return new ExitPlayMode();
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
             Time.captureDeltaTime = 1f / 60;
             player = Object.FindFirstObjectByType<PlayerMotor>(); player.enabled = false;
             inventory = player.GetComponent<BurgerInventory>();

@@ -108,7 +108,7 @@ namespace BurgerShop.Tests.EditMode
                 persistence.Configure(wallet,upgrade,crew,dir);wallet.RestoreProgress(123,2);parts.TryCollect(7);
                 Assert.That(persistence.Flush(),Is.True);parts.Restore(0);wallet.RestoreProgress(0,0);
                 persistence.Configure(wallet,upgrade,crew,dir);Assert.That(parts.Balance,Is.EqualTo(7));Assert.That(wallet.Coins,Is.EqualTo(123));
-                Assert.That(new LocalSaveStore(dir).Load(out var saved),Is.EqualTo(SaveLoadResult.Loaded));Assert.That(saved.version,Is.EqualTo(11));
+                Assert.That(new LocalSaveStore(dir).Load(out var saved),Is.EqualTo(SaveLoadResult.Loaded));Assert.That(saved.version,Is.EqualTo(RestaurantSaveData.CurrentVersion));
             }
             finally{if(Directory.Exists(dir))Directory.Delete(dir,true);}
         }

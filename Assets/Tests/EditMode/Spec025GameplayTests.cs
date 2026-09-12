@@ -39,6 +39,8 @@ namespace BurgerShop.Tests.EditMode
                 + ",\"checksum\":\"mCEYqNRMQFrbW31D0JfUEDdbAN5FCkLh/qx+eWmdLfI=\"}");
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
             Time.captureDeltaTime = 1f / 60;
             var player = Object.FindFirstObjectByType<PlayerMotor>();
             var inventory = player.GetComponent<BurgerInventory>();
@@ -89,6 +91,8 @@ namespace BurgerShop.Tests.EditMode
             StopInput();
             yield return new ExitPlayMode();
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
             Time.captureDeltaTime = 1f / 60;
             crew = Object.FindFirstObjectByType<WorkerHiringZone>(); crew.Worker.enabled = false;
             expansion = Object.FindFirstObjectByType<ShopExpansion>(); box = expansion.Boxing;
@@ -111,6 +115,8 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
             Time.captureDeltaTime = 1f / 60;
             var queue = MainKitchen<CustomerQueue>(); queue.OrderQuantityFactory = () => 3;
             var serving = MainKitchen<BurgerServingZone>();

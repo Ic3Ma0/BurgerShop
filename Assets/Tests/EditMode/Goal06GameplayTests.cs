@@ -28,6 +28,8 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
             previousStep = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
             previousBackground = InputSystem.settings.backgroundBehavior;
@@ -50,12 +52,14 @@ namespace BurgerShop.Tests.EditMode
             Text upgradeText = GameObject.Find("UpgradeStatus").GetComponent<Text>();
             CanvasGroup panel = GameObject.Find("UpgradePanel").GetComponent<CanvasGroup>();
 
+            yield return WalkTo(inventory.transform, new Vector3(2.5f, 0, 12f));
             yield return WalkTo(inventory.transform, upgrade.UpgradePosition);
             yield return WaitSeconds(2f);
             Assert.That(upgrade.Level, Is.EqualTo(1));
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(upgradeText.text, Does.Contain("Need 30 more coins"));
             Assert.That(panel.alpha, Is.EqualTo(1f));
+            yield return WalkTo(inventory.transform, new Vector3(2.5f, 0, 12f));
             yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             Assert.That(panel.alpha, Is.Zero);
             yield return WaitSeconds(16f);
@@ -65,6 +69,7 @@ namespace BurgerShop.Tests.EditMode
                 yield return CollectAndServe(inventory, pickup, serving, wallet, trip);
                 Assert.That(wallet.Coins, Is.EqualTo(trip * 10));
             }
+            yield return WalkTo(inventory.transform, new Vector3(2.5f, 0, 12f));
             yield return WalkTo(inventory.transform, upgrade.UpgradePosition);
             float deadline = Time.time + 4f;
             while (upgrade.Level == 1 && Time.time < deadline) yield return null;
@@ -94,6 +99,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(grill.Stock, Is.EqualTo(grill.Capacity));
             Assert.That(Time.time - started, Is.InRange(1.9f, 2.15f));
 
+            yield return WalkTo(inventory.transform, new Vector3(2.5f, 0, 12f));
             yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             yield return CollectAndServe(inventory, pickup, serving, wallet, 4);
             Assert.That(wallet.Coins, Is.EqualTo(10), "New earnings remain available after spending the first 30 coins.");

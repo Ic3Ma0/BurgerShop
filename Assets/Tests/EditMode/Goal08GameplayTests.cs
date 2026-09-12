@@ -29,6 +29,9 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
+            GameObject.Find("ColaCustomerArea")?.SetActive(false);
             MainKitchen<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
             previousStep = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
@@ -56,15 +59,17 @@ namespace BurgerShop.Tests.EditMode
             while (!hiring.IsHired && Time.time < deadline) yield return null;
             Assert.That(hiring.IsHired, Is.True);
             yield return WalkTo(inventory.transform, Vector3.zero);
-            deadline = Time.time + 90f;
+            // Include repeated trips to clean tables and dispose of trash.
+            deadline = Time.time + 150f;
             while ((hiring.Worker == null || hiring.Worker.CompletedDeliveries < 4) && Time.time < deadline)
                 yield return null;
             CashFloor cash = Object.FindFirstObjectByType<CashFloor>();
             yield return WalkTo(inventory.transform, cash.CounterOrigin);
             while (wallet.Coins < 30 && Time.time < deadline) yield return null;
             Assert.That(hiring.Worker, Is.Not.Null);
-            Assert.That(hiring.Worker.CompletedDeliveries, Is.GreaterThanOrEqualTo(4));
+            Assert.That(hiring.Worker.CompletedDeliveries, Is.GreaterThanOrEqualTo(4), $"state={hiring.Worker.State}, job={hiring.Worker.Job}, position={hiring.Worker.transform.position}, bag={hiring.Worker.Inventory.Count}, clears={hiring.Worker.CompletedClears}");
             Assert.That(wallet.Coins, Is.GreaterThanOrEqualTo(30));
+            yield return WalkTo(inventory.transform, new Vector3(2.5f, 0, 12f));
             yield return WalkTo(inventory.transform, upgrade.UpgradePosition);
             deadline = Time.time + 4f;
             while (upgrade.Level < 2 && Time.time < deadline) yield return null;
@@ -86,6 +91,9 @@ namespace BurgerShop.Tests.EditMode
 
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
+            GameObject.Find("ColaCustomerArea")?.SetActive(false);
             MainKitchen<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
             previousStep = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;

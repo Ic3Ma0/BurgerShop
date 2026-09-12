@@ -64,11 +64,13 @@ namespace BurgerShop.Core
             ShopExpansion expansion = ShopExpansion.Create(root, dining, serving, hiring, inventory, wallet, cash);
             StaffUpgradeBoard staffUpgrades = root.gameObject.AddComponent<StaffUpgradeBoard>();
             staffUpgrades.Configure(wallet, hiring, inventory);
+            TableUpgradeBoard tableUpgrades = root.gameObject.AddComponent<TableUpgradeBoard>();
+            tableUpgrades.Configure(dining, expansion, wallet, inventory);
             SessionGoalTracker goals = root.gameObject.AddComponent<SessionGoalTracker>();
             goals.Configure(inventory, station, stock, customers, wallet, serving, dining, trashBag, hiring, boost, expansion,
                 colaServing, colaMachine.Station);
             CreateJoystick(root, inventory, pickup, customers, wallet, upgrade, hiring, goals, trashBag, staffUpgrades,
-                boost, colaMachine.Upgrade);
+                boost, colaMachine.Upgrade, tableUpgrades);
             InteractionFocus.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), inventory);
             FeedbackDirector.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), inventory);
             WorldLabelHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), player);
@@ -80,7 +82,7 @@ namespace BurgerShop.Core
             root.gameObject.AddComponent<CourierLine>().Configure(wallet,parts,inventory,cash,station);
             PartsHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),parts);
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
-            persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades, goals, cola: colaMachine.Upgrade);
+            persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades, goals, cola: colaMachine.Upgrade, tables: tableUpgrades);
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
             player.gameObject.AddComponent<TemporaryPowerups>().Configure(inventory,motor,wallet,Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"));
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
@@ -188,6 +190,7 @@ namespace BurgerShop.Core
             part.transform.localPosition = localPosition;
             part.transform.localScale = localScale;
             ApplyMaterial(part, material);
+            SolidOccupancy.Apply(part.GetComponent<Collider>(), true);
             return part;
         }
 
@@ -262,7 +265,7 @@ namespace BurgerShop.Core
             follow.SetTarget(player);
         }
 
-        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers, RestaurantWallet wallet, GrillUpgradeZone upgrade, WorkerHiringZone hiring, SessionGoalTracker goals, TrashInventory trashBag, StaffUpgradeBoard staffUpgrades = null, BoostUpgradeZone playerBoost = null, GrillUpgradeZone colaUpgrade = null)
+        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers, RestaurantWallet wallet, GrillUpgradeZone upgrade, WorkerHiringZone hiring, SessionGoalTracker goals, TrashInventory trashBag, StaffUpgradeBoard staffUpgrades = null, BoostUpgradeZone playerBoost = null, GrillUpgradeZone colaUpgrade = null, TableUpgradeBoard tableUpgrades = null)
         {
             if (Object.FindFirstObjectByType<EventSystem>() == null)
             {
@@ -332,6 +335,8 @@ namespace BurgerShop.Core
                 StaffUpgradeHud.Build(uiRoot, staffUpgrades);
             if (playerBoost != null)
                 PlayerUpgradeHud.Build(uiRoot, playerBoost);
+            if (tableUpgrades != null)
+                TableChangeHud.Build(uiRoot, tableUpgrades);
         }
 
         static void CreateStaffHud(Transform canvas, WorkerHiringZone hiring)

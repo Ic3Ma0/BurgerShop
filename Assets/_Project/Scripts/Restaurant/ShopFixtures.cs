@@ -29,9 +29,7 @@ namespace BurgerShop.Restaurant
                 mark.transform.localRotation = Quaternion.Euler(0f, -angle * Mathf.Rad2Deg, 0f);
                 mark.transform.localScale = new Vector3(0.22f, 0.02f, 0.07f);
                 mark.GetComponent<Renderer>().sharedMaterial = dash;
-                Collider collider = mark.GetComponent<Collider>();
-                collider.enabled = false;
-                BurgerVisual.Release(collider);
+                SolidOccupancy.Apply(mark.GetComponent<Collider>(), false);
             }
             return root.transform;
         }
@@ -50,9 +48,7 @@ namespace BurgerShop.Restaurant
             badge.transform.position = counterTop + new Vector3(1.15f, 0.55f, -0.85f);
             badge.transform.localScale = new Vector3(0.7f, 0.55f, 0.04f);
             badge.GetComponent<Renderer>().sharedMaterial = BurgerShop.Core.RuntimeMaterials.Create(new Color(1f, 1f, 1f), true);
-            Collider collider = badge.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(badge.GetComponent<Collider>(), false);
 
             TextMesh label = new GameObject(boxed ? "PackageStockCount" : cola ? "ColaStockCount" : "CounterStockCount")
                 .AddComponent<TextMesh>();

@@ -9,6 +9,8 @@ namespace BurgerShop.Restaurant
     public sealed class ShopExpansion : MonoBehaviour
     {
         public const int TableCost = 150;
+        public const int FourSeatCost = 200;
+        public const int SquareTableCost = 150;
         public const int GrillCost = 200;
         public const int CounterCost = 250;
         public const int BoxingCost = 150;
@@ -24,6 +26,8 @@ namespace BurgerShop.Restaurant
         CashFloor cash;
         UpgradeHud upgradeHud;
         DiningTable extraTable;
+        DiningTable fourSeatTable;
+        DiningTable squareTable;
         ExpandableGrill extraGrill;
         CounterStock extraStock;
         CounterDropZone extraDrop;
@@ -34,11 +38,15 @@ namespace BurgerShop.Restaurant
         public event Action PurchaseCompleted;
 
         public FacilityUnlockZone TablePad { get; private set; }
+        public FacilityUnlockZone FourSeatPad { get; private set; }
+        public FacilityUnlockZone SquarePad { get; private set; }
         public FacilityUnlockZone GrillPad { get; private set; }
         public FacilityUnlockZone CounterPad { get; private set; }
         public FacilityUnlockZone BoxingPad { get; private set; }
         public FacilityUnlockZone DriveThruPad { get; private set; }
         public bool HasExtraTable => extraTable != null;
+        public bool HasFourSeatTable => fourSeatTable != null;
+        public bool HasSquareTable => squareTable != null;
         public bool HasExtraGrill => extraGrill != null;
         public bool HasExtraCounter => extraStock != null;
         public bool HasBoxing => boxing != null;
@@ -47,6 +55,8 @@ namespace BurgerShop.Restaurant
         public DriveThruLane DriveThru => driveThru;
         public int ExtraGrillLevel => extraGrill != null && extraGrill.Upgrade != null ? extraGrill.Upgrade.Level : 0;
         public DiningTable ExtraTable => extraTable;
+        public DiningTable FourSeatTable => fourSeatTable;
+        public DiningTable SquareTable => squareTable;
         public ExpandableGrill ExtraGrill => extraGrill;
         public CounterStock ExtraStock => extraStock;
         public CounterDropZone ExtraDrop => extraDrop;
@@ -56,8 +66,10 @@ namespace BurgerShop.Restaurant
             get
             {
                 if (wallet == null) return null;
-                FacilityUnlockZone[] pads = { TablePad, BoxingPad, GrillPad, CounterPad, DriveThruPad };
-                string[] names = { "a table", "a boxing table", "a grill", "a counter", "a drive-thru" };
+                FacilityUnlockZone[] pads =
+                    { TablePad, FourSeatPad, SquarePad, BoxingPad, GrillPad, CounterPad, DriveThruPad };
+                string[] names =
+                    { "a table", "a 4-seat table", "a square table", "a boxing table", "a grill", "a counter", "a drive-thru" };
                 for (int i = 0; i < pads.Length; i++)
                     if (pads[i] != null && pads[i].RankVisible && !pads[i].IsPurchased
                         && (wallet.Coins > 0 || pads[i].Invested > 0))
@@ -77,6 +89,12 @@ namespace BurgerShop.Restaurant
             cash = cashFloor;
             if (TablePad == null)
                 TablePad = MakePad("TableUnlockPad", ShopLayout.TableUnlock, TableCost, "TABLE", UnlockTable);
+            if (FourSeatPad == null)
+                FourSeatPad = MakePad("FourSeatUnlockPad", ShopLayout.FourSeatUnlock, FourSeatCost, "4-SEAT",
+                    UnlockFourSeat);
+            if (SquarePad == null)
+                SquarePad = MakePad("SquareUnlockPad", ShopLayout.SquareUnlock, SquareTableCost, "SQUARE",
+                    UnlockSquare);
             if (GrillPad == null)
                 GrillPad = MakePad("GrillUnlockPad", ShopLayout.GrillUnlock, GrillCost, "GRILL", UnlockGrill);
             if (CounterPad == null)
@@ -96,12 +114,22 @@ namespace BurgerShop.Restaurant
         }
 
         public void Restore(bool table, bool grill, bool counter, int grillLevel,
-            bool boxingStation = false, bool lane = false)
+            bool boxingStation = false, bool lane = false, bool fourSeat = false, bool square = false)
         {
             if (table && !HasExtraTable)
             {
                 UnlockTable();
                 TablePad?.RestorePurchased();
+            }
+            if (fourSeat && !HasFourSeatTable)
+            {
+                UnlockFourSeat();
+                FourSeatPad?.RestorePurchased();
+            }
+            if (square && !HasSquareTable)
+            {
+                UnlockSquare();
+                SquarePad?.RestorePurchased();
             }
             if (grill && !HasExtraGrill)
             {
@@ -127,9 +155,12 @@ namespace BurgerShop.Restaurant
             }
         }
 
-        public void RestoreInvestments(int table, int grill, int counter, int box, int lane)
+        public void RestoreInvestments(int table, int grill, int counter, int box, int lane,
+            int fourSeat = 0, int square = 0)
         {
             TablePad?.RestoreInvestment(table);
+            FourSeatPad?.RestoreInvestment(fourSeat);
+            SquarePad?.RestoreInvestment(square);
             GrillPad?.RestoreInvestment(grill);
             CounterPad?.RestoreInvestment(counter);
             BoxingPad?.RestoreInvestment(box);
@@ -157,6 +188,20 @@ namespace BurgerShop.Restaurant
             extraTable.gameObject.name = "ExtraDiningTable";
         }
 
+        void UnlockFourSeat()
+        {
+            if (HasFourSeatTable || dining == null) return;
+            fourSeatTable = dining.AddTable(ShopLayout.FourSeatTable, DiningTableKind.FourSeat);
+            fourSeatTable.gameObject.name = "FourSeatDiningTable";
+        }
+
+        void UnlockSquare()
+        {
+            if (HasSquareTable || dining == null) return;
+            squareTable = dining.AddTable(ShopLayout.SquareTable, DiningTableKind.Square);
+            squareTable.gameObject.name = "SquareDiningTable";
+        }
+
         void UnlockGrill()
         {
             if (HasExtraGrill || player == null || wallet == null) return;
@@ -176,8 +221,8 @@ namespace BurgerShop.Restaurant
             Vector3 counter = ShopLayout.ExtraCounter;
             Material body = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.38f, 0.49f, 0.58f));
             Material top = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.90f, 0.88f, 0.78f));
-            Part(desk, "OrderCounter", counter + Vector3.up * 0.5f, new Vector3(3.2f, 1f, 1.4f), body);
-            Part(desk, "OrderCounterTop", counter + Vector3.up * 1.05f, new Vector3(3.35f, 0.12f, 1.55f), top);
+            Part(desk, "OrderCounter", counter + Vector3.up * 0.5f, new Vector3(3.2f, 1f, 1.4f), body, true);
+            Part(desk, "OrderCounterTop", counter + Vector3.up * 1.05f, new Vector3(3.35f, 0.12f, 1.55f), top, true);
             extraCircle = ShopFixtures.CreateCashierCircle(desk, ShopLayout.ExtraServingCircle);
             extraCircle.name = "ExtraCashierCircle";
             extraStock = ShopFixtures.CreateCounterStock(desk, ShopLayout.ExtraCounterTop);
@@ -219,7 +264,13 @@ namespace BurgerShop.Restaurant
             zone.Configure(wallet, player, pad, cost, title, () =>
             {
                 unlocked();
-                Transform look = title=="TABLE"?extraTable?.transform:title=="GRILL"?extraGrill?.transform:title=="COUNTER"?extraStock?.transform:title=="BOX"?boxing?.transform:driveThru?.transform;
+                Transform look = title == "TABLE" ? extraTable?.transform
+                    : title == "4-SEAT" ? fourSeatTable?.transform
+                    : title == "SQUARE" ? squareTable?.transform
+                    : title == "GRILL" ? extraGrill?.transform
+                    : title == "COUNTER" ? extraStock?.transform
+                    : title == "BOX" ? boxing?.transform
+                    : driveThru?.transform;
                 UI.VisualMeshPulse.Play(look);
                 PurchaseCompleted?.Invoke();
             }, label);
@@ -244,6 +295,18 @@ namespace BurgerShop.Restaurant
                 Part(icon, "Box", center, new Vector3(0.65f, 0.35f, 0.65f), light);
                 Part(icon, "Lid", center + Vector3.up * 0.22f, new Vector3(0.72f, 0.07f, 0.72f), light);
             }
+            else if (title == "4-SEAT")
+            {
+                Part(icon, "Top", center, new Vector3(0.55f, 0.12f, 1.05f), light);
+                Part(icon, "Stem", center - Vector3.up * 0.25f, new Vector3(0.13f, 0.4f, 0.13f), light);
+            }
+            else if (title == "SQUARE")
+            {
+                Part(icon, "Top", center, new Vector3(0.55f, 0.12f, 0.55f), light);
+                Part(icon, "Stem", center - Vector3.up * 0.25f, new Vector3(0.12f, 0.4f, 0.12f), light);
+                Part(icon, "BackA", center + new Vector3(0f, 0.22f, -0.28f), new Vector3(0.4f, 0.35f, 0.08f), light);
+                Part(icon, "BackB", center + new Vector3(0f, 0.22f, 0.28f), new Vector3(0.4f, 0.35f, 0.08f), light);
+            }
             else
             {
                 Part(icon, "Top", center, new Vector3(0.9f, 0.12f, 0.6f), light);
@@ -263,9 +326,7 @@ namespace BurgerShop.Restaurant
             pad.transform.SetParent(transform, false);
             pad.transform.position = position;
             pad.transform.localScale = new Vector3(2f, 0.02f, 2f);
-            Collider collider = pad.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(pad.GetComponent<Collider>(), false);
             pad.GetComponent<Renderer>().sharedMaterial =
                 BurgerShop.Core.RuntimeMaterials.Create(new Color(0.18f, 0.72f, 0.32f));
             Material gold = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.95f, 0.75f, 0.18f));
@@ -277,14 +338,13 @@ namespace BurgerShop.Restaurant
                 coin.transform.localPosition = new Vector3((i % 2) * 0.12f - 0.04f, 6f + i * 4.2f, (i / 2) * 0.10f - 0.04f);
                 coin.transform.localScale = new Vector3(0.22f, 2.2f, 0.22f);
                 coin.GetComponent<Renderer>().sharedMaterial = gold;
-                Collider coinCollider = coin.GetComponent<Collider>();
-                coinCollider.enabled = false;
-                BurgerVisual.Release(coinCollider);
+                SolidOccupancy.Apply(coin.GetComponent<Collider>(), false);
             }
             return pad.transform;
         }
 
-        static void Part(Transform parent, string name, Vector3 position, Vector3 scale, Material material)
+        static void Part(Transform parent, string name, Vector3 position, Vector3 scale, Material material,
+            bool solid = false)
         {
             GameObject part = GameObject.CreatePrimitive(PrimitiveType.Cube);
             part.name = name;
@@ -292,9 +352,7 @@ namespace BurgerShop.Restaurant
             part.transform.position = position;
             part.transform.localScale = scale;
             part.GetComponent<Renderer>().sharedMaterial = material;
-            Collider collider = part.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(part.GetComponent<Collider>(), solid);
         }
 
         public static ShopExpansion Create(Transform parent, DiningArea hall, BurgerServingZone cashier,

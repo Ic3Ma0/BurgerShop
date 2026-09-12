@@ -260,11 +260,11 @@ namespace BurgerShop.Restaurant
                 CircleColor);
 
             Vector3 road = ShopLayout.DriveThruRoad;
-            Part("Road", PrimitiveType.Cube, road + Vector3.up * 0.04f, new Vector3(18.4f, 0.08f, 3.4f), asphalt);
+            Part("Road", PrimitiveType.Cube, road + Vector3.up * 0.04f, new Vector3(18.4f, 0.08f, 3.4f), asphalt, true);
             float dashWest = road.x - 8.6f;
             for (int i = 0; i < 9; i++)
                 Part("LaneDash_" + i, PrimitiveType.Cube,
-                    new Vector3(dashWest + i * 2.1f, 0.09f, road.z), new Vector3(1.1f, 0.02f, 0.12f), line);
+                    new Vector3(dashWest + i * 2.1f, 0.09f, road.z), new Vector3(1.1f, 0.02f, 0.12f), line, false);
 
             TextMesh mark = new GameObject("DriveThruMark").AddComponent<TextMesh>();
             mark.transform.SetParent(transform, false);
@@ -287,10 +287,10 @@ namespace BurgerShop.Restaurant
             stop.color = new Color(0.95f, 0.22f, 0.22f);
             stop.text = "STOP";
             Part("StopPost", PrimitiveType.Cube, stopAt + Vector3.up * 0.55f,
-                new Vector3(0.12f, 1.1f, 0.12f), steel);
+                new Vector3(0.12f, 1.1f, 0.12f), steel, true);
         }
 
-        void Part(string name, PrimitiveType type, Vector3 position, Vector3 scale, Material material)
+        void Part(string name, PrimitiveType type, Vector3 position, Vector3 scale, Material material, bool solid)
         {
             GameObject part = GameObject.CreatePrimitive(type);
             part.name = name;
@@ -298,9 +298,7 @@ namespace BurgerShop.Restaurant
             part.transform.position = position;
             part.transform.localScale = scale;
             part.GetComponent<Renderer>().sharedMaterial = material;
-            Collider collider = part.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(part.GetComponent<Collider>(), solid);
         }
 
         sealed class LaneCar : MonoBehaviour

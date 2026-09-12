@@ -26,6 +26,9 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
+            GameObject.Find("ColaCustomerArea")?.SetActive(false);
             MainKitchen<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
             previousStep = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
@@ -76,14 +79,15 @@ namespace BurgerShop.Tests.EditMode
             Vector3 parkedPlayer = inventory.transform.position;
             Vector3 workerStart = worker.transform.position;
             bool workerMoved = false;
-            deadline = Time.time + 180f;
+            // Include repeated trips to clean tables and dispose of trash.
+            deadline = Time.time + 240f;
             while (worker.CompletedDeliveries < 6 && Time.time < deadline)
             {
                 workerMoved |= Vector3.Distance(worker.transform.position, workerStart) > 2f;
                 Assert.That(worker.Inventory.Count, Is.InRange(0, 2));
                 yield return null;
             }
-            Assert.That(worker.CompletedDeliveries, Is.GreaterThanOrEqualTo(6));
+            Assert.That(worker.CompletedDeliveries, Is.GreaterThanOrEqualTo(6), $"state={worker.State}, job={worker.Job}, position={worker.transform.position}, bag={worker.Inventory.Count}, clears={worker.CompletedClears}");
             Assert.That(workerMoved, Is.True);
             Vector3 playerMovement = inventory.transform.position - parkedPlayer;
             playerMovement.y = 0f;

@@ -26,7 +26,10 @@ namespace BurgerShop.Restaurant
         SessionGoalTracker goals;
         ShopExpansion expansion;
         public BurgerInventory Player { get; private set; }
-        public IEnumerable<Offer> Offers=>offers.Values;
+        public IEnumerable<Offer> Offers
+        {
+            get { foreach(var offer in offers.Values)if(!offer.Id.StartsWith("table-")||GetComponent<TableUpgradeBoard>()==null)yield return offer; }
+        }
         public int Level(string id)=>levels.TryGetValue(id,out int n)?n:1;
         public static bool ValidId(string id)=>id=="cola-machine"||id=="grill-main"||id=="grill-extra"||id=="table-0"||id=="table-1"||id=="table-2"||id=="table-extra"||id=="counter-main"||id=="counter-extra"||id=="boxing"||id=="bag-machine"||id=="bag-table"||id=="bag-counter";
         public void Configure(RestaurantWallet earnings,SessionGoalTracker tracker,BurgerInventory player,ShopExpansion shop)
@@ -39,7 +42,7 @@ namespace BurgerShop.Restaurant
         {
             if(offers.ContainsKey(offer.Id))return;
             offers.Add(offer.Id,offer);
-            ShopFixtures.CreateActionCircle(offer.Target,"Upgrade_"+offer.Id,offer.Position,HudChrome.Gold);
+            if(!offer.Id.StartsWith("table-")||GetComponent<TableUpgradeBoard>()==null)ShopFixtures.CreateActionCircle(offer.Target,"Upgrade_"+offer.Id,offer.Position,HudChrome.Gold);
             offer.Apply(Level(offer.Id));
         }
         public void Discover()

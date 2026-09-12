@@ -28,6 +28,8 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
             previousStep = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
             previousBackground = InputSystem.settings.backgroundBehavior;

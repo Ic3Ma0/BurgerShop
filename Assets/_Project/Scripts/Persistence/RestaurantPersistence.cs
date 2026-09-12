@@ -17,6 +17,7 @@ namespace BurgerShop.Persistence
         SessionGoalTracker goals;
         PartsWallet partsWallet;
         GrillUpgradeZone colaUpgrade;
+        TableUpgradeBoard tableUpgrades;
         LocalSaveStore store;
         string lastChecksum;
         float elapsed;
@@ -47,7 +48,7 @@ namespace BurgerShop.Persistence
 
         public void Configure(RestaurantWallet earnings, GrillUpgradeZone grill, WorkerHiringZone staff,
             BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades, SessionGoalTracker tracker,
-            string directory = null, GrillUpgradeZone cola = null)
+            string directory = null, GrillUpgradeZone cola = null, TableUpgradeBoard tables = null)
         {
             if(partsWallet!=null)partsWallet.Changed-=RequestSave;
             partsWallet=GetComponent<PartsWallet>();
@@ -63,6 +64,9 @@ namespace BurgerShop.Persistence
             goals = tracker;
             colaUpgrade = cola;
             if (goals != null) goals.ProgressChanged += RequestSave;
+            if (tableUpgrades != null) tableUpgrades.Changed -= RequestSave;
+            tableUpgrades = tables;
+            if (tableUpgrades != null) tableUpgrades.Changed += RequestSave;
             if (directory == null)
             {
                 directory = Application.persistentDataPath;
@@ -83,10 +87,17 @@ namespace BurgerShop.Persistence
                 boost?.RestoreTiers(data.ResolvedPlayerSpeedTier, data.ResolvedPlayerCarryTier);
                 expansion?.Restore(data.ResolvedBoughtExtraTable, data.ResolvedBoughtExtraGrill,
                     data.ResolvedBoughtExtraCounter, data.ResolvedExtraGrillLevel,
-                    data.ResolvedBoughtBoxingStation, data.ResolvedBoughtDriveThru);
+                    data.ResolvedBoughtBoxingStation, data.ResolvedBoughtDriveThru,
+                    data.ResolvedBoughtFourSeatTable, data.ResolvedBoughtSquareTable);
                 if (data.version >= 7)
                     expansion?.RestoreInvestments(data.tableInvestment, data.grillInvestment, data.counterInvestment,
-                        data.boxingInvestment, data.driveThruInvestment);
+                        data.boxingInvestment, data.driveThruInvestment,
+                        data.ResolvedFourSeatInvestment, data.ResolvedSquareTableInvestment);
+                tableUpgrades?.Restore(data.ResolvedTable0Set, data.ResolvedTable1Set, data.ResolvedTable2Set,
+                    data.ResolvedExtraTableSet, data.ResolvedTable0Investment, data.ResolvedTable1Investment,
+                    data.ResolvedTable2Investment, data.ResolvedExtraTableInvestment,
+                    data.ResolvedFourSeatSet, data.ResolvedSquareTableSet,
+                    data.ResolvedFourSeatUpgradeInvestment, data.ResolvedSquareTableUpgradeInvestment);
                 colaUpgrade?.RestoreLevel(data.ResolvedColaLevel);
                 lastChecksum = data.Checksum();
                 RestoredRank = data.ResolvedShopRank;
@@ -167,7 +178,23 @@ namespace BurgerShop.Persistence
                 bagMachineInvestment = GetComponent<BagLine>()?.MachinePad?.Invested ?? 0,
                 bagTableInvestment = GetComponent<BagLine>()?.TablePad?.Invested ?? 0,
                 bagCounterInvestment = GetComponent<BagLine>()?.CounterPad?.Invested ?? 0,
-                colaLevel = colaUpgrade != null ? colaUpgrade.Level : 1
+                colaLevel = colaUpgrade != null ? colaUpgrade.Level : 1,
+                table0Set = tableUpgrades?.SetAt(0) ?? 0,
+                table1Set = tableUpgrades?.SetAt(1) ?? 0,
+                table2Set = tableUpgrades?.SetAt(2) ?? 0,
+                extraTableSet = tableUpgrades?.SetAt(3) ?? 0,
+                table0Investment = tableUpgrades?.InvestedAt(0) ?? 0,
+                table1Investment = tableUpgrades?.InvestedAt(1) ?? 0,
+                table2Investment = tableUpgrades?.InvestedAt(2) ?? 0,
+                extraTableInvestment = tableUpgrades?.InvestedAt(3) ?? 0,
+                boughtFourSeatTable = expansion != null && expansion.HasFourSeatTable,
+                boughtSquareTable = expansion != null && expansion.HasSquareTable,
+                fourSeatInvestment = expansion?.FourSeatPad?.Invested ?? 0,
+                squareTableInvestment = expansion?.SquarePad?.Invested ?? 0,
+                fourSeatSet = tableUpgrades?.SetAt(4) ?? 0,
+                squareTableSet = tableUpgrades?.SetAt(5) ?? 0,
+                fourSeatUpgradeInvestment = tableUpgrades?.InvestedAt(4) ?? 0,
+                squareTableUpgradeInvestment = tableUpgrades?.InvestedAt(5) ?? 0
             };
             string checksum = data.Checksum();
             if (checksum == lastChecksum) return true;
@@ -184,6 +211,7 @@ namespace BurgerShop.Persistence
             if (expansion != null) expansion.PurchaseCompleted -= RequestSave;
             if (goals != null) goals.ProgressChanged -= RequestSave;
             if(partsWallet!=null)partsWallet.Changed-=RequestSave;
+            if (tableUpgrades != null) tableUpgrades.Changed -= RequestSave;
         }
         void OnApplicationPause(bool paused) { if (paused) Flush(); }
         void OnApplicationFocus(bool focused) { if (!focused) Flush(); }

@@ -76,7 +76,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(TrashBin.ShopPosition, Is.EqualTo(ShopLayout.TrashBin));
             Assert.That(ShopLayout.BoxingUnlock, Is.EqualTo(new Vector3(-9f, 0.02f, -9f)));
             Assert.That(ShopLayout.BoxingCircle, Is.EqualTo(new Vector3(-8f, 0.02f, -7.2f)));
-            Assert.That(ShopLayout.PackageCounter, Is.EqualTo(new Vector3(-9f, 0f, -12f)));
+            Assert.That(ShopLayout.PackageCounter, Is.EqualTo(ShopLayout.DriveThruWindow));
             Assert.That(ShopLayout.DriveThruWindow, Is.EqualTo(new Vector3(-9f, 0f, -14.35f)));
             Assert.That(ShopLayout.DriveThruCircle, Is.EqualTo(new Vector3(-9f, 0.02f, -13.05f)));
             Assert.That(ShopLayout.DriveThruUnlock, Is.EqualTo(new Vector3(-6f, 0.02f, -12f)));
@@ -152,7 +152,7 @@ namespace BurgerShop.Tests.EditMode
 
             AssertFar("trash-counter", ShopLayout.TrashBin, ShopLayout.Counter, min);
             AssertFar("box-pack", ShopLayout.BoxingTable, ShopLayout.PackageCounter, 2f);
-            AssertFar("pack-window", ShopLayout.PackageCounter, ShopLayout.DriveThruWindow, 2f);
+            Assert.That(ShopLayout.PackageCounter, Is.EqualTo(ShopLayout.DriveThruWindow), "Package stock and car service share the blue counter.");
             AssertFar("box-circle-window-circle", ShopLayout.BoxingCircle, ShopLayout.DriveThruCircle, min);
             AssertFar("lane-buy-vs-window-green", ShopLayout.DriveThruUnlock, ShopLayout.DriveThruCircle, min);
             AssertFar("boost-door-vs-window", ShopLayout.BoostDoor, ShopLayout.DriveThruWindow, 8f);

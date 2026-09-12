@@ -29,6 +29,8 @@ namespace BurgerShop.Tests.EditMode
             // Run on the real entry scene, including its runtime bootstrap.
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // Keep legacy kitchen scenarios independent of the autonomous courier economy.
+            Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
             yield return null;
 
             // Batch Mode runs uncapped. Use a real gameplay timestep so movement is
