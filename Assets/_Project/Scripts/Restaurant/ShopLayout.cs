@@ -73,9 +73,9 @@ namespace BurgerShop.Restaurant
         public static readonly Vector3 BoxingTable = new Vector3(-9f, 0f, -9f);
         public static readonly Vector3 BoxingUnlock = Pad(BoxingTable);
         public static readonly Vector3 BoxingCircle = new Vector3(-8f, 0.02f, -7.2f);
-        public static readonly Vector3 PackageCounter = new Vector3(-9f, 0f, -12f);
+        public static readonly Vector3 PackageCounter = new Vector3(-9f, 0f, -14.35f);
         public static readonly Vector3 PackageCounterTop = new Vector3(PackageCounter.x, 1.05f, PackageCounter.z);
-        public static readonly Vector3 PackageDrop = new Vector3(-10.8f, 0.02f, -12f);
+        public static readonly Vector3 PackageDrop = new Vector3(-11.1f, 0.02f, -13.05f);
         public static readonly Vector3 DriveThruWindow = new Vector3(-9f, 0f, -14.35f);
         public static readonly Vector3 DriveThruCircle = new Vector3(-9f, 0.02f, -13.05f);
         public static readonly Vector3 DriveThruUnlock = new Vector3(-6f, 0.02f, -12f);

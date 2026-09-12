@@ -229,7 +229,6 @@ namespace BurgerShop.Restaurant
             DriveThruLane lane = root.AddComponent<DriveThruLane>();
             lane.Build();
             lane.Configure(station, earnings, floor, carrier);
-            if(station!=null)CounterTierVisual.Create(lane.transform,"WindowAppearance",ShopLayout.DriveThruWindow,2.8f,.85f,.68f,BurgerShop.UI.FoodIcon.Box).Follow(station);
             return lane;
         }
 
@@ -242,10 +241,20 @@ namespace BurgerShop.Restaurant
             Material steel = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.35f, 0.38f, 0.42f));
 
             Vector3 window = ShopLayout.DriveThruWindow;
-            Part("WindowDesk", PrimitiveType.Cube, window + Vector3.up * 0.32f, new Vector3(2.8f, 0.64f, 0.85f), body);
-            Part("WindowTop", PrimitiveType.Cube, window + Vector3.up * 0.68f, new Vector3(2.95f, 0.08f, 0.95f), top);
-            Part("WindowPad", PrimitiveType.Cube, window + new Vector3(0.85f, 0.82f, -0.12f),
-                new Vector3(0.36f, 0.16f, 0.2f), steel);
+            Transform wall=null;
+            foreach(var candidate in transform.root.GetComponentsInChildren<Transform>(true))
+                if(candidate.name=="Wall-Z_W"){wall=candidate;break;}
+            if(wall!=null)
+            {
+                wall.gameObject.SetActive(false);
+                float left=wall.position.x-wall.localScale.x*.5f,right=wall.position.x+wall.localScale.x*.5f;
+                float min=window.x-1.7f,max=window.x+1.7f;
+                var material=wall.GetComponent<Renderer>().sharedMaterial;
+                CourierVisuals.Part(transform,"WindowWallLeft",new Vector3((left+min)*.5f,.75f,wall.position.z),new Vector3(min-left,1.5f,.4f),material,true);
+                CourierVisuals.Part(transform,"WindowWallRight",new Vector3((right+max)*.5f,.75f,wall.position.z),new Vector3(right-max,1.5f,.4f),material,true);
+                CourierVisuals.Part(transform,"LowServingSill",new Vector3(window.x,.30f,wall.position.z),new Vector3(3.4f,.6f,.4f),material,true);
+            }
+
             ShopFixtures.CreateStationLabel(transform, "WindowLabel", window + new Vector3(0f, 1.25f, 0f), "WINDOW");
             circle = ShopFixtures.CreateActionCircle(transform, "DriveThruCircle", ShopLayout.DriveThruCircle,
                 CircleColor);

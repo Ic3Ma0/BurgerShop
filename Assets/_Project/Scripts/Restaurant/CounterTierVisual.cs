@@ -43,6 +43,7 @@ namespace BurgerShop.Restaurant
             Level = value;
             if(look != null) { look.gameObject.SetActive(false); BurgerVisual.Release(look.gameObject); }
             look = new GameObject("Look_Lv" + value).transform; look.SetParent(transform, false);
+            if(product==FoodIcon.Box){BuildBlueCounter(value);return;}
             Color accent = product == FoodIcon.Cola ? new Color(.15f,.43f,.78f)
                 : product == FoodIcon.Bagged ? HudChrome.Green : HudChrome.Tomato;
             Material paint = RuntimeMaterials.Create(accent);
@@ -76,6 +77,32 @@ namespace BurgerShop.Restaurant
                 badge.transform.localScale=Vector3.one*.34f;
                 badge.GetComponent<SpriteRenderer>().sprite=FoodIcons.Get(product);
                 Part("FootRail",new Vector3(0,.14f,front-.02f),new Vector3(width*.92f,.09f,.10f),metal);
+            }
+        }
+        void BuildBlueCounter(int level)
+        {
+            var cyan=RuntimeMaterials.Create(new Color(.40f,.71f,.78f));
+            var dark=RuntimeMaterials.Create(new Color(.08f,.16f,.21f));
+            var trim=RuntimeMaterials.Create(level==3?new Color(.74f,.90f,.94f):new Color(.25f,.48f,.56f));
+            look.gameObject.AddComponent<BurgerVisual>().OwnMaterials(cyan,dark,trim);
+            Part("BlueWorktop",new Vector3(0,height+.07f,0),new Vector3(width+.10f,.12f,depth+.08f),cyan);
+            for(int side=-1;side<=1;side+=2)for(int i=0;i<(width>3?3:2);i++)
+            {
+                int count=width>3?3:2;float panel=width/count;
+                float x=-width*.5f+panel*(i+.5f);
+                Part("BlueCabinet",new Vector3(x,height*.47f,side*(depth*.5f+.02f)),new Vector3(panel-.10f,height*.77f,.045f),cyan);
+                Part("Handle",new Vector3(x,height*.68f,side*(depth*.5f+.05f)),new Vector3(.28f,.045f,.035f),dark);
+            }
+            Part("BaseTrim",new Vector3(0,.09f,0),new Vector3(width+.05f,.12f,depth+.06f),dark);
+            if(level>=2)Part("UpgradeTrim",new Vector3(0,height*.82f,-depth*.5f-.055f),new Vector3(width,.045f,.035f),trim);
+            if(level==3)foreach(int side in new[]{-1,1})Part("PremiumCorner",new Vector3(side*(width*.5f-.05f),height*.5f,-depth*.5f-.055f),new Vector3(.09f,height*.8f,.05f),trim);
+            if(width>3)
+            {
+                for(int i=0;i<40;i++)
+                {
+                    float angle=i*Mathf.PI*2/40;
+                    Part("IngredientRing",new Vector3(1.2f+Mathf.Sin(angle)*.47f,height+.138f,Mathf.Cos(angle)*.47f),new Vector3(.06f,.012f,.06f),trim);
+                }
             }
         }
         void Part(string name, Vector3 position, Vector3 scale, Material material)

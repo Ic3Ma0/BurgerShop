@@ -86,9 +86,9 @@ namespace BurgerShop.Restaurant
                 new Vector3(3,1.1f,10),new Vector3(3,1.1f,18),new Vector3(-7,1.1f,18),
                 Machine+new Vector3(0,1.1f,-1.05f)),dark,white);
             parcelBelt=new CourierConveyor(area,"RedParcelChain",CourierConveyor.Rounded(
-                Machine+new Vector3(1.8f,1.1f,0),new Vector3(-3,1.1f,21),new Vector3(-3,1.1f,23),
+                Machine+new Vector3(0,1.1f,1.05f),new Vector3(-7,1.1f,23),
                 Counter+new Vector3(-1.35f,1.1f,0)),dark,white);
-            machineBelt=new CourierConveyor(area,"InternalPackagingChain",new[]{Machine+new Vector3(0,1.1f,-1.05f),Machine+new Vector3(1.8f,1.1f,0)},dark,white);
+            machineBelt=new CourierConveyor(area,"InternalPackagingChain",new[]{Machine+new Vector3(0,1.1f,-1.05f),Machine+new Vector3(0,1.1f,1.05f)},dark,white);
             // Cut an actual conveyor aperture in the north wall at x=3.
             foreach(Transform part in area)
                 if(part.name=="OldNorthWall"&&part.position.x>0)part.gameObject.SetActive(false);
@@ -102,9 +102,10 @@ namespace BurgerShop.Restaurant
             machine.Find("WhiteFrame").gameObject.SetActive(false);
             foreach(Transform part in machine)if(part.name=="Roller")part.gameObject.SetActive(false);
             CourierVisuals.Part(machine,"TunnelRoof",new Vector3(0,1.95f,0),new Vector3(2.5f,.4f,1.6f),blue);
-            CourierVisuals.Part(machine,"TunnelPillar",new Vector3(-1.02f,.95f,0),new Vector3(.42f,1.6f,1.6f),blue);
+            machine.Find("InputTray").gameObject.SetActive(false);
+            machine.Find("OutputTray").gameObject.SetActive(false);
             foreach(int side in new[]{-1,1})
-                CourierVisuals.Part(machine,"OutletPost",new Vector3(1.12f,.95f,side*.78f),new Vector3(.24f,1.6f,.24f),blue);
+                CourierVisuals.Part(machine,"TunnelPillar",new Vector3(side*1.02f,.95f,0),new Vector3(.42f,1.6f,1.6f),blue);
         }
         void AdvanceAutomation(float dt)
         {
@@ -164,12 +165,12 @@ namespace BurgerShop.Restaurant
             if(inProcess!=null)
             {
                 work+=dt;
-                if(source!=null)inProcess.position=Vector3.Lerp(Machine+new Vector3(0,1.1f,-1.05f),Machine+new Vector3(1.8f,1.1f,0),Mathf.Clamp01(work/ProcessingSeconds));
+                if(source!=null)inProcess.position=Vector3.Lerp(Machine+new Vector3(0,1.1f,-1.05f),Machine+new Vector3(0,1.1f,1.05f),Mathf.Clamp01(work/ProcessingSeconds));
                 inProcess.localScale=Vector3.one*Mathf.Lerp(1,.35f,Mathf.Clamp01(work/ProcessingSeconds));
                 if(work>=ProcessingSeconds)
                 {
                     BurgerVisual.Release(inProcess.gameObject);inProcess=null;
-                    output.Add(CourierVisuals.RedParcel(machine));Stack(output,Machine+new Vector3(1.8f,source!=null?1.1f:.6f,0),.28f);
+                    output.Add(CourierVisuals.RedParcel(machine));Stack(output,source!=null?Machine+new Vector3(0,1.1f,1.05f):Machine+new Vector3(1.8f,.6f,0),.28f);
                 }
             }
             if(inProcess==null&&raw.Count>0&&output.Count+(parcelBelt?.Count??0)<Capacity)

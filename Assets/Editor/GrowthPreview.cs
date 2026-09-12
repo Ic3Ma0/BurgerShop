@@ -13,14 +13,16 @@ namespace BurgerShop.EditorTools
         const string Active="BurgerShop.GrowthPreview.Active",Previous="BurgerShop.GrowthPreview.Previous";
         static GrowthPreview()=>EditorApplication.playModeStateChanged+=state=>
         {
-            if(state==PlayModeStateChange.EnteredPlayMode&&SessionState.GetBool("BurgerShop.CourierPreview",false))
+            if(state==PlayModeStateChange.EnteredPlayMode&&(SessionState.GetBool("BurgerShop.CourierPreview",false)||SessionState.GetBool("BurgerShop.BlueCounterPreview",false)))
             {
+                bool blueCounters=SessionState.GetBool("BurgerShop.BlueCounterPreview",false);
+                SessionState.SetBool("BurgerShop.BlueCounterPreview",false);
                 SessionState.SetBool("BurgerShop.CourierPreview",false);
                 EditorApplication.delayCall+=()=>
                 {
                     var player=UnityEngine.Object.FindFirstObjectByType<BurgerShop.Player.PlayerMotor>();
                     if(player==null)return;
-                    player.transform.position=new UnityEngine.Vector3(-1,1.1f,20);
+                    player.transform.position=blueCounters?new UnityEngine.Vector3(-8,1.1f,-10.5f):new UnityEngine.Vector3(-1,1.1f,20);
                     UnityEngine.Camera.main.GetComponent<BurgerShop.Player.CameraFollow>().Snap();
                 };
             }
@@ -37,6 +39,12 @@ namespace BurgerShop.EditorTools
         {
             if(EditorApplication.isPlayingOrWillChangePlaymode)return;
             SessionState.SetBool("BurgerShop.CourierPreview",true);StartPreview(false);
+        }
+        [MenuItem("BurgerShop/Blue drive-thru preview (isolated save)")]
+        public static void BlueCounterPreview()
+        {
+            if(EditorApplication.isPlayingOrWillChangePlaymode)return;
+            SessionState.SetBool("BurgerShop.BlueCounterPreview",true);StartPreview(false);
         }
         static void StartPreview(bool counters)
         {

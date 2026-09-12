@@ -241,22 +241,22 @@ namespace BurgerShop.Restaurant
             root.transform.SetParent(parent, false);
             BoxingStation station = root.AddComponent<BoxingStation>();
             station.Build();
-            CounterTierVisual.Create(station.transform,"PackingAppearance",ShopLayout.PackageCounter,2.1f,1.15f,1.05f,BurgerShop.UI.FoodIcon.Box).Follow(station);
-            CounterTierVisual.Create(station.transform,"WorktableAppearance",ShopLayout.BoxingTable,2.4f,1.15f,1.05f,BurgerShop.UI.FoodIcon.Box).Follow(station);
+            CounterTierVisual.Create(station.transform,"PackingAppearance",ShopLayout.PackageCounter,2.8f,1.4f,1.05f,BurgerShop.UI.FoodIcon.Box).Follow(station);
+            CounterTierVisual.Create(station.transform,"WorktableAppearance",ShopLayout.BoxingTable,4.2f,1.4f,1.05f,BurgerShop.UI.FoodIcon.Box).Follow(station);
             return station;
         }
 
         void Build()
         {
-            Material body = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.92f, 0.93f, 0.96f));
-            Material top = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.86f, 0.22f, 0.22f));
+            Material body = BurgerShop.Core.RuntimeMaterials.Create(new Color(.12f,.21f,.26f));
+            Material top = BurgerShop.Core.RuntimeMaterials.Create(new Color(.38f,.70f,.78f));
             Material board = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.93f, 0.82f, 0.62f));
             Material steel = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.35f, 0.38f, 0.42f));
             Vector3 table = ShopLayout.BoxingTable;
-            Part("BoxTable", table + Vector3.up * 0.5f, new Vector3(2.4f, 1f, 1.15f), body);
-            Part("BoxTableTop", table + Vector3.up * 1.05f, new Vector3(2.55f, 0.1f, 1.28f), top);
-            inputAnchor = StockAnchor("RawInput", table + new Vector3(-0.8f, 1.14f, 0));
-            outputAnchor = StockAnchor("BoxOutput", table + new Vector3(0.8f, 1.14f, 0));
+            Part("BoxTable", table + Vector3.up * 0.5f, new Vector3(4.2f,1f,1.4f), body);
+            Part("BoxTableTop", table + Vector3.up * 1.05f, new Vector3(4.3f,.1f,1.5f), top);
+            inputAnchor = StockAnchor("RawInput", table + new Vector3(1.2f,1.18f,0));
+            outputAnchor = StockAnchor("BoxOutput", table + new Vector3(-1.2f,1.18f,0));
             rawLabel = StockLabel("RawCount", table + new Vector3(-1.15f, 3.7f, 0));
             boxLabel = StockLabel("BoxCount", table + new Vector3(1.15f, 3.7f, 0));
             processLabel = StockLabel("ProcessCount", table + new Vector3(0, 1.7f, -0.25f));
@@ -266,18 +266,15 @@ namespace BurgerShop.Restaurant
 
             circle = ShopFixtures.CreateActionCircle(transform, "BoxingCircle", ShopLayout.BoxingCircle, CircleColor);
             Vector3 desk = ShopLayout.PackageCounter;
-            Part("PackageDesk", desk + Vector3.up * 0.5f, new Vector3(2.1f, 1f, 1.15f), body);
-            Part("PackageDeskTop", desk + Vector3.up * 1.05f, new Vector3(2.25f, 0.1f, 1.28f), top);
-            Part("PackageHutch", desk + new Vector3(0f, 1.85f, 0.38f), new Vector3(2.05f, 1.5f, 0.32f), body);
-            Part("PackageHutchTop", desk + new Vector3(0f, 2.64f, 0.38f), new Vector3(2.15f, 0.08f, 0.4f), top);
-            for (int i = 0; i < 4; i++)
-                Part("PackSupply_" + i, desk + new Vector3(-0.55f, 1.22f + i * 0.16f, -0.12f),
-                    new Vector3(0.4f, 0.13f, 0.4f), board);
-            Part("PackageScreen", desk + new Vector3(0.72f, 1.42f, -0.12f), new Vector3(0.42f, 0.38f, 0.06f), steel);
+            Part("PackageDesk", desk + Vector3.up * 0.5f, new Vector3(2.8f,1f,1.4f), body);
+            Part("PackageDeskTop", desk + Vector3.up * 1.05f, new Vector3(2.9f,.1f,1.5f), top);
+            Part("PackageRegister",desk+new Vector3(.72f,1.20f,0),new Vector3(.5f,.18f,.40f),steel);
+            Part("PackageScreen",desk+new Vector3(.72f,1.43f,.12f),new Vector3(.5f,.40f,.10f),steel);
             ShopFixtures.CreateStationLabel(transform, "PackageLabel", desk + new Vector3(0f, 2.95f, 0f), "PACK");
 
             Transform dropPoint = ShopFixtures.CreateActionCircle(transform, "PackageDrop", ShopLayout.PackageDrop, CircleColor);
             Package = ShopFixtures.CreateCounterStock(transform, ShopLayout.PackageCounterTop, true);
+            Package.transform.Find("CounterStockAnchor").position=desk+new Vector3(-.70f,1.18f,0);
             Drop = gameObject.AddComponent<CounterDropZone>();
             Drop.Configure(Package, dropPoint, 0.9f, 0.25f, true);
         }

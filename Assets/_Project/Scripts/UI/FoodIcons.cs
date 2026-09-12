@@ -74,10 +74,9 @@ namespace BurgerShop.UI
                     { if(Disc(x,y,.35f,.76f,.022f)||Disc(x,y,.62f,.79f,.022f))return cream;return gold; }
                     break;
                 case FoodIcon.Box:
-                    if(Box(x,y,.18f,.18f,.82f,.76f))
-                    {if(y>.68f||x<.23f||x>.77f||y<.23f)return ink;return gold;}
-                    if(Line(x,y,.12f,.65f,.3f,.85f,.04f)||Line(x,y,.3f,.85f,.76f,.85f,.04f))return ink;
-                    if(Box(x,y,.46f,.46f,.54f,.7f))return cream;break;
+                    if(Box(x,y,.15f,.2f,.85f,.8f))
+                    {if(Box(x,y,.36f,.37f,.64f,.65f))return cream;return new Color(.06f,.52f,.76f);}
+                    break;
                 case FoodIcon.Coin:
                     if(Disc(x,y,.5f,.5f,.42f))
                     {if(!Disc(x,y,.5f,.5f,.33f))return new Color32(181,118,31,255);

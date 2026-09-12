@@ -224,14 +224,16 @@ namespace BurgerShop.Restaurant
             box.SetParent(parent, false);
             box.localPosition = new Vector3(0f, index * 0.34f, 0f);
 
-            Material board = CreateMaterial(new Color(0.93f, 0.82f, 0.62f));
-            Material stripe = CreateMaterial(new Color(0.72f, 0.38f, 0.12f));
-            Material lid = CreateMaterial(new Color(0.98f, 0.94f, 0.86f));
+            Material board = CreateMaterial(new Color(.04f,.40f,.66f));
+            Material stripe = CreateMaterial(new Color(.88f,.98f,1f));
+            Material lid = CreateMaterial(new Color(.10f,.58f,.80f));
             box.gameObject.AddComponent<BurgerVisual>().OwnMaterials(board, stripe, lid);
 
             CreateLayer(box, "Body", PrimitiveType.Cube, new Vector3(0f, 0.14f, 0f), new Vector3(0.62f, 0.22f, 0.62f), board);
             CreateLayer(box, "Lid", PrimitiveType.Cube, new Vector3(0f, 0.28f, 0f), new Vector3(0.66f, 0.06f, 0.66f), lid);
             CreateLayer(box, "Band", PrimitiveType.Cube, new Vector3(0f, 0.20f, 0f), new Vector3(0.68f, 0.05f, 0.18f), stripe);
+            CreateLayer(box,"WhiteEmblem",PrimitiveType.Cube,new Vector3(0,.32f,0),new Vector3(.34f,.012f,.34f),stripe);
+            CreateLayer(box,"BlueEmblem",PrimitiveType.Cube,new Vector3(0,.33f,0),new Vector3(.24f,.012f,.24f),board);
             return box;
         }
 

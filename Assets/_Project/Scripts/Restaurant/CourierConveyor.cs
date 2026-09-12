@@ -82,7 +82,8 @@ namespace BurgerShop.Restaurant
             var points=new List<Vector3>{corners[0]};
             for(int i=1;i<corners.Length-1;i++)
             {
-                Vector3 a=Vector3.MoveTowards(corners[i],corners[i-1],.8f),b=Vector3.MoveTowards(corners[i],corners[i+1],.8f);
+                float radius=Mathf.Min(.8f,Mathf.Min(Vector3.Distance(corners[i],corners[i-1]),Vector3.Distance(corners[i],corners[i+1]))*.45f);
+                Vector3 a=Vector3.MoveTowards(corners[i],corners[i-1],radius),b=Vector3.MoveTowards(corners[i],corners[i+1],radius);
                 points.Add(a);
                 for(int step=1;step<=8;step++)
                 {float t=step/8f;points.Add((1-t)*(1-t)*a+2*(1-t)*t*corners[i]+t*t*b);}
