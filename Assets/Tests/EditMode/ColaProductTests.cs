@@ -395,7 +395,7 @@ namespace BurgerShop.Tests.EditMode
                 Assert.That(persistence.Flush(), Is.True);
                 Assert.That(new LocalSaveStore(directory).Load(out RestaurantSaveData data),
                     Is.EqualTo(SaveLoadResult.Loaded));
-                Assert.That(data.version, Is.EqualTo(10));
+                Assert.That(data.version, Is.EqualTo(RestaurantSaveData.CurrentVersion));
                 Assert.That(data.colaLevel, Is.EqualTo(2));
                 Assert.That(data.grillLevel, Is.EqualTo(3));
                 Assert.That(data.coins, Is.EqualTo(600));

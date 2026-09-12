@@ -13,6 +13,23 @@ namespace BurgerShop.EditorTools
         const string Active="BurgerShop.GrowthPreview.Active",Previous="BurgerShop.GrowthPreview.Previous";
         static GrowthPreview()=>EditorApplication.playModeStateChanged+=state=>
         {
+            if(state==PlayModeStateChange.EnteredPlayMode&&SessionState.GetBool("BurgerShop.CourierPreview",false))
+            {
+                SessionState.SetBool("BurgerShop.CourierPreview",false);
+                EditorApplication.delayCall+=()=>
+                {
+                    var player=UnityEngine.Object.FindFirstObjectByType<BurgerShop.Player.PlayerMotor>();
+                    if(player==null)return;
+                    player.transform.position=new UnityEngine.Vector3(-2,1.1f,18);
+                    UnityEngine.Camera.main.GetComponent<BurgerShop.Player.CameraFollow>().Snap();
+                    var inventory=player.GetComponent<BurgerShop.Player.BurgerInventory>();
+                    foreach(var station in UnityEngine.Object.FindObjectsByType<BurgerShop.Restaurant.ProductionStation>(UnityEngine.FindObjectsSortMode.None))
+                    {
+                        if(station.Product!=BurgerShop.Restaurant.KitchenProduct.Burger)continue;
+                        station.Advance(12);while(!inventory.IsFull&&inventory.TryCollectFrom(station)){}break;
+                    }
+                };
+            }
             if(state!=PlayModeStateChange.EnteredEditMode||!SessionState.GetBool(Active,false))return;
             SessionState.SetString(RestaurantPersistence.EditorDirectoryKey,SessionState.GetString(Previous,""));
             SessionState.SetBool(Active,false);
@@ -21,6 +38,12 @@ namespace BurgerShop.EditorTools
         public static void Start() => StartPreview(false);
         [MenuItem("BurgerShop/Counter appearance preview (isolated save)")]
         public static void CounterPreview() => StartPreview(true);
+        [MenuItem("BurgerShop/Courier preview (isolated save)")]
+        public static void CourierPreview()
+        {
+            if(EditorApplication.isPlayingOrWillChangePlaymode)return;
+            SessionState.SetBool("BurgerShop.CourierPreview",true);StartPreview(false);
+        }
         static void StartPreview(bool counters)
         {
             if(EditorApplication.isPlayingOrWillChangePlaymode)return;

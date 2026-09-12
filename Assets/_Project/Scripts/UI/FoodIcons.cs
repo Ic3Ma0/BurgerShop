@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace BurgerShop.UI
 {
-    public enum FoodIcon { Burger, Box, Coin, Speed, Carry, Clean, Lock, Check, Phone, Gloves, Skates, EmptyBag, Bagged, Chair1, Chair2, Chair3, Chair4, Cola }
+    public enum FoodIcon { Burger, Box, Coin, Speed, Carry, Clean, Lock, Check, Phone, Gloves, Skates, EmptyBag, Bagged, Chair1, Chair2, Chair3, Chair4, Cola, RedParcel, Parts }
 
     // Original, code-drawn icons. Supersampled at creation; cached for the whole session.
     public static class FoodIcons
@@ -39,6 +39,20 @@ namespace BurgerShop.UI
         }
         static Color Pixel(FoodIcon icon,float x,float y)
         {
+            if(icon==FoodIcon.RedParcel)
+            {
+                if(x<.12f||x>.88f||y<.20f||y>.80f)return Color.clear;
+                return (x>.43f&&x<.56f)||(y>.44f&&y<.55f)?Color.white:new Color(.86f,.06f,.09f);
+            }
+            if(icon==FoodIcon.Parts)
+            {
+                float dx=x-.5f,dy=y-.5f,r=Mathf.Sqrt(dx*dx+dy*dy);
+                if(r>.40f)return Color.clear;
+                if(r>.27f)return new Color(.75f,.8f,.84f);
+                if(r<.10f)return new Color(.20f,.25f,.30f);
+                return new Color(.15f,.40f,.85f);
+            }
+
             if(icon==FoodIcon.Cola)
             {
                 if(x>.60f&&x<.66f&&y>.65f&&y<.94f)return Color.white;

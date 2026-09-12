@@ -15,6 +15,7 @@ namespace BurgerShop.Persistence
         ShopExpansion expansion;
         StaffUpgradeBoard staffUpgrades;
         SessionGoalTracker goals;
+        PartsWallet partsWallet;
         GrillUpgradeZone colaUpgrade;
         LocalSaveStore store;
         string lastChecksum;
@@ -48,6 +49,8 @@ namespace BurgerShop.Persistence
             BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades, SessionGoalTracker tracker,
             string directory = null, GrillUpgradeZone cola = null)
         {
+            if(partsWallet!=null)partsWallet.Changed-=RequestSave;
+            partsWallet=GetComponent<PartsWallet>();
             wallet = earnings;
             upgrade = grill;
             hiring = staff;
@@ -96,6 +99,8 @@ namespace BurgerShop.Persistence
                 RestoredGoalIndex = 0;
                 RestoredGoalProgress = 0;
             }
+            partsWallet?.Restore(data?.ResolvedParts ?? 0);
+            if(partsWallet!=null)partsWallet.Changed+=RequestSave;
             goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, data?.ResolvedUpgradeStars ?? 0);
             GetComponent<BagLine>()?.Restore(data);
             GetComponent<GrowthUpgrades>()?.Restore(data?.facilityLevels, data?.grillLevel ?? 1, data?.ResolvedExtraGrillLevel ?? 0, data?.ResolvedColaLevel ?? 1);
@@ -129,6 +134,7 @@ namespace BurgerShop.Persistence
             var data = new RestaurantSaveData
             {
                 version = RestaurantSaveData.CurrentVersion, coins = wallet.Coins, completedSales = wallet.CompletedSales,
+                parts = partsWallet != null ? partsWallet.Balance : 0,
                 grillLevel = upgrade.Level, workerHired = hiring.IsHired,
                 workerDeliveries = hiring.TotalDeliveries,
                 hiredWorkerCount = hiring.HiredCount,
@@ -177,6 +183,7 @@ namespace BurgerShop.Persistence
         {
             if (expansion != null) expansion.PurchaseCompleted -= RequestSave;
             if (goals != null) goals.ProgressChanged -= RequestSave;
+            if(partsWallet!=null)partsWallet.Changed-=RequestSave;
         }
         void OnApplicationPause(bool paused) { if (paused) Flush(); }
         void OnApplicationFocus(bool focused) { if (!focused) Flush(); }

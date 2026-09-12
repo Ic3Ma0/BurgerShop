@@ -53,7 +53,7 @@ namespace BurgerShop.UI
                     var pad=source.transform.parent.Find(n.Substring(0,n.Length-5));
                     if(pad!=null)foreach(Transform child in pad)if(child.name.StartsWith("FacilityIcon"))foreach(var r in child.GetComponentsInChildren<Renderer>())r.enabled=false;
                 }
-                bool order=n=="OrderQuantity"||n=="BagOrderQuantity";
+                bool order=n=="OrderQuantity"||n=="BagOrderQuantity"||n=="CourierOrderQuantity";
                 if(order || n=="CounterStockCount" || n=="ColaStockCount" || n=="PackageStockCount")
                     foreach(var r in source.transform.parent.GetComponentsInChildren<Renderer>(true))r.enabled=false;
                 // Only customer and vehicle order icons remain in the world-space HUD.
@@ -112,7 +112,8 @@ namespace BurgerShop.UI
             }
             if(!detailed&&!e.Critical)copy="";
             if(!detailed&&e.Source.name=="UpgradeMarker")visible=false;
-            if(e.Source.name=="BagOrderQuantity")e.Icon.sprite=FoodIcons.Get(FoodIcon.Bagged);
+            if(e.Source.name=="CourierOrderQuantity")e.Icon.sprite=FoodIcons.Get(FoodIcon.RedParcel);
+            else if(e.Source.name=="BagOrderQuantity")e.Icon.sprite=FoodIcons.Get(FoodIcon.Bagged);
             else if(e.Customer!=null && !e.Customer.CanAcceptOrder)e.Icon.sprite=FoodIcons.Get(FoodIcon.Phone);
             else if(e.Customer!=null&&e.Customer.Product==KitchenProduct.Cola)e.Icon.sprite=FoodIcons.Get(FoodIcon.Cola);
             else if(e.Order)e.Icon.sprite=FoodIcons.Get(e.Source.transform.parent.name=="CarOrderBubble"?FoodIcon.Box:FoodIcon.Burger);

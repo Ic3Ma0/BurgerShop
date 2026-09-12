@@ -8,10 +8,12 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 10;
+        public const int CurrentVersion = 11;
 
         public int version;
         public long coins;
+        public long parts;
+        public long ResolvedParts => version >= 11 ? parts : 0;
         public int completedSales;
         public int grillLevel;
         public bool workerHired;
@@ -82,6 +84,7 @@ namespace BurgerShop.Persistence
         {
             get
             {
+                if(version>=11 && parts<0)return false;
                 if (coins < 0 || completedSales < 0 || grillLevel < 1 || grillLevel > 3) return false;
                 if (workerDeliveries < 0 || workerDeliveries > completedSales || workerClears < 0) return false;
                 if (version == 1)
@@ -222,6 +225,7 @@ namespace BurgerShop.Persistence
                 if(facilityLevels!=null)foreach(var row in facilityLevels)value += "|"+row.id+":"+row.level.ToString(CultureInfo.InvariantCulture);
             }
             if(version >= 10) value += "|" + colaLevel.ToString(CultureInfo.InvariantCulture);
+            if(version>=11)value += "|" + parts.ToString(CultureInfo.InvariantCulture);
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }

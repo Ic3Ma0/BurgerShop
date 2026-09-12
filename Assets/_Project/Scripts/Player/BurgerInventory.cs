@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace BurgerShop.Player
 {
-    public enum CarriedItemKind { Burger, Boxed, EmptyBag, Bagged, Cola }
+    public enum CarriedItemKind { Burger, Boxed, EmptyBag, Bagged, Cola, RedParcel }
     public sealed class BurgerInventory : MonoBehaviour
     {
         [SerializeField, Min(1)] int capacity = 4;
@@ -26,6 +26,7 @@ namespace BurgerShop.Player
                 return loose;
             }
         }
+        public int RedParcelCount => CountKind(CarriedItemKind.RedParcel);
         public int ColaCount => CountKind(CarriedItemKind.Cola);
         public int BoxedCount => CountKind(CarriedItemKind.Boxed) + incomingBoxes;
         public int EmptyBagCount => CountKind(CarriedItemKind.EmptyBag);

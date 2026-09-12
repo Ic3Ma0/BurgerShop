@@ -44,6 +44,7 @@ namespace BurgerShop.Core
             bin.Configure(trashBag);
             CounterStock stock = ShopFixtures.CreateCounterStock(customers.transform, ShopLayout.CounterTop);
             RestaurantWallet wallet = root.gameObject.AddComponent<RestaurantWallet>();
+            PartsWallet parts = root.gameObject.AddComponent<PartsWallet>();
             root.gameObject.AddComponent<SaleFeedback>().Configure(wallet);
             CashFloor cash = root.gameObject.AddComponent<CashFloor>();
             cash.Configure(wallet, player, ShopLayout.CounterCash);
@@ -76,6 +77,8 @@ namespace BurgerShop.Core
             growth.Configure(wallet,goals,inventory,expansion);
             root.gameObject.AddComponent<BagLine>().Configure(wallet,goals,growth,hiring,inventory,cash);
             GrowthUpgradeHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),growth,goals,wallet);
+            root.gameObject.AddComponent<CourierLine>().Configure(wallet,parts,inventory,cash);
+            PartsHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),parts);
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
             persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades, goals, cola: colaMachine.Upgrade);
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
