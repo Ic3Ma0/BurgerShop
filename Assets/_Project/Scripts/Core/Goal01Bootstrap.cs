@@ -55,6 +55,7 @@ namespace BurgerShop.Core
             ExpandableGrill colaMachine = ExpandableGrill.CreateColaStarter(root, inventory, wallet);
             BurgerServingZone serving = CreateServingZone(customers, inventory, wallet, stock, dining, cash);
             BurgerServingZone colaServing = CreateColaServing(root, inventory, wallet, dining, cash);
+            CounterTierVisual.Create(colaServing.transform,"ColaCounterAppearance",ShopLayout.ColaCounter,3.2f,1.4f,1.05f,FoodIcon.Cola).Follow(colaMachine.Upgrade);
             WorkerHiringZone hiring = CreateHiringZone(root, station, serving, pickup, inventory, wallet, dining, bin, office);
             hiring.RegisterCola(colaMachine.Station, colaMachine.Pickup.PickupPoint, colaServing, colaServing.DropZone);
             PlayerMotor motor = player.GetComponent<PlayerMotor>();

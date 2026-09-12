@@ -241,6 +241,8 @@ namespace BurgerShop.Restaurant
             root.transform.SetParent(parent, false);
             BoxingStation station = root.AddComponent<BoxingStation>();
             station.Build();
+            CounterTierVisual.Create(station.transform,"PackingAppearance",ShopLayout.PackageCounter,2.1f,1.15f,1.05f,BurgerShop.UI.FoodIcon.Box).Follow(station);
+            CounterTierVisual.Create(station.transform,"WorktableAppearance",ShopLayout.BoxingTable,2.4f,1.15f,1.05f,BurgerShop.UI.FoodIcon.Box).Follow(station);
             return station;
         }
 

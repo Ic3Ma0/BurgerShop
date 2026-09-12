@@ -60,7 +60,7 @@ namespace BurgerShop.Restaurant
                 string counterId=main?"counter-main":"counter-extra";
                 if(offers.ContainsKey(counterId))continue;
                 var visual=new GameObject(counterId+"Upgrades").transform;visual.SetParent(stock.transform,false);visual.position=stock.CounterPosition;
-                Register(new Offer{Id=main?"counter-main":"counter-extra",Title="Dining counter",Target=visual,Position=stock.CounterPosition+new Vector3(-1.8f,-stock.CounterPosition.y+.02f,0),Costs=new[]{100,200},Benefit=n=>$"Item every {(.6f-.05f*(n-1)):0.00}s",Apply=n=>{stock.ServiceLevel=n;ShowDetail(visual,n);}});
+                Register(new Offer{Id=main?"counter-main":"counter-extra",Title="Dining counter",Target=visual,Position=stock.CounterPosition+new Vector3(-1.8f,-stock.CounterPosition.y+.02f,0),Costs=new[]{100,200},Benefit=n=>$"Item every {(.6f-.05f*(n-1)):0.00}s",Apply=n=>{stock.ServiceLevel=n;CounterTierVisual.Create(visual,"CounterAppearance",new Vector3(stock.CounterPosition.x,0,stock.CounterPosition.z),3.2f,1.4f,1.05f,FoodIcon.Burger,n);}});
             }
             if(expansion!=null&&expansion.Boxing!=null)
             {

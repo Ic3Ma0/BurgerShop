@@ -113,7 +113,13 @@ namespace BurgerShop.Restaurant
         {
             growth.Register(new GrowthUpgrades.Offer{Id=id,Title=title,Target=target,Position=pos,Costs=new[]{150,300},Benefit=benefit,Apply=n=>
             {
-                apply(n);var old=target.Find("TierBars");if(old!=null){old.gameObject.SetActive(false);BurgerVisual.Release(old.gameObject);}
+                apply(n);
+                if(id=="bag-counter"||id=="bag-table")
+                {
+                    CounterTierVisual.Create(target,"CounterAppearance",target.position,1.5f,1.1f,.8f,FoodIcon.Bagged,n);
+                    return;
+                }
+                var old=target.Find("TierBars");if(old!=null){old.gameObject.SetActive(false);BurgerVisual.Release(old.gameObject);}
                 var bars=new GameObject("TierBars").transform;bars.SetParent(target,false);
                 for(int i=1;i<n;i++)BagVisualFactory.Part(bars,"Trim",PrimitiveType.Cube,new Vector3(.6f,.85f+i*.12f,0),new Vector3(.1f,.08f,.8f),paper);
             }});

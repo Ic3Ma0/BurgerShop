@@ -229,6 +229,7 @@ namespace BurgerShop.Restaurant
             DriveThruLane lane = root.AddComponent<DriveThruLane>();
             lane.Build();
             lane.Configure(station, earnings, floor, carrier);
+            if(station!=null)CounterTierVisual.Create(lane.transform,"WindowAppearance",ShopLayout.DriveThruWindow,2.8f,.85f,.68f,BurgerShop.UI.FoodIcon.Box).Follow(station);
             return lane;
         }
 
