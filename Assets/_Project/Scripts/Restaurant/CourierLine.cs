@@ -27,6 +27,10 @@ namespace BurgerShop.Restaurant
         float work,transfer,spawn,handoff,cooldown,partPickup;
         bool paused,unfocused;
         int spawnedRiders;
+        ProductionStation source;
+        CourierConveyor intakeBelt,parcelBelt;
+        float feedClock;
+        public int InTransitCount => (intakeBelt?.Count??0)+(parcelBelt?.Count??0);
         public int InputCount=>raw.Count;
         public int OutputCount=>output.Count;
         public int ProcessingCount=>inProcess!=null?1:0;
@@ -35,9 +39,10 @@ namespace BurgerShop.Restaurant
         public int WaitingCount=>queue.Count;
         public BicycleCourier Front=>queue.Count>0?queue[0]:null;
         public int GroundParts {get{int sum=0;foreach(int n in partsAmounts)sum+=n;return sum;}}
-        public void Configure(RestaurantWallet earnings,PartsWallet currency,BurgerInventory actor,CashFloor floor)
+        public void Configure(RestaurantWallet earnings,PartsWallet currency,BurgerInventory actor,CashFloor floor,ProductionStation burgerSource=null)
         {
-            Current=this;wallet=earnings;parts=currency;player=actor;cash=floor;Build();
+            Current=this;wallet=earnings;parts=currency;player=actor;cash=floor;source=burgerSource;Build();
+            if(source!=null)BuildAutomation();
         }
         void Build()
         {
@@ -72,6 +77,55 @@ namespace BurgerShop.Restaurant
             }
             ShopFixtures.CreateActionCircle(area,"ParcelStock",DropPoint,HudChrome.Green);
         }
+        void BuildAutomation()
+        {
+            // Back outlet bypasses the player's existing front pickup and upgrade pad.
+            Vector3 start=ShopLayout.Grill+new Vector3(0,1.1f,1);
+            intakeBelt=new CourierConveyor(area,"BurgerIntakeChain",CourierConveyor.Rounded(start,
+                new Vector3(3,1.1f,10),new Vector3(3,1.1f,18),new Vector3(-7,1.1f,18),
+                Machine+new Vector3(0,1.1f,-1.05f)),dark,white);
+            parcelBelt=new CourierConveyor(area,"RedParcelChain",CourierConveyor.Rounded(
+                Machine+new Vector3(1.8f,1.1f,0),new Vector3(-3,1.1f,21),new Vector3(-3,1.1f,23),
+                Counter+new Vector3(-1.35f,1.1f,0)),dark,white);
+            // Cut an actual conveyor aperture in the north wall at x=3.
+            foreach(Transform part in area)
+                if(part.name=="OldNorthWall"&&part.position.x>0)part.gameObject.SetActive(false);
+            CourierVisuals.Part(area,"NorthWallBeyondChain",new Vector3(9.4f,.75f,15),new Vector3(11.2f,1.5f,.4f),dark,true);
+            CourierVisuals.Part(area,"NorthWallBelowChain",new Vector3(2.8f,.3f,15),new Vector3(2f,.6f,.4f),dark,true);
+            foreach(string name in new[]{"ParcelInput","ParcelOutput","ParcelStock"})
+                area.Find(name)?.gameObject.SetActive(false);
+            // Replace the blue block with a tunnel whose mouth is aligned to the moving burgers.
+            machine.Find("MachineBody").gameObject.SetActive(false);
+            machine.Find("Opening").gameObject.SetActive(false);
+            machine.Find("WhiteFrame").gameObject.SetActive(false);
+            foreach(Transform part in machine)if(part.name=="Roller")part.gameObject.SetActive(false);
+            CourierVisuals.Part(machine,"TunnelRoof",new Vector3(0,1.95f,0),new Vector3(2.5f,.4f,1.6f),blue);
+            foreach(int side in new[]{-1,1})
+                CourierVisuals.Part(machine,"TunnelPillar",new Vector3(side*1.02f,.95f,0),new Vector3(.42f,1.6f,1.6f),blue);
+        }
+        void AdvanceAutomation(float dt)
+        {
+            intakeBelt.Advance(dt,item=>
+            {
+                if(raw.Count>=Capacity)return false;
+                item.SetParent(machine,true);raw.Add(item);Stack(raw,Machine+new Vector3(0,1.1f,-1.05f),.17f);return true;
+            });
+            parcelBelt.Advance(dt,item=>
+            {
+                if(stock.Count>=Capacity)return false;
+                item.SetParent(bin,true);stock.Add(item);Stack(stock,Counter+new Vector3(-.6f,.91f,0),.28f);return true;
+            });
+            feedClock=Mathf.Max(0,feedClock-dt);
+            if(feedClock<=0&&source.Product==KitchenProduct.Burger&&source.Stock>1&&raw.Count+intakeBelt.Count<Capacity&&intakeBelt.CanLoad)
+            {
+                if(source.TryTakeBurger(out var item))
+                {if(item==null)item=BurgerVisualFactory.Create(area,0);intakeBelt.LoadItem(item);feedClock=1f;}
+            }
+            if(output.Count>0&&parcelBelt.CanLoad)
+            {
+                var item=output[0];output.RemoveAt(0);parcelBelt.LoadItem(item);
+            }
+        }
         public void SetPaused(bool value)=>paused=value;
         public void Advance(float seconds)
         {
@@ -80,7 +134,8 @@ namespace BurgerShop.Restaurant
             {
                 float dt=Mathf.Min(.05f,seconds);seconds-=dt;
                 transfer=Mathf.Max(0,transfer-dt);cooldown=Mathf.Max(0,cooldown-dt);partPickup=Mathf.Max(0,partPickup-dt);
-                TransferPlayer();Process(dt);AdvanceRiders(dt);AdvanceHandoff(dt);CollectParts();
+                if(source==null)TransferPlayer();else AdvanceAutomation(dt);
+                Process(dt);AdvanceRiders(dt);AdvanceHandoff(dt);CollectParts();
             }
         }
         bool Near(Vector3 point)=>player!=null&&player.isActiveAndEnabled&&ShopLayout.Horizontal(player.transform.position,point)<=.95f;
@@ -102,14 +157,16 @@ namespace BurgerShop.Restaurant
         {
             if(inProcess!=null)
             {
-                work+=dt;inProcess.localScale=Vector3.one*Mathf.Lerp(1,.35f,Mathf.Clamp01(work/ProcessingSeconds));
+                work+=dt;
+                if(source!=null)inProcess.position=Vector3.Lerp(Machine+new Vector3(0,1.1f,-1.05f),Machine+new Vector3(1.8f,1.1f,0),Mathf.Clamp01(work/ProcessingSeconds));
+                inProcess.localScale=Vector3.one*Mathf.Lerp(1,.35f,Mathf.Clamp01(work/ProcessingSeconds));
                 if(work>=ProcessingSeconds)
                 {
                     BurgerVisual.Release(inProcess.gameObject);inProcess=null;
-                    output.Add(CourierVisuals.RedParcel(machine));Stack(output,Machine+new Vector3(1.8f,.6f,0),.28f);
+                    output.Add(CourierVisuals.RedParcel(machine));Stack(output,Machine+new Vector3(1.8f,source!=null?1.1f:.6f,0),.28f);
                 }
             }
-            if(inProcess==null&&raw.Count>0&&output.Count<Capacity)
+            if(inProcess==null&&raw.Count>0&&output.Count+(parcelBelt?.Count??0)<Capacity)
             {
                 inProcess=raw[raw.Count-1];raw.RemoveAt(raw.Count-1);inProcess.position=Machine+new Vector3(0,.85f,-1.05f);work=0;
             }

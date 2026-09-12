@@ -20,14 +20,8 @@ namespace BurgerShop.EditorTools
                 {
                     var player=UnityEngine.Object.FindFirstObjectByType<BurgerShop.Player.PlayerMotor>();
                     if(player==null)return;
-                    player.transform.position=new UnityEngine.Vector3(-2,1.1f,18);
+                    player.transform.position=new UnityEngine.Vector3(-1,1.1f,20);
                     UnityEngine.Camera.main.GetComponent<BurgerShop.Player.CameraFollow>().Snap();
-                    var inventory=player.GetComponent<BurgerShop.Player.BurgerInventory>();
-                    foreach(var station in UnityEngine.Object.FindObjectsByType<BurgerShop.Restaurant.ProductionStation>(UnityEngine.FindObjectsSortMode.None))
-                    {
-                        if(station.Product!=BurgerShop.Restaurant.KitchenProduct.Burger)continue;
-                        station.Advance(12);while(!inventory.IsFull&&inventory.TryCollectFrom(station)){}break;
-                    }
                 };
             }
             if(state!=PlayModeStateChange.EnteredEditMode||!SessionState.GetBool(Active,false))return;

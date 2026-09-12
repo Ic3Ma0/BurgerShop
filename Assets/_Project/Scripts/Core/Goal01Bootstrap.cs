@@ -77,7 +77,7 @@ namespace BurgerShop.Core
             growth.Configure(wallet,goals,inventory,expansion);
             root.gameObject.AddComponent<BagLine>().Configure(wallet,goals,growth,hiring,inventory,cash);
             GrowthUpgradeHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),growth,goals,wallet);
-            root.gameObject.AddComponent<CourierLine>().Configure(wallet,parts,inventory,cash);
+            root.gameObject.AddComponent<CourierLine>().Configure(wallet,parts,inventory,cash,station);
             PartsHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),parts);
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
             persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades, goals, cola: colaMachine.Upgrade);

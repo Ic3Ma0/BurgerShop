@@ -65,6 +65,32 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(line.OutputCount,Is.Zero);Assert.That(line.ProcessingCount,Is.EqualTo(1));Assert.That(line.WaitingCount,Is.Zero);
             line.SetPaused(false);player.transform.position=Vector3.zero;Step(2);Assert.That(line.OutputCount,Is.EqualTo(1));
         }
+        void ConnectAutomation()
+        {
+            Object.DestroyImmediate(line);
+            line=root.AddComponent<CourierLine>();line.Configure(wallet,parts,player,cash,grill);
+            player.transform.position=Vector3.zero;
+        }
+        [Test] public void AutomationCompletesOrdersWithoutPlayerTransport()
+        {
+            ConnectAutomation();
+            for(int i=0;i<2000;i++){grill.Advance(.05f);line.Advance(.05f);}
+            Assert.That(line.CompletedOrders,Is.GreaterThan(0));
+            Assert.That(player.LooseCount+player.RedParcelCount,Is.Zero);
+            Assert.That(line.GroundParts,Is.EqualTo(line.CompletedOrders*4));
+            Assert.That(cash.GroundValue,Is.EqualTo(line.CompletedOrders*80));
+            Assert.That(grill.Stock,Is.GreaterThanOrEqualTo(1));
+        }
+        [Test] public void FullAutomationBacksUpWithoutLosingItemsAndResumes()
+        {
+            ConnectAutomation();wallet.RestoreProgress(0,int.MaxValue);
+            grill.SetCapacity(64);grill.Advance(64);Step(100);
+            Assert.That(line.StockCount,Is.EqualTo(8));
+            Assert.That(grill.Stock+line.InputCount+line.OutputCount+line.ProcessingCount+line.InTransitCount+line.StockCount,Is.EqualTo(64));
+            int before=grill.Stock;Step(10);Assert.That(grill.Stock,Is.EqualTo(before));
+            wallet.RestoreProgress(0,0);Step(30);Assert.That(line.CompletedOrders,Is.GreaterThan(0));
+            Assert.That(grill.Stock,Is.LessThan(before));
+        }
         [Test] public void PartsRejectOverflowAndVersionTenChecksumIgnoresNewCurrency()
         {
             parts.Restore(long.MaxValue);Assert.That(parts.TryCollect(1),Is.False);Assert.That(parts.Balance,Is.EqualTo(long.MaxValue));
