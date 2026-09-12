@@ -8,7 +8,7 @@ namespace BurgerShop.Restaurant
     ///   -X dining (2×2 tables) | center counters + queue | +X kitchen (two grills)
     ///   z=0 east–west aisle into HR door (x=+15)
     ///   south wall: BOX → PACK → WINDOW, road west, Boost door east
-    /// Side wing (BS-SPEC-033) sits north of HR then east behind it; locked until purchased.
+    /// Side wing (BS-SPEC-033) enters south of HR then east behind it; locked until purchased.
     /// </summary>
     public static class ShopLayout
     {
@@ -112,15 +112,15 @@ namespace BurgerShop.Restaurant
         public static readonly Vector3 HrChair = new Vector3(20.2f, 0f, 0.95f);
         public static readonly Vector3 HrHirePoint = new Vector3(20.3f, 0.02f, 0f);
 
-        // Side wing: entrance north of HR, corridor north of HR, hall behind HR.
+        // Side wing: entrance south of HR, corridor south of HR, hall behind HR.
         public const float SideDoorHalf = 1.5f;
-        public const float SideDoorZ = 8f;
+        public const float SideDoorZ = -6.5f;
         public static readonly Vector3 SideDoor = new Vector3(WallHalf, 0f, SideDoorZ);
-        public static readonly Vector3 WingUnlock = new Vector3(8f, 0.02f, 8f);
+        public static readonly Vector3 WingUnlock = new Vector3(12f, 0.02f, SideDoorZ);
         public const float WingCorridorMinX = 15.2f;
         public const float WingCorridorMaxX = 23.4f;
-        public const float WingCorridorMinZ = 4.3f;
-        public const float WingCorridorMaxZ = 11.5f;
+        public const float WingCorridorMinZ = -8f;
+        public const float WingCorridorMaxZ = -4.3f;
         public const float WingBackMinX = 23.4f;
         public const float WingBackMaxX = 38f;
         public const float WingBackMinZ = -8f;
@@ -154,7 +154,7 @@ namespace BurgerShop.Restaurant
             ClampInside(new Vector3(-14f, 0f, -8f))
         };
 
-        // Route cross-wing traffic through the north HR corridor, never through the office.
+        // Route cross-wing traffic through the south HR corridor, never through the office.
         public static Vector3[] WingRoute(Vector3 from, Vector3 to)
         {
             var points = new System.Collections.Generic.List<Vector3>();
@@ -162,7 +162,7 @@ namespace BurgerShop.Restaurant
             if (source != destination && WingUnlocked)
             {
                 Vector3[] crossing = { new Vector3(2,0,0), new Vector3(14,0,0),
-                    new Vector3(14,0,8), new Vector3(25,0,8) };
+                    new Vector3(14,0,SideDoorZ), new Vector3(24.3f,0,SideDoorZ), new Vector3(24.3f,0,0) };
                 if (source) System.Array.Reverse(crossing);
                 points.AddRange(crossing);
             }
@@ -222,7 +222,7 @@ namespace BurgerShop.Restaurant
             if (WingUnlocked && point.x > WallHalf)
             {
                 point.x = Mathf.Clamp(point.x, WallHalf + 0.2f, WingBackMaxX - 0.2f);
-                point.z = Mathf.Clamp(point.z, WingBackMinZ + 0.2f, WingCorridorMaxZ - 0.2f);
+                point.z = Mathf.Clamp(point.z, WingBackMinZ + 0.2f, Mathf.Max(WingBackMaxZ, WingCorridorMaxZ) - 0.2f);
                 return point;
             }
             if (point.z < -WallHalf && Mathf.Abs(point.x - BoostDoorX) <= BoostRoomWidth * 0.5f)
@@ -315,19 +315,19 @@ namespace BurgerShop.Restaurant
                 new Vector3(WingBackMaxX - WingBackMinX, 0.2f, WingBackMaxZ - WingBackMinZ),
                 floorMaterial);
 
-            float northZ = WingCorridorMaxZ + 0.2f;
+            float northZ = WingBackMaxZ + 0.2f;
             float southZ = WingBackMinZ - 0.2f;
             float eastX = WingBackMaxX + 0.2f;
             float westX = WingBackMinX;
-            CreateWall(parent, "WingWall+Z", new Vector3((WallHalf + eastX) * 0.5f, height * 0.5f, northZ),
-                new Vector3(eastX - WallHalf, height, 0.4f), wallMaterial);
+            CreateWall(parent, "WingWall+Z", new Vector3((westX + eastX) * 0.5f, height * 0.5f, northZ),
+                new Vector3(eastX - westX, height, 0.4f), wallMaterial);
             CreateWall(parent, "WingWall+X", new Vector3(eastX, height * 0.5f, (southZ + northZ) * 0.5f),
                 new Vector3(0.4f, height, northZ - southZ), wallMaterial);
-            CreateWall(parent, "WingWall-Z", new Vector3((westX + eastX) * 0.5f, height * 0.5f, southZ),
-                new Vector3(eastX - westX, height, 0.4f), wallMaterial);
-            float hrSouth = HrDoorZ - HrRoomWidth * 0.5f;
-            CreateWall(parent, "WingWall-X_S", new Vector3(westX, height * 0.5f, (southZ + hrSouth) * 0.5f),
-                new Vector3(0.4f, height, hrSouth - southZ), wallMaterial);
+            CreateWall(parent, "WingWall-Z", new Vector3((WallHalf + eastX) * 0.5f, height * 0.5f, southZ),
+                new Vector3(eastX - WallHalf, height, 0.4f), wallMaterial);
+            float hrNorth = HrDoorZ + HrRoomWidth * 0.5f;
+            CreateWall(parent, "WingWall-X_N", new Vector3(westX, height * 0.5f, (northZ + hrNorth) * 0.5f),
+                new Vector3(0.4f, height, northZ - hrNorth), wallMaterial);
         }
 
         static void SplitEastWall(Transform parent, Material material, float height)
@@ -336,21 +336,21 @@ namespace BurgerShop.Restaurant
             float hrMax = HrDoorZ + HrDoorHalf;
             float sideMin = SideDoorZ - SideDoorHalf;
             float sideMax = SideDoorZ + SideDoorHalf;
-            float southLength = hrMin - (-WallHalf);
-            float southCenterZ = (-WallHalf + hrMin) * 0.5f;
+            float southLength = sideMin - (-WallHalf);
+            float southCenterZ = (-WallHalf + sideMin) * 0.5f;
             CreateWall(parent, "Wall+X_S", new Vector3(WallHalf, height * 0.5f, southCenterZ),
                 new Vector3(0.4f, height, southLength), material);
 
-            float midLength = sideMin - hrMax;
-            float midCenterZ = (hrMax + sideMin) * 0.5f;
+            float midLength = hrMin - sideMax;
+            float midCenterZ = (sideMax + hrMin) * 0.5f;
             CreateWall(parent, "Wall+X_Mid", new Vector3(WallHalf, height * 0.5f, midCenterZ),
                 new Vector3(0.4f, height, midLength), material);
 
             CreateWall(parent, "WingDoorPlug", new Vector3(WallHalf, height * 0.5f, SideDoorZ),
                 new Vector3(0.4f, height, SideDoorHalf * 2f), material);
 
-            float northLength = WallHalf - sideMax;
-            float northCenterZ = (sideMax + WallHalf) * 0.5f;
+            float northLength = WallHalf - hrMax;
+            float northCenterZ = (hrMax + WallHalf) * 0.5f;
             CreateWall(parent, "Wall+X_N", new Vector3(WallHalf, height * 0.5f, northCenterZ),
                 new Vector3(0.4f, height, northLength), material);
         }

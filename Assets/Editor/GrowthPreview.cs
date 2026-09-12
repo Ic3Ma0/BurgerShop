@@ -24,7 +24,7 @@ namespace BurgerShop.EditorTools
                 {
                     var player=UnityEngine.Object.FindFirstObjectByType<BurgerShop.Player.PlayerMotor>();
                     if(player==null)return;
-                    player.transform.position=wing?new UnityEngine.Vector3(8,1.1f,6):blueCounters?new UnityEngine.Vector3(-8,1.1f,-10.5f):new UnityEngine.Vector3(-1,1.1f,20);
+                    player.transform.position=wing?new UnityEngine.Vector3(12,1.1f,-4.5f):blueCounters?new UnityEngine.Vector3(-8,1.1f,-10.5f):new UnityEngine.Vector3(-1,1.1f,20);
                     UnityEngine.Camera.main.GetComponent<BurgerShop.Player.CameraFollow>().Snap();
                 };
             }

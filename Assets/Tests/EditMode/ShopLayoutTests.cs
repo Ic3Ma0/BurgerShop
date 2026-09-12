@@ -85,8 +85,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopLayout.SquareTable, Is.Not.EqualTo(new Vector3(-12f, 0f, 12f)));
             Assert.That(ShopLayout.Cola, Is.EqualTo(new Vector3(34f, 0f, 7f)));
             Assert.That(ShopLayout.ColaCounter, Is.EqualTo(new Vector3(28f, 0f, 5f)));
-            Assert.That(ShopLayout.WingUnlock, Is.EqualTo(new Vector3(8f, 0.02f, 8f)));
-            Assert.That(ShopLayout.SideDoor, Is.EqualTo(new Vector3(15f, 0f, 8f)));
+            Assert.That(ShopLayout.WingUnlock, Is.EqualTo(new Vector3(12f, 0.02f, -6.5f)));
+            Assert.That(ShopLayout.SideDoor, Is.EqualTo(new Vector3(15f, 0f, -6.5f)));
             Assert.That(ShopLayout.TrashBin, Is.EqualTo(new Vector3(-13f, 0f, 0f)));
             Assert.That(DiningArea.ShopPositions[0], Is.EqualTo(ShopLayout.Tables[0]));
             Assert.That(TrashBin.ShopPosition, Is.EqualTo(ShopLayout.TrashBin));
@@ -232,6 +232,14 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(root.transform.Find("WingCorridorFloor"), Is.Not.Null);
             Assert.That(Physics.CheckBox(ShopLayout.SideDoor + Vector3.up * 0.6f, new Vector3(0.2f, 0.4f, 1.2f)),
                 Is.False);
+            Assert.That(Physics.CheckBox(new Vector3(15f,.6f,8f), new Vector3(.2f,.4f,1.2f)),
+                Is.True, "The previous north entrance must remain a solid wall.");
+            Assert.That(ShopLayout.ContainsPlayable(new Vector3(19,0,8)),Is.False);
+            Assert.That(ShopLayout.ContainsPlayable(new Vector3(19,0,-6.5f)),Is.True);
+            var corridor = root.transform.Find("WingCorridorFloor");
+            Assert.That(corridor.position.z,Is.LessThan(-4.1f));
+            var route = ShopLayout.WingRoute(Vector3.zero,ShopLayout.Cola);
+            Assert.That(System.Array.Exists(route,p=>p.x==14 && p.z==-6.5f),Is.True);
             Assert.That(ShopLayout.ContainsPlayable(ShopLayout.Cola), Is.True);
             Assert.That(ShopLayout.ContainsPlayable(ShopLayout.ExtraTable), Is.True);
             Assert.That(ShopLayout.ContainsHrOffice(ShopLayout.Cola), Is.False);
