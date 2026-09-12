@@ -206,8 +206,8 @@ namespace BurgerShop.Restaurant
             Vector3 counter = ShopLayout.ExtraCounter;
             Material body = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.38f, 0.49f, 0.58f));
             Material top = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.90f, 0.88f, 0.78f));
-            Part(desk, "OrderCounter", counter + Vector3.up * 0.5f, new Vector3(3.2f, 1f, 1.4f), body);
-            Part(desk, "OrderCounterTop", counter + Vector3.up * 1.05f, new Vector3(3.35f, 0.12f, 1.55f), top);
+            Part(desk, "OrderCounter", counter + Vector3.up * 0.5f, new Vector3(3.2f, 1f, 1.4f), body, true);
+            Part(desk, "OrderCounterTop", counter + Vector3.up * 1.05f, new Vector3(3.35f, 0.12f, 1.55f), top, true);
             extraCircle = ShopFixtures.CreateCashierCircle(desk, ShopLayout.ExtraServingCircle);
             extraCircle.name = "ExtraCashierCircle";
             extraStock = ShopFixtures.CreateCounterStock(desk, ShopLayout.ExtraCounterTop);
@@ -311,9 +311,7 @@ namespace BurgerShop.Restaurant
             pad.transform.SetParent(transform, false);
             pad.transform.position = position;
             pad.transform.localScale = new Vector3(2f, 0.02f, 2f);
-            Collider collider = pad.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(pad.GetComponent<Collider>(), false);
             pad.GetComponent<Renderer>().sharedMaterial =
                 BurgerShop.Core.RuntimeMaterials.Create(new Color(0.18f, 0.72f, 0.32f));
             Material gold = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.95f, 0.75f, 0.18f));
@@ -325,14 +323,13 @@ namespace BurgerShop.Restaurant
                 coin.transform.localPosition = new Vector3((i % 2) * 0.12f - 0.04f, 6f + i * 4.2f, (i / 2) * 0.10f - 0.04f);
                 coin.transform.localScale = new Vector3(0.22f, 2.2f, 0.22f);
                 coin.GetComponent<Renderer>().sharedMaterial = gold;
-                Collider coinCollider = coin.GetComponent<Collider>();
-                coinCollider.enabled = false;
-                BurgerVisual.Release(coinCollider);
+                SolidOccupancy.Apply(coin.GetComponent<Collider>(), false);
             }
             return pad.transform;
         }
 
-        static void Part(Transform parent, string name, Vector3 position, Vector3 scale, Material material)
+        static void Part(Transform parent, string name, Vector3 position, Vector3 scale, Material material,
+            bool solid = false)
         {
             GameObject part = GameObject.CreatePrimitive(PrimitiveType.Cube);
             part.name = name;
@@ -340,9 +337,7 @@ namespace BurgerShop.Restaurant
             part.transform.position = position;
             part.transform.localScale = scale;
             part.GetComponent<Renderer>().sharedMaterial = material;
-            Collider collider = part.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(part.GetComponent<Collider>(), solid);
         }
 
         public static ShopExpansion Create(Transform parent, DiningArea hall, BurgerServingZone cashier,

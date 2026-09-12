@@ -47,10 +47,10 @@ namespace BurgerShop.Restaurant
             Material frame = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.32f, 0.24f, 0.16f));
             CreatePart("BoostDoorFrameL", PrimitiveType.Cube,
                 new Vector3(ShopLayout.BoostDoorX - ShopLayout.BoostDoorHalf, height * 0.5f, -ShopLayout.WallHalf),
-                new Vector3(0.18f, height, 0.18f), frame, keepCollider: false);
+                new Vector3(0.18f, height, 0.18f), frame, keepCollider: true);
             CreatePart("BoostDoorFrameR", PrimitiveType.Cube,
                 new Vector3(ShopLayout.BoostDoorX + ShopLayout.BoostDoorHalf, height * 0.5f, -ShopLayout.WallHalf),
-                new Vector3(0.18f, height, 0.18f), frame, keepCollider: false);
+                new Vector3(0.18f, height, 0.18f), frame, keepCollider: true);
 
             Material steel = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.38f, 0.40f, 0.44f));
             Material pad = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.86f, 0.42f, 0.18f));
@@ -61,16 +61,16 @@ namespace BurgerShop.Restaurant
                 new Vector3(1.8f, 0.06f, 1.4f), mat, keepCollider: false);
             CreatePart("TrainingPad", PrimitiveType.Cube,
                 station + new Vector3(0f, 0.22f, 0f),
-                new Vector3(1.35f, 0.16f, 0.48f), pad, keepCollider: false);
+                new Vector3(1.35f, 0.16f, 0.48f), pad, keepCollider: true);
             CreatePart("TrainingPostL", PrimitiveType.Cube,
                 station + new Vector3(-0.55f, 0.7f, -0.12f),
-                new Vector3(0.1f, 1.2f, 0.1f), steel, keepCollider: false);
+                new Vector3(0.1f, 1.2f, 0.1f), steel, keepCollider: true);
             CreatePart("TrainingPostR", PrimitiveType.Cube,
                 station + new Vector3(0.55f, 0.7f, -0.12f),
-                new Vector3(0.1f, 1.2f, 0.1f), steel, keepCollider: false);
+                new Vector3(0.1f, 1.2f, 0.1f), steel, keepCollider: true);
             CreatePart("TrainingBar", PrimitiveType.Cube,
                 station + new Vector3(0f, 1.18f, -0.12f),
-                new Vector3(1.35f, 0.08f, 0.08f), steel, keepCollider: false);
+                new Vector3(1.35f, 0.08f, 0.08f), steel, keepCollider: true);
 
             GameObject point = new GameObject("BoostPoint");
             point.transform.SetParent(transform, false);
@@ -118,9 +118,7 @@ namespace BurgerShop.Restaurant
             part.transform.localScale = scale;
             part.GetComponent<Renderer>().sharedMaterial = material;
             Collider collider = part.GetComponent<Collider>();
-            if (keepCollider) return part;
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(collider, keepCollider);
             return part;
         }
     }

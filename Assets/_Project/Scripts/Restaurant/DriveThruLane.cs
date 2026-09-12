@@ -241,20 +241,20 @@ namespace BurgerShop.Restaurant
             Material steel = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.35f, 0.38f, 0.42f));
 
             Vector3 window = ShopLayout.DriveThruWindow;
-            Part("WindowDesk", PrimitiveType.Cube, window + Vector3.up * 0.32f, new Vector3(2.8f, 0.64f, 0.85f), body);
-            Part("WindowTop", PrimitiveType.Cube, window + Vector3.up * 0.68f, new Vector3(2.95f, 0.08f, 0.95f), top);
+            Part("WindowDesk", PrimitiveType.Cube, window + Vector3.up * 0.32f, new Vector3(2.8f, 0.64f, 0.85f), body, true);
+            Part("WindowTop", PrimitiveType.Cube, window + Vector3.up * 0.68f, new Vector3(2.95f, 0.08f, 0.95f), top, true);
             Part("WindowPad", PrimitiveType.Cube, window + new Vector3(0.85f, 0.82f, -0.12f),
-                new Vector3(0.36f, 0.16f, 0.2f), steel);
+                new Vector3(0.36f, 0.16f, 0.2f), steel, true);
             ShopFixtures.CreateStationLabel(transform, "WindowLabel", window + new Vector3(0f, 1.25f, 0f), "WINDOW");
             circle = ShopFixtures.CreateActionCircle(transform, "DriveThruCircle", ShopLayout.DriveThruCircle,
                 CircleColor);
 
             Vector3 road = ShopLayout.DriveThruRoad;
-            Part("Road", PrimitiveType.Cube, road + Vector3.up * 0.04f, new Vector3(18.4f, 0.08f, 3.4f), asphalt);
+            Part("Road", PrimitiveType.Cube, road + Vector3.up * 0.04f, new Vector3(18.4f, 0.08f, 3.4f), asphalt, true);
             float dashWest = road.x - 8.6f;
             for (int i = 0; i < 9; i++)
                 Part("LaneDash_" + i, PrimitiveType.Cube,
-                    new Vector3(dashWest + i * 2.1f, 0.09f, road.z), new Vector3(1.1f, 0.02f, 0.12f), line);
+                    new Vector3(dashWest + i * 2.1f, 0.09f, road.z), new Vector3(1.1f, 0.02f, 0.12f), line, false);
 
             TextMesh mark = new GameObject("DriveThruMark").AddComponent<TextMesh>();
             mark.transform.SetParent(transform, false);
@@ -277,10 +277,10 @@ namespace BurgerShop.Restaurant
             stop.color = new Color(0.95f, 0.22f, 0.22f);
             stop.text = "STOP";
             Part("StopPost", PrimitiveType.Cube, stopAt + Vector3.up * 0.55f,
-                new Vector3(0.12f, 1.1f, 0.12f), steel);
+                new Vector3(0.12f, 1.1f, 0.12f), steel, true);
         }
 
-        void Part(string name, PrimitiveType type, Vector3 position, Vector3 scale, Material material)
+        void Part(string name, PrimitiveType type, Vector3 position, Vector3 scale, Material material, bool solid)
         {
             GameObject part = GameObject.CreatePrimitive(type);
             part.name = name;
@@ -288,9 +288,7 @@ namespace BurgerShop.Restaurant
             part.transform.position = position;
             part.transform.localScale = scale;
             part.GetComponent<Renderer>().sharedMaterial = material;
-            Collider collider = part.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(part.GetComponent<Collider>(), solid);
         }
 
         sealed class LaneCar : MonoBehaviour

@@ -152,6 +152,7 @@ namespace BurgerShop.Core
             part.transform.localPosition = localPosition;
             part.transform.localScale = localScale;
             ApplyMaterial(part, material);
+            SolidOccupancy.Apply(part.GetComponent<Collider>(), true);
             return part;
         }
 

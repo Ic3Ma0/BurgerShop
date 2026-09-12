@@ -20,6 +20,7 @@
 - **四人桌 200**、**小方桌 150**。买完圈消失，家具出现在圈所在格。
 - 四人桌 4 椅；方桌 2 椅且靠背明显高于开局椅。椅 `forward` 朝桌心，靠背在外侧。
 - 建成后各有一枚 030 紫色升级圈（80 金币、同一套 Bistro / Diner / Patio）。未买则没有紫圈。
+- 桌椅占位挡住玩家，规则见 [BS-SPEC-032](BS-SPEC-032.md)。
 - 存档升到 version **9**。旧档默认没买这两种桌；金币、已购设施、030 套装保留。
 
 本次不做：
@@ -118,3 +119,4 @@
 - 测试：`DiningTableTests` 四人朝向与方桌高靠背、`ShopExpansionTests` 购买/读档、`TableUpgradeTests` 紫圈与 Patio 往返、`LocalSaveTests` v9 往返与 v8 兼容。
 - **Unity EditMode 未跑**：本云主机无 Unity `6000.3.23f1`。云端成功 ≠ Editor / 真机。交付前须在本机跑完全部 EditMode，并在 SampleScene Play 走进两圈买桌、确认椅朝向。未做 vivo。
 - 偏差：参考 PNG 本环境未找到；方桌/钱堆圈对齐同批 TABLE CHANGE 截图意图与现有 TABLE 垫，不是像素复刻。无钻石/广告/可乐。
+- 032：桌椅碰撞见 [BS-SPEC-032](BS-SPEC-032.md)。

@@ -418,9 +418,7 @@ namespace BurgerShop.Restaurant
             part.transform.localPosition = localPosition;
             part.transform.localScale = localScale;
             part.GetComponent<Renderer>().sharedMaterial = material;
-            Collider collider = part.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(part.GetComponent<Collider>(), true);
         }
     }
 }

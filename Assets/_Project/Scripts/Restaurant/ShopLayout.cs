@@ -176,6 +176,7 @@ namespace BurgerShop.Restaurant
             floor.transform.position = new Vector3(0f, -0.1f, 0f);
             floor.transform.localScale = new Vector3(FloorSize, 0.2f, FloorSize);
             Apply(floor, material);
+            SolidOccupancy.Apply(floor.GetComponent<Collider>(), true);
             return floor;
         }
 
@@ -262,6 +263,7 @@ namespace BurgerShop.Restaurant
             wall.transform.position = position;
             wall.transform.localScale = scale;
             Apply(wall, material);
+            SolidOccupancy.Apply(wall.GetComponent<Collider>(), true);
         }
 
         static void Apply(GameObject instance, Material material)

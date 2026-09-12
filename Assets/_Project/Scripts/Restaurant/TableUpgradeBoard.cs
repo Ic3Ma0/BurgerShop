@@ -135,9 +135,7 @@ namespace BurgerShop.Restaurant
             pad.transform.SetParent(transform, false);
             pad.transform.position = position;
             pad.transform.localScale = new Vector3(2f, 0.02f, 2f);
-            Collider collider = pad.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(pad.GetComponent<Collider>(), false);
             pad.GetComponent<Renderer>().sharedMaterial =
                 BurgerShop.Core.RuntimeMaterials.Create(new Color(0.60f, 0.36f, 0.90f));
             return pad.transform;

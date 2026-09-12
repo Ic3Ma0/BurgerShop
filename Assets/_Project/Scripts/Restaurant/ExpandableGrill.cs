@@ -131,9 +131,7 @@ namespace BurgerShop.Restaurant
             spot.transform.SetParent(root, false);
             spot.transform.localPosition = ShopLayout.GrillPickupLocal;
             spot.transform.localScale = new Vector3(2f, 0.015f, 2f);
-            Collider pickupCollider = spot.GetComponent<Collider>();
-            pickupCollider.enabled = false;
-            BurgerVisual.Release(pickupCollider);
+            SolidOccupancy.Apply(spot.GetComponent<Collider>(), false);
             spot.GetComponent<Renderer>().sharedMaterial = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.24f, 0.77f, 0.46f));
             BurgerPickupZone pickup = root.gameObject.AddComponent<BurgerPickupZone>();
             pickup.Configure(station, player, spot.transform);
@@ -144,9 +142,7 @@ namespace BurgerShop.Restaurant
             upgradeSpot.transform.SetParent(root, false);
             upgradeSpot.transform.localPosition = upgradeLocal;
             upgradeSpot.transform.localScale = new Vector3(2f, 0.02f, 2f);
-            Collider upgradeCollider = upgradeSpot.GetComponent<Collider>();
-            upgradeCollider.enabled = false;
-            BurgerVisual.Release(upgradeCollider);
+            SolidOccupancy.Apply(upgradeSpot.GetComponent<Collider>(), false);
             upgradeSpot.GetComponent<Renderer>().sharedMaterial =
                 BurgerShop.Core.RuntimeMaterials.Create(new Color(0.60f, 0.36f, 0.90f));
             TextMesh upgradeLabel = NewLabel(root, "UpgradeMarker",
@@ -235,9 +231,7 @@ namespace BurgerShop.Restaurant
             part.transform.localPosition = local;
             part.transform.localScale = scale;
             part.GetComponent<Renderer>().sharedMaterial = material;
-            Collider collider = part.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
+            SolidOccupancy.Apply(part.GetComponent<Collider>(), true);
         }
 
         static TextMesh NewLabel(Transform parent, string name, Vector3 localPosition, Color color, int fontSize,
