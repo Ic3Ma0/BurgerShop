@@ -36,6 +36,7 @@ namespace BurgerShop.Tests.EditMode
             inventory.Configure();
             wallet = root.AddComponent<RestaurantWallet>();
             burgerGrill = ExpandableGrill.CreateStarter(root.transform, inventory, wallet);
+            ShopLayout.OpenWing(root.transform, BurgerShop.Core.RuntimeMaterials.Create(Color.gray), BurgerShop.Core.RuntimeMaterials.Create(Color.gray));
             colaMachine = ExpandableGrill.CreateColaStarter(root.transform, inventory, wallet);
 
             burgerQueue = root.AddComponent<CustomerQueue>();
@@ -74,7 +75,7 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(root);
+        public void TearDown() { Object.DestroyImmediate(root); ShopLayout.ResetWingLock(); }
 
         Transform Point(string name, Vector3 position)
         {
@@ -86,7 +87,7 @@ namespace BurgerShop.Tests.EditMode
 
         void FillColaQueue()
         {
-            for (int i = 0; i < 1200; i++) colaQueue.Advance(1f / 60f);
+            for (int i = 0; i < 6000; i++) colaQueue.Advance(1f / 60f);
         }
 
         void CompleteColaHandoff()
@@ -346,7 +347,7 @@ namespace BurgerShop.Tests.EditMode
             inventory.transform.position = new Vector3(-8f, 0f, -8f);
             RestaurantWorker worker = hiring.Worker;
             Assert.That(worker, Is.Not.Null);
-            for (int i = 0; i < 1800 && colaServing.TotalStock == 0; i++)
+            for (int i = 0; i < 6000 && colaServing.TotalStock == 0; i++)
             {
                 const float dt = 1f / 60f;
                 colaMachine.Station.Advance(dt);

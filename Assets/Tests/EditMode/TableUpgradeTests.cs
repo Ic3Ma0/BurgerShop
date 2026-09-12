@@ -61,6 +61,7 @@ namespace BurgerShop.Tests.EditMode
             hiring = root.AddComponent<WorkerHiringZone>();
             hiring.Configure(grill, serving, wallet, player, root.transform, root.transform, ShopLayout.Aisle, drop);
             expansion = ShopExpansion.Create(root.transform, dining, serving, hiring, player, wallet, cash);
+            expansion.Restore(false, false, false, 0, false, false, false, false, true);
             board = root.AddComponent<TableUpgradeBoard>();
             board.Configure(dining, expansion, wallet, player);
 
@@ -91,7 +92,11 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(root);
+        public void TearDown()
+        {
+            Object.DestroyImmediate(root);
+            ShopLayout.ResetWingLock();
+        }
 
         void Hold(TableUpgradeZone zone, float seconds)
         {

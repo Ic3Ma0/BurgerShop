@@ -54,7 +54,18 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(root);
+        public void TearDown()
+        {
+            if (root != null)
+                Object.DestroyImmediate(root);
+            ShopLayout.ResetWingLock();
+        }
+
+        ShopExpansion OpenWing()
+        {
+            expansion.Restore(false, false, false, 0, false, false, false, false, true);
+            return expansion;
+        }
 
         void Hold(FacilityUnlockZone pad, float seconds)
         {
@@ -74,11 +85,40 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
+        public void HallPadsExistAtStartWhileTableAndColaPadsWaitForTheWing()
+        {
+            Assert.That(expansion.WingPad.Cost, Is.EqualTo(300));
+            Assert.That(expansion.WingPad.PadPosition, Is.EqualTo(ShopLayout.WingUnlock));
+            Assert.That(expansion.GrillPad.Cost, Is.EqualTo(200));
+            Assert.That(expansion.CounterPad.Cost, Is.EqualTo(250));
+            Assert.That(expansion.BoxingPad.Cost, Is.EqualTo(150));
+            Assert.That(expansion.DriveThruPad.Cost, Is.EqualTo(250));
+            Assert.That(expansion.TablePad, Is.Null);
+            Assert.That(expansion.FourSeatPad, Is.Null);
+            Assert.That(expansion.SquarePad, Is.Null);
+            Assert.That(expansion.ColaPad, Is.Null);
+            Assert.That(expansion.ColaBarPad, Is.Null);
+            Assert.That(GameObject.Find("WingUnlockPad"), Is.Not.Null);
+            Assert.That(GameObject.Find("TableUnlockPad"), Is.Null);
+            Assert.That(GameObject.Find("ColaUnlockPad"), Is.Null);
+            Assert.That(expansion.HasWing, Is.False);
+            Assert.That(expansion.HasColaMachine, Is.False);
+            Assert.That(dining.TableCount, Is.EqualTo(3));
+            Assert.That(expansion.HasExtraTable, Is.False);
+            Assert.That(GameObject.Find("UpgradeSpot"), Is.Null);
+            Assert.That(expansion.ExtraGrillUpgrade, Is.Null);
+        }
+
+        [Test]
         public void ThreeGreenPadsSitOnEmptyGroundWithListedPrices()
         {
+            OpenWing();
+            Assert.That(expansion.TablePad, Is.Not.Null);
             Assert.That(expansion.TablePad.Cost, Is.EqualTo(150));
             Assert.That(expansion.FourSeatPad.Cost, Is.EqualTo(200));
             Assert.That(expansion.SquarePad.Cost, Is.EqualTo(150));
+            Assert.That(expansion.ColaPad.Cost, Is.EqualTo(200));
+            Assert.That(expansion.ColaBarPad.Cost, Is.EqualTo(250));
             Assert.That(expansion.GrillPad.Cost, Is.EqualTo(200));
             Assert.That(expansion.CounterPad.Cost, Is.EqualTo(250));
             Assert.That(expansion.BoxingPad.Cost, Is.EqualTo(150));
@@ -86,6 +126,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(expansion.TablePad.PadPosition, Is.EqualTo(ShopLayout.TableUnlock));
             Assert.That(expansion.FourSeatPad.PadPosition, Is.EqualTo(ShopLayout.FourSeatUnlock));
             Assert.That(expansion.SquarePad.PadPosition, Is.EqualTo(ShopLayout.SquareUnlock));
+            Assert.That(expansion.ColaPad.PadPosition, Is.EqualTo(ShopLayout.Pad(ShopLayout.Cola)));
+            Assert.That(expansion.ColaBarPad.PadPosition, Is.EqualTo(ShopLayout.Pad(ShopLayout.ColaCounter)));
             Assert.That(expansion.GrillPad.PadPosition, Is.EqualTo(ShopLayout.GrillUnlock));
             Assert.That(expansion.CounterPad.PadPosition, Is.EqualTo(ShopLayout.CounterUnlock));
             Assert.That(expansion.BoxingPad.PadPosition, Is.EqualTo(ShopLayout.BoxingUnlock));
@@ -93,6 +135,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(GameObject.Find("TableUnlockPad"), Is.Not.Null);
             Assert.That(GameObject.Find("FourSeatUnlockPad"), Is.Not.Null);
             Assert.That(GameObject.Find("SquareUnlockPad"), Is.Not.Null);
+            Assert.That(GameObject.Find("ColaUnlockPad"), Is.Not.Null);
+            Assert.That(GameObject.Find("ColaBarUnlockPad"), Is.Not.Null);
             Assert.That(GameObject.Find("GrillUnlockPad"), Is.Not.Null);
             Assert.That(GameObject.Find("CounterUnlockPad"), Is.Not.Null);
             Assert.That(GameObject.Find("BoxingUnlockPad"), Is.Not.Null);
@@ -160,6 +204,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void TablePadUnlocksAFourthFacingTableAndHidesTheCircle()
         {
+            OpenWing();
             wallet.RestoreProgress(150, 0);
             Hold(expansion.TablePad, 3f);
             Assert.That(wallet.Coins, Is.Zero);
@@ -176,6 +221,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void FourSeatPadUnlocksFourFacingChairsAndHidesTheCircle()
         {
+            OpenWing();
             wallet.RestoreProgress(200, 0);
             Hold(expansion.FourSeatPad, 3f);
             Assert.That(wallet.Coins, Is.Zero);
@@ -198,6 +244,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void SquarePadUnlocksTallBackedChairsAndHidesTheCircle()
         {
+            OpenWing();
             wallet.RestoreProgress(150, 0);
             Hold(expansion.SquarePad, 3f);
             Assert.That(wallet.Coins, Is.Zero);
@@ -231,6 +278,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void ExtraPairAndFourSeatAreIndependentPurchases()
         {
+            OpenWing();
             wallet.RestoreProgress(350, 0);
             Hold(expansion.TablePad, 3f);
             Hold(expansion.FourSeatPad, 3f);
@@ -246,6 +294,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void PartialInvestmentSurvivesLeavingAndShortReentryDoesNotSpend()
         {
+            OpenWing();
             wallet.RestoreProgress(149, 0);
             Hold(expansion.TablePad, 5f);
             Assert.That(expansion.HasExtraTable, Is.False);
@@ -357,6 +406,7 @@ namespace BurgerShop.Tests.EditMode
                 "BurgerShopExpand-" + System.Guid.NewGuid().ToString("N"));
             try
             {
+                OpenWing();
                 Hold(expansion.TablePad, 3f);
                 Leave(expansion.GrillPad);
                 Hold(expansion.GrillPad, 3f);
@@ -388,19 +438,25 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void CapsuleCanAskToInstallATableWhenThePlayerCanAffordIt()
+        public void CapsuleCanAskToInstallAWingThenATable()
         {
-            wallet.RestoreProgress(150, 0);
+            hiring.RestoreWorkers(3, 0, 0);
+            wallet.RestoreProgress(300, 0);
             var tracker = root.AddComponent<SessionGoalTracker>();
             tracker.Configure(player, root.GetComponent<ProductionStation>(), stock, queue, wallet, serving,
-                dining, null, null, null, expansion);
-            tracker.Restore(1, 2, 0);
+                dining, null, hiring, null, expansion);
             tracker.Advance(2f);
+            Assert.That(tracker.Title, Does.StartWith("Install a wing"));
+            Hold(expansion.WingPad, 5f);
+            tracker.Advance(0.01f);
+            Assert.That(tracker.Title, Does.StartWith("Install a cola"));
+            expansion.Restore(false, false, false, 0, false, false, false, false, true, true, true);
+            wallet.RestoreProgress(150, 0);
+            tracker.Advance(1f);
             Assert.That(tracker.Title, Does.StartWith("Install a table"));
             Hold(expansion.TablePad, 3f);
             tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Does.StartWith("Install a table"));
-            Assert.That(tracker.IsCelebrating, Is.True);
+            Assert.That(expansion.NextWingPad, Is.Null);
         }
 
         [Test]
@@ -501,6 +557,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void OverlappingPadsChooseNearestAndKeepCurrentTargetOnTie()
         {
+            OpenWing();
             // Deliberately intersect the two zones. Update order must not charge both.
             expansion.GrillPad.transform.position = new Vector3(3, 0, 0);
             expansion.TablePad.transform.position = new Vector3(4, 0, 0);
@@ -550,6 +607,7 @@ namespace BurgerShop.Tests.EditMode
                 upgrade.Configure(root.GetComponent<ProductionStation>(), wallet, player, root.transform);
                 var persistence = root.AddComponent<RestaurantPersistence>();
                 persistence.Configure(wallet, upgrade, hiring, null, expansion, directory);
+                OpenWing();
                 wallet.RestoreProgress(200, 0);
                 Hold(expansion.GrillPad, 0.4f);
                 Leave(expansion.GrillPad);
@@ -596,6 +654,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void AC07AllFiveLabelsRemainVisibleAbovePlayerAndShowRemainingWhileInside()
         {
+            OpenWing();
             FacilityUnlockZone[] pads =
             {
                 expansion.TablePad, expansion.FourSeatPad, expansion.SquarePad, expansion.GrillPad,
@@ -627,6 +686,101 @@ namespace BurgerShop.Tests.EditMode
             expansion.GrillPad.Advance(10f);
             Assert.That(wallet.Coins, Is.EqualTo(1000));
             Assert.That(expansion.GrillPad.Invested, Is.Zero);
+        }
+
+        [Test]
+        public void PayingForTheWingOpensTheSideDoorAndSpawnsColaAndTablePads()
+        {
+            Material wall = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.40f, 0.29f, 0.17f));
+            ShopLayout.CreateWalls(root.transform, wall);
+            Physics.SyncTransforms();
+            Assert.That(root.transform.Find("WingDoorPlug"), Is.Not.Null);
+            Assert.That(Physics.CheckBox(ShopLayout.SideDoor + Vector3.up * 0.6f, new Vector3(0.2f, 0.4f, 1.2f)),
+                Is.True);
+            wallet.RestoreProgress(300, 0);
+            Hold(expansion.WingPad, 5f);
+            Physics.SyncTransforms();
+            Assert.That(wallet.Coins, Is.Zero);
+            Assert.That(expansion.HasWing, Is.True);
+            Assert.That(root.transform.Find("WingDoorPlug"), Is.Null);
+            Assert.That(root.transform.Find("WingBackFloor"), Is.Not.Null);
+            Assert.That(root.transform.Find("WingCorridorFloor"), Is.Not.Null);
+            Assert.That(Physics.CheckBox(ShopLayout.SideDoor + Vector3.up * 0.6f, new Vector3(0.2f, 0.4f, 1.2f)),
+                Is.False);
+            Assert.That(ShopLayout.ContainsPlayable(new Vector3(30f, 0f, 0f)), Is.True);
+            Assert.That(expansion.ColaPad.PadPosition, Is.EqualTo(ShopLayout.Pad(ShopLayout.Cola)));
+            Assert.That(expansion.ColaBarPad.PadPosition, Is.EqualTo(ShopLayout.Pad(ShopLayout.ColaCounter)));
+            Assert.That(expansion.TablePad.PadPosition, Is.EqualTo(ShopLayout.TableUnlock));
+            Assert.That(GameObject.Find("TableUnlockPad"), Is.Not.Null);
+            Assert.That(Horizontal(ShopLayout.TableUnlock, new Vector3(-12f, 0f, 3f)), Is.GreaterThan(10f));
+            Assert.That(Horizontal(ShopLayout.FourSeatUnlock, new Vector3(-8f, 0f, 12f)), Is.GreaterThan(10f));
+            Assert.That(Horizontal(ShopLayout.SquareUnlock, new Vector3(-12f, 0f, 12f)), Is.GreaterThan(10f));
+        }
+
+        [Test]
+        public void ColaMachineAndBarSpawnInTheBackWingWithCorrectCircleColors()
+        {
+            OpenWing();
+            wallet.RestoreProgress(450, 0);
+            Hold(expansion.ColaPad, 4f);
+            Hold(expansion.ColaBarPad, 4f);
+            Assert.That(expansion.HasColaMachine, Is.True);
+            Assert.That(expansion.HasColaBar, Is.True);
+            Assert.That(expansion.ColaMachine.transform.position, Is.EqualTo(ShopLayout.Cola));
+            Assert.That(expansion.ColaServing.ServingPosition.x, Is.EqualTo(ShopLayout.ColaServingCircle.x).Within(0.05f));
+            Color pickup = expansion.ColaMachine.Pickup.PickupPoint.GetComponent<Renderer>().sharedMaterial.color;
+            Color upgrade = expansion.ColaMachine.UpgradeSpot.GetComponent<Renderer>().sharedMaterial.color;
+            Assert.That(pickup.g, Is.GreaterThan(pickup.r));
+            Assert.That(pickup.g, Is.GreaterThan(pickup.b));
+            Assert.That(upgrade.b, Is.GreaterThan(upgrade.g));
+            Assert.That(upgrade.r, Is.GreaterThan(upgrade.g));
+            Transform dash = expansion.ColaServing.transform.Find("ColaCashierCircle/Dash_1");
+            Assert.That(dash, Is.Not.Null);
+            Color white = dash.GetComponent<Renderer>().sharedMaterial.color;
+            Assert.That(white.r, Is.GreaterThan(0.9f));
+            Assert.That(white.g, Is.GreaterThan(0.9f));
+            Assert.That(white.b, Is.GreaterThan(0.9f));
+            Assert.That(expansion.ColaUpgrade.ProductNoun, Is.EqualTo("COLA"));
+            Assert.That(hiring.HireCost, Is.EqualTo(50));
+        }
+
+        [Test]
+        public void Version9ExtraTableSaveOpensTheWingWithoutChargingOrSpawningCola()
+        {
+            string directory = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+                "BurgerShopWingV9-" + System.Guid.NewGuid().ToString("N"));
+            try
+            {
+                var upgrade = root.AddComponent<GrillUpgradeZone>();
+                upgrade.Configure(root.GetComponent<ProductionStation>(), wallet, player, root.transform);
+                var v9 = new RestaurantSaveData
+                {
+                    version = 9, coins = 600, completedSales = 18, grillLevel = 1, workerHired = false,
+                    workerDeliveries = 0, hiredWorkerCount = 0, workerClears = 0, boughtExtraTable = true,
+                    tableInvestment = 150
+                };
+                Assert.That(new LocalSaveStore(directory).Save(v9), Is.True);
+                var persistence = root.AddComponent<RestaurantPersistence>();
+                persistence.Configure(wallet, upgrade, hiring, null, expansion, directory);
+                Assert.That(wallet.Coins, Is.EqualTo(600));
+                Assert.That(expansion.HasWing, Is.True);
+                Assert.That(expansion.HasExtraTable, Is.True);
+                Assert.That(expansion.ExtraTable.Center, Is.EqualTo(ShopLayout.ExtraTable));
+                Assert.That(expansion.HasColaMachine, Is.False);
+                Assert.That(expansion.HasColaBar, Is.False);
+                Assert.That(expansion.ColaLevel, Is.EqualTo(1));
+                AssertChairFaces(expansion.ExtraTable, "ChairA");
+                Assert.That(persistence.Flush(), Is.True);
+                Assert.That(new LocalSaveStore(directory).Load(out RestaurantSaveData written),
+                    Is.EqualTo(SaveLoadResult.Loaded));
+                Assert.That(written.version, Is.EqualTo(RestaurantSaveData.CurrentVersion));
+                Assert.That(written.boughtSideWing, Is.True);
+                Assert.That(written.boughtColaMachine, Is.False);
+            }
+            finally
+            {
+                if (System.IO.Directory.Exists(directory)) System.IO.Directory.Delete(directory, true);
+            }
         }
 
         static void Lifecycle(FacilityUnlockZone zone, string method, params object[] args) =>

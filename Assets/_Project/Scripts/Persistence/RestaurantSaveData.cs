@@ -8,7 +8,7 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 12;
+        public const int CurrentVersion = 13;
 
         public int version;
         public long coins;
@@ -63,6 +63,13 @@ namespace BurgerShop.Persistence
         public int fourSeatUpgradeInvestment;
         public int squareTableUpgradeInvestment;
 
+        public bool boughtSideWing;
+        public int wingInvestment;
+        public bool boughtColaMachine;
+        public bool boughtColaCounter;
+        public int colaMachineInvestment;
+        public int colaCounterInvestment;
+
         public int ResolvedHiredCount => version >= 2
             ? hiredWorkerCount
             : workerHired ? 1 : 0;
@@ -112,6 +119,13 @@ namespace BurgerShop.Persistence
         public int ResolvedFourSeatUpgradeInvestment => version >= 12 ? fourSeatUpgradeInvestment : 0;
         public int ResolvedSquareTableUpgradeInvestment => version >= 12 ? squareTableUpgradeInvestment : 0;
 
+        public bool ResolvedBoughtSideWing => version >= 13 ? boughtSideWing : version >= 10 || ResolvedBoughtExtraTable;
+        public int ResolvedWingInvestment => version >= 13 ? wingInvestment : 0;
+        public bool ResolvedBoughtColaMachine => version >= 13 ? boughtColaMachine : version >= 10;
+        public bool ResolvedBoughtColaCounter => version >= 13 ? boughtColaCounter : version >= 10;
+        public int ResolvedColaMachineInvestment => version >= 13 ? colaMachineInvestment : 0;
+        public int ResolvedColaCounterInvestment => version >= 13 ? colaCounterInvestment : 0;
+
         public bool IsValid
         {
             get
@@ -121,6 +135,17 @@ namespace BurgerShop.Persistence
                 if (workerDeliveries < 0 || workerDeliveries > completedSales || workerClears < 0) return false;
                 if (version == 1)
                     return workerHired || workerDeliveries == 0;
+                if (version >= 13)
+                {
+                if (wingInvestment < 0 || wingInvestment > Restaurant.ShopExpansion.WingCost
+                    || colaMachineInvestment < 0 || colaMachineInvestment > Restaurant.ShopExpansion.GrillCost
+                    || colaCounterInvestment < 0 || colaCounterInvestment > Restaurant.ShopExpansion.CounterCost)
+                    return false;
+                if (colaLevel < 1 || colaLevel > 3) return false;
+                if (!boughtColaMachine && colaLevel != 1) return false;
+                if ((boughtColaMachine || boughtColaCounter) && !boughtSideWing) return false;
+                if (!boughtSideWing && (boughtColaMachine || boughtColaCounter)) return false;
+                }
                 if (version < 2 || version > CurrentVersion) return false;
                 if (hiredWorkerCount < 0 || hiredWorkerCount > 3) return false;
                 if ((hiredWorkerCount > 0) != workerHired) return false;
@@ -292,6 +317,14 @@ namespace BurgerShop.Persistence
                     squareTableSet.ToString(CultureInfo.InvariantCulture),
                     fourSeatUpgradeInvestment.ToString(CultureInfo.InvariantCulture),
                     squareTableUpgradeInvestment.ToString(CultureInfo.InvariantCulture));
+            if (version >= 13)
+                value += "|" + string.Join("|",
+                    boughtSideWing ? "1" : "0",
+                    wingInvestment.ToString(CultureInfo.InvariantCulture),
+                    boughtColaMachine ? "1" : "0", boughtColaCounter ? "1" : "0",
+                    colaMachineInvestment.ToString(CultureInfo.InvariantCulture),
+                    colaCounterInvestment.ToString(CultureInfo.InvariantCulture),
+                    colaLevel.ToString(CultureInfo.InvariantCulture));
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }

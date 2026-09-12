@@ -263,6 +263,12 @@ namespace BurgerShop.Customer
                 finishedTable?.Release(this);
                 seatIndex = -1;
                 ReleaseMeal();
+                if (exitRoute.Length > 0 && transform.position.x > ShopLayout.WallHalf)
+                {
+                    var leaving = new System.Collections.Generic.List<Vector3>(ShopLayout.WingRoute(transform.position, exitRoute[0]));
+                    for (int i = 1; i < exitRoute.Length; i++) leaving.Add(exitRoute[i]);
+                    exitRoute = leaving.ToArray(); exitWaypoint = 0;
+                }
                 phase = Phase.Exiting;
             }
 
@@ -288,7 +294,26 @@ namespace BurgerShop.Customer
             }
         }
 
+        Vector3[] wingWalk;
+        Vector3 wingTarget;
+        int wingStep;
         bool StepToward(Vector3 target, ref float travel)
+        {
+            if (wingWalk == null || wingTarget != target)
+            {
+                wingTarget = target;
+                wingWalk = ShopLayout.WingRoute(transform.position, target);
+                wingStep = 0;
+            }
+            while (wingStep < wingWalk.Length)
+            {
+                if (!StepDirect(wingWalk[wingStep], ref travel)) return false;
+                wingStep++;
+            }
+            return true;
+        }
+
+        bool StepDirect(Vector3 target, ref float travel)
         {
             Vector3 offset = target - transform.position;
             offset.y = 0f;

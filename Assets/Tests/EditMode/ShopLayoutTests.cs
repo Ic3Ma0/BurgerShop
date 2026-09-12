@@ -13,7 +13,11 @@ namespace BurgerShop.Tests.EditMode
         public void SetUp() => root = new GameObject("ShopLayoutTest");
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(root);
+        public void TearDown()
+        {
+            ShopLayout.ResetWingLock();
+            Object.DestroyImmediate(root);
+        }
 
         [Test]
         public void FloorAndWallsAreOneAndAHalfTimesThePreviousShop()
@@ -44,6 +48,9 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(root.transform.Find("Wall-Z"), Is.Null);
             Assert.That(wallEastNorth, Is.Not.Null);
             Assert.That(wallEastSouth, Is.Not.Null);
+            Assert.That(root.transform.Find("Wall+X_Mid"), Is.Not.Null);
+            Assert.That(root.transform.Find("WingDoorPlug"), Is.Not.Null);
+            Assert.That(ShopLayout.WingUnlocked, Is.False);
             Assert.That(wallSouthWest, Is.Not.Null);
             Assert.That(wallSouthEast, Is.Not.Null);
             Assert.That(wallEastNorth.position.x, Is.EqualTo(15f));
@@ -69,8 +76,17 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopLayout.Tables[0], Is.EqualTo(new Vector3(-8f, 0f, 7f)));
             Assert.That(ShopLayout.Tables[1], Is.EqualTo(new Vector3(-8f, 0f, 3f)));
             Assert.That(ShopLayout.Tables[2], Is.EqualTo(new Vector3(-12f, 0f, 7f)));
-            Assert.That(ShopLayout.ExtraTable, Is.EqualTo(new Vector3(-12f, 0f, 3f)));
-            Assert.That(ShopLayout.TableUnlock, Is.EqualTo(new Vector3(-12f, 0.02f, 3f)));
+            Assert.That(ShopLayout.ExtraTable, Is.EqualTo(new Vector3(26f, 0f, -6f)));
+            Assert.That(ShopLayout.TableUnlock, Is.EqualTo(new Vector3(26f, 0.02f, -6f)));
+            Assert.That(ShopLayout.FourSeatTable, Is.EqualTo(new Vector3(30.5f, 0f, -6f)));
+            Assert.That(ShopLayout.SquareTable, Is.EqualTo(new Vector3(35f, 0f, -6f)));
+            Assert.That(ShopLayout.ExtraTable, Is.Not.EqualTo(new Vector3(-12f, 0f, 3f)));
+            Assert.That(ShopLayout.FourSeatTable, Is.Not.EqualTo(new Vector3(-8f, 0f, 12f)));
+            Assert.That(ShopLayout.SquareTable, Is.Not.EqualTo(new Vector3(-12f, 0f, 12f)));
+            Assert.That(ShopLayout.Cola, Is.EqualTo(new Vector3(34f, 0f, 7f)));
+            Assert.That(ShopLayout.ColaCounter, Is.EqualTo(new Vector3(28f, 0f, 5f)));
+            Assert.That(ShopLayout.WingUnlock, Is.EqualTo(new Vector3(8f, 0.02f, 8f)));
+            Assert.That(ShopLayout.SideDoor, Is.EqualTo(new Vector3(15f, 0f, 8f)));
             Assert.That(ShopLayout.TrashBin, Is.EqualTo(new Vector3(-13f, 0f, 0f)));
             Assert.That(DiningArea.ShopPositions[0], Is.EqualTo(ShopLayout.Tables[0]));
             Assert.That(TrashBin.ShopPosition, Is.EqualTo(ShopLayout.TrashBin));
@@ -84,21 +100,25 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopLayout.BoostDoorX, Is.EqualTo(11f));
             Assert.That(ShopLayout.HrDoorZ, Is.EqualTo(ShopLayout.Aisle.z));
             Assert.That(ShopLayout.HiringSpot, Is.EqualTo(new Vector3(2f, 0.02f, 0f)));
-            Assert.That(ShopLayout.Cola, Is.EqualTo(new Vector3(9f, 0f, 3f)));
-            Assert.That(ShopLayout.ColaUpgrade, Is.EqualTo(new Vector3(9f, 0.02f, 5.4f)));
-            Assert.That(Vector3.Distance(ShopLayout.ColaPickup, new Vector3(10.15f, 0.015f, 0.8f)), Is.LessThan(.0001f));
-            Assert.That(ShopLayout.ColaCounter, Is.EqualTo(new Vector3(3f, 0f, -3f)));
-            Assert.That(ShopLayout.ColaServingCircle, Is.EqualTo(new Vector3(6.6f, 0.02f, -3f)));
-            Assert.That(ShopLayout.ColaQueueEntry, Is.EqualTo(new Vector3(3f, 0f, -13f)));
-            Assert.That(ShopLayout.ColaQueueSlots[0], Is.EqualTo(new Vector3(3f, 0f, -5.5f)));
-            Assert.That(ShopLayout.ColaQueueSlots[1], Is.EqualTo(new Vector3(3f, 0f, -8.5f)));
-            Assert.That(ShopLayout.ColaQueueSlots[2], Is.EqualTo(new Vector3(3f, 0f, -11.5f)));
+            Assert.That(ShopLayout.Cola, Is.EqualTo(new Vector3(34f, 0f, 7f)));
+            Assert.That(ShopLayout.ColaUpgrade, Is.EqualTo(new Vector3(34f, 0.02f, 9.4f)));
+            Assert.That(Vector3.Distance(ShopLayout.ColaPickup, new Vector3(35.15f, 0.015f, 4.8f)), Is.LessThan(.0001f));
+            Assert.That(ShopLayout.ColaCounter, Is.EqualTo(new Vector3(28f, 0f, 5f)));
+            Assert.That(ShopLayout.ColaServingCircle, Is.EqualTo(new Vector3(31.6f, 0.02f, 5f)));
+            Assert.That(ShopLayout.ColaQueueEntry, Is.EqualTo(new Vector3(28f, 0f, -4f)));
+            Assert.That(ShopLayout.ColaQueueSlots[0], Is.EqualTo(new Vector3(28f, 0f, 2.5f)));
+            Assert.That(ShopLayout.ColaQueueSlots[1], Is.EqualTo(new Vector3(28f, 0f, 0f)));
+            Assert.That(ShopLayout.ColaQueueSlots[2], Is.EqualTo(new Vector3(28f, 0f, -2.5f)));
         }
 
         [Test]
         public void UnlockPadsSitOnTheFacilityTheyBuy()
         {
             AssertPadOn(ShopLayout.TableUnlock, ShopLayout.ExtraTable);
+            AssertPadOn(ShopLayout.FourSeatUnlock, ShopLayout.FourSeatTable);
+            AssertPadOn(ShopLayout.SquareUnlock, ShopLayout.SquareTable);
+            AssertPadOn(ShopLayout.Pad(ShopLayout.Cola), ShopLayout.Cola);
+            AssertPadOn(ShopLayout.Pad(ShopLayout.ColaCounter), ShopLayout.ColaCounter);
             AssertPadOn(ShopLayout.GrillUnlock, ShopLayout.ExtraGrill);
             AssertPadOn(ShopLayout.CounterUnlock, ShopLayout.ExtraCounter);
             AssertPadOn(ShopLayout.BoxingUnlock, ShopLayout.BoxingTable);
@@ -184,6 +204,38 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopLayout.ContainsHall(ShopLayout.HiringSpot), Is.True);
             Assert.That(ShopLayout.ContainsHrOffice(ShopLayout.HiringSpot), Is.False);
             Assert.That(ShopLayout.ContainsBoostRoom(ShopLayout.HiringSpot), Is.False);
+        }
+
+        [Test]
+        public void SideEntranceOpensBehindHrAfterTheWingIsBought()
+        {
+            Material mat = RuntimeMaterials.Create(new Color(0.5f, 0.4f, 0.3f));
+            ShopLayout.CreateWalls(root.transform, mat);
+            Physics.SyncTransforms();
+            Assert.That(Physics.CheckBox(ShopLayout.SideDoor + Vector3.up * 0.6f, new Vector3(0.2f, 0.4f, 1.2f)),
+                Is.True);
+            Assert.That(ShopLayout.ContainsWing(new Vector3(30f, 0f, 0f)), Is.True);
+            Assert.That(ShopLayout.ContainsPlayable(new Vector3(30f, 0f, 0f)), Is.False);
+            Assert.That(ShopLayout.ContainsSideDoorway(ShopLayout.SideDoor), Is.True);
+            Assert.That(ShopLayout.Horizontal(ShopLayout.SideDoor, ShopLayout.HrDoor), Is.GreaterThan(6f));
+            Assert.That(ShopLayout.Cola.x, Is.GreaterThan(ShopLayout.HrDesk.x));
+            Assert.That(ShopLayout.TableUnlock.x, Is.GreaterThan(ShopLayout.WallHalf));
+            Assert.That(ShopLayout.FourSeatUnlock.x, Is.GreaterThan(ShopLayout.WallHalf));
+            Assert.That(ShopLayout.SquareUnlock.x, Is.GreaterThan(ShopLayout.WallHalf));
+
+            Material floor = RuntimeMaterials.Create(new Color(0.76f, 0.72f, 0.58f));
+            ShopLayout.OpenWing(root.transform, floor, mat);
+            Physics.SyncTransforms();
+            Assert.That(ShopLayout.WingUnlocked, Is.True);
+            Assert.That(root.transform.Find("WingDoorPlug"), Is.Null);
+            Assert.That(root.transform.Find("WingBackFloor"), Is.Not.Null);
+            Assert.That(root.transform.Find("WingCorridorFloor"), Is.Not.Null);
+            Assert.That(Physics.CheckBox(ShopLayout.SideDoor + Vector3.up * 0.6f, new Vector3(0.2f, 0.4f, 1.2f)),
+                Is.False);
+            Assert.That(ShopLayout.ContainsPlayable(ShopLayout.Cola), Is.True);
+            Assert.That(ShopLayout.ContainsPlayable(ShopLayout.ExtraTable), Is.True);
+            Assert.That(ShopLayout.ContainsHrOffice(ShopLayout.Cola), Is.False);
+            Assert.That(ShopLayout.ContainsHall(ShopLayout.Cola), Is.False);
         }
 
         static void AssertPadOn(Vector3 pad, Vector3 facility)

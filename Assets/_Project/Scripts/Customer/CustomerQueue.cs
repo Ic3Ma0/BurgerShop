@@ -49,12 +49,12 @@ namespace BurgerShop.Customer
                 if (Vector3.Distance(slots[i - 1], slots[i]) < minimumGap)
                     throw new ArgumentException("Queue slots must be at least MinimumGap apart.", nameof(slots));
 
-            route = new Vector3[slots.Length + 2];
+            var approach = new System.Collections.Generic.List<Vector3> { entrance };
+            approach.AddRange(ShopLayout.WingRoute(entrance, queueEntry));
+            for (int i = slots.Length - 1; i >= 0; i--) approach.Add(slots[i]);
+            route = approach.ToArray();
             cumulativeDistance = new float[route.Length];
             slotDistance = new float[slots.Length];
-            route[0] = entrance;
-            route[1] = queueEntry;
-            for (int i = 0; i < slots.Length; i++) route[i + 2] = slots[slots.Length - 1 - i];
             for (int i = 1; i < route.Length; i++)
                 cumulativeDistance[i] = cumulativeDistance[i - 1] + Vector3.Distance(route[i - 1], route[i]);
             for (int i = 0; i < slots.Length; i++) slotDistance[i] = cumulativeDistance[route.Length - 1 - i];

@@ -540,6 +540,8 @@ namespace BurgerShop.Restaurant
                         AtHeight(new Vector3(-11.3f, 0, southZ)), AtHeight(destination) };
             }
             else route = new[] { AtHeight(aisleCorner), AtHeight(destination) };
+            if (ShopLayout.WingUnlocked && (destination.x > ShopLayout.WallHalf || transform.position.x > ShopLayout.WallHalf))
+                route = System.Array.ConvertAll(ShopLayout.WingRoute(transform.position, destination), AtHeight);
             waypoint = 0;
         }
 

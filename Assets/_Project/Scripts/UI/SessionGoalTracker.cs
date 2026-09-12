@@ -198,6 +198,11 @@ namespace BurgerShop.UI
 
         void PaintCurrent()
         {
+            if (expansion != null && expansion.NextWingPad != null)
+            {
+                Show(expansion.NextWingHint, 0, 1);
+                return;
+            }
             if (TryShowChore())
                 return;
             if (!IsMaxRank && goalIndex >= 0 && goalIndex < rankGoals.Length)
