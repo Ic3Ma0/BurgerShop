@@ -34,21 +34,24 @@ namespace BurgerShop.Restaurant
             return root.transform;
         }
 
-        public static CounterStock CreateCounterStock(Transform parent, Vector3 counterTop, bool boxed = false)
+        public static CounterStock CreateCounterStock(Transform parent, Vector3 counterTop, bool boxed = false,
+            KitchenProduct product = KitchenProduct.Burger)
         {
             Transform anchor = new GameObject("CounterStockAnchor").transform;
             anchor.SetParent(parent, false);
             anchor.position = counterTop + new Vector3(0.55f, 0.18f, 0f);
 
+            bool cola = product == KitchenProduct.Cola;
             GameObject badge = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            badge.name = boxed ? "PackageStockBadge" : "CounterStockBadge";
+            badge.name = boxed ? "PackageStockBadge" : cola ? "ColaStockBadge" : "CounterStockBadge";
             badge.transform.SetParent(parent, false);
             badge.transform.position = counterTop + new Vector3(1.15f, 0.55f, -0.85f);
             badge.transform.localScale = new Vector3(0.7f, 0.55f, 0.04f);
             badge.GetComponent<Renderer>().sharedMaterial = BurgerShop.Core.RuntimeMaterials.Create(new Color(1f, 1f, 1f), true);
             SolidOccupancy.Apply(badge.GetComponent<Collider>(), false);
 
-            TextMesh label = new GameObject(boxed ? "PackageStockCount" : "CounterStockCount").AddComponent<TextMesh>();
+            TextMesh label = new GameObject(boxed ? "PackageStockCount" : cola ? "ColaStockCount" : "CounterStockCount")
+                .AddComponent<TextMesh>();
             label.transform.SetParent(badge.transform, false);
             label.transform.localPosition = new Vector3(0.12f, 0f, -1.2f);
             label.anchor = TextAnchor.MiddleCenter;
@@ -60,13 +63,15 @@ namespace BurgerShop.Restaurant
 
             Transform icon = boxed
                 ? BoxVisualFactory.Create(badge.transform, 0)
-                : BurgerVisualFactory.Create(badge.transform, 0);
-            icon.name = boxed ? "BadgeBox" : "BadgeBurger";
+                : cola
+                    ? ColaVisualFactory.Create(badge.transform, 0)
+                    : BurgerVisualFactory.Create(badge.transform, 0);
+            icon.name = boxed ? "BadgeBox" : cola ? "BadgeCola" : "BadgeBurger";
             icon.localPosition = new Vector3(-0.16f, -0.08f, -1.1f);
             icon.localScale = Vector3.one * 0.35f;
 
             CounterStock stock = parent.gameObject.AddComponent<CounterStock>();
-            stock.Configure(anchor, label);
+            stock.Configure(anchor, label, product);
             return stock;
         }
 

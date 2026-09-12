@@ -1,4 +1,5 @@
 using BurgerShop.Core;
+using BurgerShop.Customer;
 using BurgerShop.Economy;
 using BurgerShop.Player;
 using BurgerShop.Restaurant;
@@ -15,7 +16,11 @@ namespace BurgerShop.Tests.EditMode
         public void SetUp() => root = new GameObject("PlayerClippingTest");
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(root);
+        public void TearDown()
+        {
+            Object.DestroyImmediate(root);
+            ShopLayout.ResetWingLock();
+        }
 
         [Test]
         public void PairFourSeatAndSquareTablesBlockAndChairsFaceTheTop()
@@ -109,8 +114,10 @@ namespace BurgerShop.Tests.EditMode
             grill.Configure(new GameObject("Out").transform, null, null);
             hiring.Configure(grill, serving, wallet, player, root.transform, root.transform, ShopLayout.Aisle, drop);
             ShopExpansion expansion = ShopExpansion.Create(root.transform, dining, serving, hiring, player, wallet);
+            expansion.Restore(false, false, false, 0, false, false, false, false, true);
             Physics.SyncTransforms();
 
+            Assert.That(expansion.WingPad.GetComponent<Collider>(), Is.Null);
             Assert.That(expansion.TablePad.GetComponent<Collider>(), Is.Null);
             Assert.That(expansion.FourSeatPad.GetComponent<Collider>(), Is.Null);
             Assert.That(expansion.SquarePad.GetComponent<Collider>(), Is.Null);
@@ -182,6 +189,54 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(root.transform.Find("Wall+X"), Is.Null);
             Assert.That(Physics.CheckBox(ShopLayout.HrDoor + Vector3.up * 0.6f, new Vector3(0.2f, 0.4f, 0.9f)), Is.False);
             Assert.That(Physics.CheckBox(ShopLayout.BoostDoor + Vector3.up * 0.6f, new Vector3(0.9f, 0.4f, 0.2f)),
+                Is.False);
+        }
+
+        [Test]
+        public void SideDoorPlugBlocksUntilTheWingIsBoughtThenColaBodiesBlock()
+        {
+            Material wall = RuntimeMaterials.Create(new Color(0.4f, 0.3f, 0.2f));
+            ShopLayout.CreateWalls(root.transform, wall);
+            Physics.SyncTransforms();
+            AssertBlocks(root.transform.Find("WingDoorPlug").GetComponent<Collider>());
+            Assert.That(Physics.CheckBox(ShopLayout.SideDoor + Vector3.up * 0.6f, new Vector3(0.2f, 0.4f, 1.2f)),
+                Is.True);
+
+            var player = new GameObject("Player").AddComponent<BurgerInventory>();
+            player.transform.SetParent(root.transform);
+            player.Configure();
+            var wallet = root.AddComponent<RestaurantWallet>();
+            var queue = root.AddComponent<CustomerQueue>();
+            queue.OrderQuantityFactory = () => 1;
+            queue.Configure(ShopLayout.Entrance, ShopLayout.QueueEntry, ShopLayout.QueueSlots, ShopLayout.Counter);
+            Transform circle = new GameObject("Circle").transform;
+            circle.SetParent(root.transform);
+            circle.position = ShopLayout.ServingCircle;
+            var stock = root.AddComponent<CounterStock>();
+            stock.Configure(new GameObject("Anchor").transform, null);
+            var drop = root.AddComponent<CounterDropZone>();
+            drop.Configure(stock, circle);
+            DiningArea dining = DiningArea.Create(root.transform, ShopLayout.Tables);
+            var serving = root.AddComponent<BurgerServingZone>();
+            serving.Configure(queue, player, wallet, circle, ShopLayout.Exit, stock, dining, drop);
+            var hiring = root.AddComponent<WorkerHiringZone>();
+            var grill = root.AddComponent<ProductionStation>();
+            grill.Configure(new GameObject("Out").transform, null, null);
+            hiring.Configure(grill, serving, wallet, player, root.transform, root.transform, ShopLayout.Aisle, drop);
+            ShopExpansion expansion = ShopExpansion.Create(root.transform, dining, serving, hiring, player, wallet);
+            expansion.Restore(false, false, false, 0, false, false, false, false, true, true, true);
+            Physics.SyncTransforms();
+            Assert.That(root.transform.Find("WingDoorPlug"), Is.Null);
+            Assert.That(Physics.CheckBox(ShopLayout.SideDoor + Vector3.up * 0.6f, new Vector3(0.2f, 0.4f, 1.2f)),
+                Is.False);
+            AssertBlocks(expansion.ColaMachine.ActiveLook.Find("Body"));
+            AssertBlocks(expansion.transform.Find("ColaCustomerArea/ColaCounter"));
+            Assert.That(SolidOccupancy.BlocksPlayer(expansion.ColaMachine.Pickup.PickupPoint.GetComponent<Collider>()),
+                Is.False);
+            Assert.That(SolidOccupancy.BlocksPlayer(expansion.ColaMachine.UpgradeSpot.GetComponent<Collider>()),
+                Is.False);
+            Assert.That(SolidOccupancy.BlocksPlayer(
+                expansion.transform.Find("ColaCustomerArea/ColaCashierCircle/Dash_1").GetComponent<Collider>()),
                 Is.False);
         }
 

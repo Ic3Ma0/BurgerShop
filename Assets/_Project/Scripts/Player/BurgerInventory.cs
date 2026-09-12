@@ -11,6 +11,7 @@ namespace BurgerShop.Player
         [SerializeField] Transform carryAnchor;
         readonly List<Transform> burgers = new List<Transform>();
         readonly List<bool> boxed = new List<bool>();
+        readonly List<bool> cola = new List<bool>();
 
         int incomingBoxes;
         public int IncomingBoxes => incomingBoxes;
@@ -21,11 +22,30 @@ namespace BurgerShop.Player
             {
                 int loose = 0;
                 for (int i = 0; i < boxed.Count; i++)
-                    if (!boxed[i]) loose++;
+                    if (!boxed[i] && (i >= cola.Count || !cola[i])) loose++;
                 return loose;
             }
         }
-        public int BoxedCount => Count - LooseCount;
+        public int ColaCount
+        {
+            get
+            {
+                int cups = 0;
+                for (int i = 0; i < cola.Count; i++)
+                    if (cola[i]) cups++;
+                return cups;
+            }
+        }
+        public int BoxedCount
+        {
+            get
+            {
+                int cups = incomingBoxes;
+                for (int i = 0; i < boxed.Count; i++)
+                    if (boxed[i]) cups++;
+                return cups;
+            }
+        }
         public int Capacity => capacity;
         public bool IsFull => Count >= capacity;
         public event Action<int> CountChanged;
@@ -55,8 +75,11 @@ namespace BurgerShop.Player
             if (IsFull || station == null || !station.TryTakeBurger(out Transform burger))
                 return false;
 
+            bool drink = station.Product == KitchenProduct.Cola;
             if (burger == null)
-                burger = BurgerVisualFactory.Create(carryAnchor, Count);
+                burger = drink
+                    ? ColaVisualFactory.Create(carryAnchor, Count)
+                    : BurgerVisualFactory.Create(carryAnchor, Count);
             else
                 burger.SetParent(carryAnchor, false);
 
@@ -65,6 +88,7 @@ namespace BurgerShop.Player
             burger.localScale = Vector3.one;
             burgers.Add(burger);
             boxed.Add(false);
+            cola.Add(drink);
             CountChanged?.Invoke(Count);
             return true;
         }
@@ -82,6 +106,7 @@ namespace BurgerShop.Player
             incomingBoxes--;
             burgers.Add(box);
             boxed.Add(true);
+            cola.Add(false);
             Restack();
             CountChanged?.Invoke(Count);
         }
@@ -90,7 +115,7 @@ namespace BurgerShop.Player
         {
             for (int i = burgers.Count - 1; i >= 0; i--)
             {
-                if (boxed[i]) continue;
+                if (boxed[i] || (i < cola.Count && cola[i])) continue;
                 Transform loose = burgers[i];
                 if (loose != null)
                     BurgerVisual.Release(loose.gameObject);
@@ -118,19 +143,29 @@ namespace BurgerShop.Player
         }
 
         // Transfer ownership of the existing visual to the customer without duplicating it.
-        public bool TryTakeBurger(out Transform burger) => TryTake(false, out burger);
+        public bool TryTakeBurger(out Transform burger) => TryTake(false, false, out burger);
 
-        public bool TryTakeBoxed(out Transform box) => TryTake(true, out box);
+        public bool TryTakeBoxed(out Transform box) => TryTake(true, false, out box);
 
-        bool TryTake(bool wantBoxed, out Transform item)
+        public bool TryTakeCola() => TryTakeCola(out _);
+
+        public bool TryTakeCola(out Transform cup) => TryTake(false, true, out cup);
+
+        bool TryTake(bool wantBoxed, bool wantCola, out Transform item)
         {
             item = null;
             for (int i = burgers.Count - 1; i >= 0; i--)
             {
-                if (boxed[i] != wantBoxed) continue;
+                bool isCola = i < cola.Count && cola[i];
+                if (wantCola)
+                {
+                    if (!isCola) continue;
+                }
+                else if (isCola || boxed[i] != wantBoxed) continue;
                 item = burgers[i];
                 burgers.RemoveAt(i);
                 boxed.RemoveAt(i);
+                if (i < cola.Count) cola.RemoveAt(i);
                 if (item != null)
                     item.SetParent(null, true);
                 Restack();

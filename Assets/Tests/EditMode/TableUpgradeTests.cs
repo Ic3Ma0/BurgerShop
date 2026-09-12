@@ -61,6 +61,7 @@ namespace BurgerShop.Tests.EditMode
             hiring = root.AddComponent<WorkerHiringZone>();
             hiring.Configure(grill, serving, wallet, player, root.transform, root.transform, ShopLayout.Aisle, drop);
             expansion = ShopExpansion.Create(root.transform, dining, serving, hiring, player, wallet, cash);
+            expansion.Restore(false, false, false, 0, false, false, false, false, true);
             board = root.AddComponent<TableUpgradeBoard>();
             board.Configure(dining, expansion, wallet, player);
 
@@ -91,7 +92,11 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(root);
+        public void TearDown()
+        {
+            Object.DestroyImmediate(root);
+            ShopLayout.ResetWingLock();
+        }
 
         void Hold(TableUpgradeZone zone, float seconds)
         {
@@ -444,7 +449,7 @@ namespace BurgerShop.Tests.EditMode
                 persistence.Configure(wallet, upgrade, hiring, null, expansion, null, board, directory);
                 Assert.That(persistence.Flush(), Is.True);
                 Assert.That(new LocalSaveStore(directory).Load(out RestaurantSaveData data), Is.EqualTo(SaveLoadResult.Loaded));
-                Assert.That(data.version, Is.EqualTo(9));
+                Assert.That(data.version, Is.EqualTo(RestaurantSaveData.CurrentVersion));
                 Assert.That(data.boughtFourSeatTable, Is.True);
                 Assert.That(data.fourSeatSet, Is.EqualTo((int)TableSetId.Patio));
                 Assert.That(data.coins, Is.EqualTo(0));

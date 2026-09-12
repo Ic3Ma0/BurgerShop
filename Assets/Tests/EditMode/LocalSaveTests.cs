@@ -420,6 +420,73 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(data.IsValid, Is.False);
         }
 
+        [Test] public void Version10RoundTripRestoresWingAndColaPurchases()
+        {
+            var data = ProgressV6(90);
+            data.version = 10;
+            data.boughtSideWing = true;
+            data.wingInvestment = 300;
+            data.boughtColaMachine = true;
+            data.boughtColaCounter = true;
+            data.colaMachineInvestment = 200;
+            data.colaCounterInvestment = 250;
+            data.colaLevel = 2;
+            Assert.That(store.Save(data), Is.True);
+            Assert.That(new LocalSaveStore(directory).Load(out var loaded), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(loaded.version, Is.EqualTo(10));
+            Assert.That(loaded.ResolvedBoughtSideWing, Is.True);
+            Assert.That(loaded.ResolvedBoughtColaMachine, Is.True);
+            Assert.That(loaded.ResolvedBoughtColaCounter, Is.True);
+            Assert.That(loaded.ResolvedColaLevel, Is.EqualTo(2));
+            Assert.That(loaded.wingInvestment, Is.EqualTo(300));
+            Assert.That(loaded.coins, Is.EqualTo(90));
+        }
+
+        [Test] public void Version9AndOlderLeaveWingAndColaUnbought()
+        {
+            var v9 = ProgressV6(600);
+            v9.version = 9;
+            v9.boughtExtraTable = true;
+            v9.tableInvestment = 150;
+            Assert.That(store.Save(v9), Is.True);
+            Assert.That(store.Load(out var data), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(data.version, Is.EqualTo(9));
+            Assert.That(data.ResolvedBoughtExtraTable, Is.True);
+            Assert.That(data.ResolvedBoughtSideWing, Is.False);
+            Assert.That(data.ResolvedBoughtColaMachine, Is.False);
+            Assert.That(data.ResolvedBoughtColaCounter, Is.False);
+            Assert.That(data.ResolvedColaLevel, Is.EqualTo(1));
+            Assert.That(data.coins, Is.EqualTo(600));
+        }
+
+        [Test] public void Version10RejectsColaWithoutWingAndBadColaLevel()
+        {
+            var data = ProgressV6();
+            data.version = 10;
+            data.boughtSideWing = false;
+            data.boughtColaMachine = true;
+            data.colaLevel = 1;
+            Assert.That(data.IsValid, Is.False);
+            Assert.That(store.Save(data), Is.False);
+            data = ProgressV6();
+            data.version = 10;
+            data.boughtSideWing = true;
+            data.boughtColaMachine = false;
+            data.colaLevel = 2;
+            Assert.That(data.IsValid, Is.False);
+            data = ProgressV6();
+            data.version = 10;
+            data.boughtSideWing = true;
+            data.colaLevel = 0;
+            Assert.That(data.IsValid, Is.False);
+            data = ProgressV6();
+            data.version = 10;
+            data.boughtSideWing = true;
+            data.colaLevel = 1;
+            data.wingInvestment = 301;
+            Assert.That(data.IsValid, Is.False);
+        }
+
         [Test] public void Version2RejectsHiredCountOutsideZeroToThree()
         {
             var data = ProgressV2();

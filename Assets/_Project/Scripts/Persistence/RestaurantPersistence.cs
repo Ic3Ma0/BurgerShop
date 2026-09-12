@@ -75,11 +75,17 @@ namespace BurgerShop.Persistence
                 expansion?.Restore(data.ResolvedBoughtExtraTable, data.ResolvedBoughtExtraGrill,
                     data.ResolvedBoughtExtraCounter, data.ResolvedExtraGrillLevel,
                     data.ResolvedBoughtBoxingStation, data.ResolvedBoughtDriveThru,
-                    data.ResolvedBoughtFourSeatTable, data.ResolvedBoughtSquareTable);
+                    data.ResolvedBoughtFourSeatTable, data.ResolvedBoughtSquareTable,
+                    data.ResolvedBoughtSideWing || data.ResolvedBoughtExtraTable
+                        || data.ResolvedBoughtFourSeatTable || data.ResolvedBoughtSquareTable
+                        || data.ResolvedBoughtColaMachine || data.ResolvedBoughtColaCounter,
+                    data.ResolvedBoughtColaMachine, data.ResolvedBoughtColaCounter, data.ResolvedColaLevel);
                 if (data.version >= 7)
                     expansion?.RestoreInvestments(data.tableInvestment, data.grillInvestment, data.counterInvestment,
                         data.boxingInvestment, data.driveThruInvestment,
-                        data.ResolvedFourSeatInvestment, data.ResolvedSquareTableInvestment);
+                        data.ResolvedFourSeatInvestment, data.ResolvedSquareTableInvestment,
+                        data.ResolvedWingInvestment, data.ResolvedColaMachineInvestment,
+                        data.ResolvedColaCounterInvestment);
                 tableUpgrades?.Restore(data.ResolvedTable0Set, data.ResolvedTable1Set, data.ResolvedTable2Set,
                     data.ResolvedExtraTableSet, data.ResolvedTable0Investment, data.ResolvedTable1Investment,
                     data.ResolvedTable2Investment, data.ResolvedExtraTableInvestment,
@@ -130,7 +136,7 @@ namespace BurgerShop.Persistence
                 playerCarryTier = boost != null ? boost.CarryTier : 0,
                 boughtBoxingStation = expansion != null && expansion.HasBoxing,
                 boughtDriveThru = expansion != null && expansion.HasDriveThru,
-                tableInvestment = expansion?.TablePad?.Invested ?? 0,
+                tableInvestment = expansion?.TableInvested ?? 0,
                 grillInvestment = expansion?.GrillPad?.Invested ?? 0,
                 counterInvestment = expansion?.CounterPad?.Invested ?? 0,
                 boxingInvestment = expansion?.BoxingPad?.Invested ?? 0,
@@ -145,12 +151,19 @@ namespace BurgerShop.Persistence
                 extraTableInvestment = tableUpgrades?.InvestedAt(3) ?? 0,
                 boughtFourSeatTable = expansion != null && expansion.HasFourSeatTable,
                 boughtSquareTable = expansion != null && expansion.HasSquareTable,
-                fourSeatInvestment = expansion?.FourSeatPad?.Invested ?? 0,
-                squareTableInvestment = expansion?.SquarePad?.Invested ?? 0,
+                fourSeatInvestment = expansion?.FourSeatInvested ?? 0,
+                squareTableInvestment = expansion?.SquareInvested ?? 0,
                 fourSeatSet = tableUpgrades?.SetAt(4) ?? 0,
                 squareTableSet = tableUpgrades?.SetAt(5) ?? 0,
                 fourSeatUpgradeInvestment = tableUpgrades?.InvestedAt(4) ?? 0,
-                squareTableUpgradeInvestment = tableUpgrades?.InvestedAt(5) ?? 0
+                squareTableUpgradeInvestment = tableUpgrades?.InvestedAt(5) ?? 0,
+                boughtSideWing = expansion != null && expansion.HasWing,
+                wingInvestment = expansion?.WingPad?.Invested ?? 0,
+                boughtColaMachine = expansion != null && expansion.HasColaMachine,
+                boughtColaCounter = expansion != null && expansion.HasColaBar,
+                colaMachineInvestment = expansion?.ColaInvested ?? 0,
+                colaCounterInvestment = expansion?.ColaBarInvested ?? 0,
+                colaLevel = expansion != null ? expansion.ColaLevel : 1
             };
             string checksum = data.Checksum();
             if (checksum == lastChecksum) return true;

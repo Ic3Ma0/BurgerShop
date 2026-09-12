@@ -1,4 +1,5 @@
 using System;
+using BurgerShop.Customer;
 using BurgerShop.Economy;
 using BurgerShop.Player;
 using BurgerShop.UI;
@@ -15,6 +16,7 @@ namespace BurgerShop.Restaurant
         public const int CounterCost = 250;
         public const int BoxingCost = 150;
         public const int DriveThruCost = 250;
+        public const int WingCost = 300;
         public const int ExtraGrillLv2Cost = 80;
         public const int ExtraGrillLv3Cost = 160;
 
@@ -34,6 +36,15 @@ namespace BurgerShop.Restaurant
         Transform extraCircle;
         BoxingStation boxing;
         DriveThruLane driveThru;
+        ExpandableGrill colaMachine;
+        BurgerServingZone colaServing;
+        Material wingFloor;
+        Material wingWall;
+        int pendingTableInvestment;
+        int pendingFourSeatInvestment;
+        int pendingSquareInvestment;
+        int pendingColaInvestment;
+        int pendingColaBarInvestment;
 
         public event Action PurchaseCompleted;
 
@@ -44,6 +55,9 @@ namespace BurgerShop.Restaurant
         public FacilityUnlockZone CounterPad { get; private set; }
         public FacilityUnlockZone BoxingPad { get; private set; }
         public FacilityUnlockZone DriveThruPad { get; private set; }
+        public FacilityUnlockZone WingPad { get; private set; }
+        public FacilityUnlockZone ColaPad { get; private set; }
+        public FacilityUnlockZone ColaBarPad { get; private set; }
         public bool HasExtraTable => extraTable != null;
         public bool HasFourSeatTable => fourSeatTable != null;
         public bool HasSquareTable => squareTable != null;
@@ -51,9 +65,17 @@ namespace BurgerShop.Restaurant
         public bool HasExtraCounter => extraStock != null;
         public bool HasBoxing => boxing != null;
         public bool HasDriveThru => driveThru != null;
+        public bool HasWing => ShopLayout.WingUnlocked;
+        public bool HasColaMachine => colaMachine != null;
+        public bool HasColaBar => colaServing != null;
         public BoxingStation Boxing => boxing;
         public DriveThruLane DriveThru => driveThru;
+        public ExpandableGrill ColaMachine => colaMachine;
+        public BurgerServingZone ColaServing => colaServing;
+        public ProductionStation ColaStation => colaMachine != null ? colaMachine.Station : null;
+        public GrillUpgradeZone ColaUpgrade => colaMachine != null ? colaMachine.Upgrade : null;
         public int ExtraGrillLevel => extraGrill != null && extraGrill.Upgrade != null ? extraGrill.Upgrade.Level : 0;
+        public int ColaLevel => colaMachine != null && colaMachine.Upgrade != null ? colaMachine.Upgrade.Level : 1;
         public DiningTable ExtraTable => extraTable;
         public DiningTable FourSeatTable => fourSeatTable;
         public DiningTable SquareTable => squareTable;
@@ -61,15 +83,20 @@ namespace BurgerShop.Restaurant
         public CounterStock ExtraStock => extraStock;
         public CounterDropZone ExtraDrop => extraDrop;
         public GrillUpgradeZone ExtraGrillUpgrade => extraGrill != null ? extraGrill.Upgrade : null;
+        public int TableInvested => TablePad != null ? TablePad.Invested : pendingTableInvestment;
+        public int FourSeatInvested => FourSeatPad != null ? FourSeatPad.Invested : pendingFourSeatInvestment;
+        public int SquareInvested => SquarePad != null ? SquarePad.Invested : pendingSquareInvestment;
+        public int ColaInvested => ColaPad != null ? ColaPad.Invested : pendingColaInvestment;
+        public int ColaBarInvested => ColaBarPad != null ? ColaBarPad.Invested : pendingColaBarInvestment;
         public string NextInstallHint
         {
             get
             {
                 if (wallet == null) return null;
                 FacilityUnlockZone[] pads =
-                    { TablePad, FourSeatPad, SquarePad, BoxingPad, GrillPad, CounterPad, DriveThruPad };
+                    { WingPad, ColaPad, ColaBarPad, TablePad, FourSeatPad, SquarePad, BoxingPad, GrillPad, CounterPad, DriveThruPad };
                 string[] names =
-                    { "a table", "a 4-seat table", "a square table", "a boxing table", "a grill", "a counter", "a drive-thru" };
+                    { "a wing", "a cola", "a cola bar", "a table", "a 4-seat table", "a square table", "a boxing table", "a grill", "a counter", "a drive-thru" };
                 for (int i = 0; i < pads.Length; i++)
                     if (pads[i] != null && !pads[i].IsPurchased && (wallet.Coins > 0 || pads[i].Invested > 0))
                         return $"Install {names[i]} - Remaining {pads[i].Remaining}";
@@ -86,14 +113,10 @@ namespace BurgerShop.Restaurant
             player = carrier;
             wallet = earnings;
             cash = cashFloor;
-            if (TablePad == null)
-                TablePad = MakePad("TableUnlockPad", ShopLayout.TableUnlock, TableCost, "TABLE", UnlockTable);
-            if (FourSeatPad == null)
-                FourSeatPad = MakePad("FourSeatUnlockPad", ShopLayout.FourSeatUnlock, FourSeatCost, "4-SEAT",
-                    UnlockFourSeat);
-            if (SquarePad == null)
-                SquarePad = MakePad("SquareUnlockPad", ShopLayout.SquareUnlock, SquareTableCost, "SQUARE",
-                    UnlockSquare);
+            if (WingPad == null)
+                ShopLayout.ResetWingLock();
+            if (WingPad == null)
+                WingPad = MakePad("WingUnlockPad", ShopLayout.WingUnlock, WingCost, "WING", UnlockWing);
             if (GrillPad == null)
                 GrillPad = MakePad("GrillUnlockPad", ShopLayout.GrillUnlock, GrillCost, "GRILL", UnlockGrill);
             if (CounterPad == null)
@@ -110,11 +133,16 @@ namespace BurgerShop.Restaurant
             upgradeHud = hud;
             if (hud != null && extraGrill != null && extraGrill.Upgrade != null)
                 hud.AddZone(extraGrill.Upgrade);
+            if (hud != null && colaMachine != null && colaMachine.Upgrade != null)
+                hud.AddZone(colaMachine.Upgrade);
         }
 
         public void Restore(bool table, bool grill, bool counter, int grillLevel,
-            bool boxingStation = false, bool lane = false, bool fourSeat = false, bool square = false)
+            bool boxingStation = false, bool lane = false, bool fourSeat = false, bool square = false,
+            bool wing = false, bool colaMachineBought = false, bool colaBar = false, int colaLevel = 1)
         {
+            if ((wing || table || fourSeat || square || colaMachineBought || colaBar) && !HasWing)
+                UnlockWing();
             if (table && !HasExtraTable)
             {
                 UnlockTable();
@@ -152,18 +180,119 @@ namespace BurgerShop.Restaurant
                 UnlockDriveThru();
                 DriveThruPad?.RestorePurchased();
             }
+            if (colaMachineBought && !HasColaMachine)
+            {
+                UnlockColaMachine();
+                ColaPad?.RestorePurchased();
+                if (colaLevel >= 1 && colaMachine?.Upgrade != null)
+                    colaMachine.Upgrade.RestoreLevel(Mathf.Clamp(colaLevel, 1, 3));
+            }
+            if (colaBar && !HasColaBar)
+            {
+                UnlockColaBar();
+                ColaBarPad?.RestorePurchased();
+            }
         }
 
         public void RestoreInvestments(int table, int grill, int counter, int box, int lane,
-            int fourSeat = 0, int square = 0)
+            int fourSeat = 0, int square = 0, int wing = 0, int cola = 0, int colaBar = 0)
         {
-            TablePad?.RestoreInvestment(table);
-            FourSeatPad?.RestoreInvestment(fourSeat);
-            SquarePad?.RestoreInvestment(square);
+            WingPad?.RestoreInvestment(wing);
             GrillPad?.RestoreInvestment(grill);
             CounterPad?.RestoreInvestment(counter);
             BoxingPad?.RestoreInvestment(box);
             DriveThruPad?.RestoreInvestment(lane);
+            if (!HasWing)
+            {
+                pendingTableInvestment = table;
+                pendingFourSeatInvestment = fourSeat;
+                pendingSquareInvestment = square;
+                pendingColaInvestment = cola;
+                pendingColaBarInvestment = colaBar;
+                return;
+            }
+            ApplyWingPadInvestments(table, fourSeat, square, cola, colaBar);
+        }
+
+        void UnlockWing()
+        {
+            if (wingFloor == null)
+                wingFloor = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.76f, 0.72f, 0.58f));
+            if (wingWall == null)
+                wingWall = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.40f, 0.29f, 0.17f));
+            Transform world = transform.parent != null ? transform.parent : transform;
+            ShopLayout.OpenWing(world, wingFloor, wingWall);
+            WingPad?.RestorePurchased();
+            if (TablePad == null)
+                TablePad = MakePad("TableUnlockPad", ShopLayout.TableUnlock, TableCost, "TABLE", UnlockTable);
+            if (FourSeatPad == null)
+                FourSeatPad = MakePad("FourSeatUnlockPad", ShopLayout.FourSeatUnlock, FourSeatCost, "4-SEAT",
+                    UnlockFourSeat);
+            if (SquarePad == null)
+                SquarePad = MakePad("SquareUnlockPad", ShopLayout.SquareUnlock, SquareTableCost, "SQUARE",
+                    UnlockSquare);
+            if (ColaPad == null)
+                ColaPad = MakePad("ColaUnlockPad", ShopLayout.Pad(ShopLayout.Cola), GrillCost, "COLA", UnlockColaMachine);
+            if (ColaBarPad == null)
+                ColaBarPad = MakePad("ColaBarUnlockPad", ShopLayout.Pad(ShopLayout.ColaCounter), CounterCost, "BAR",
+                    UnlockColaBar);
+            ApplyWingPadInvestments(pendingTableInvestment, pendingFourSeatInvestment, pendingSquareInvestment,
+                pendingColaInvestment, pendingColaBarInvestment);
+        }
+
+        void ApplyWingPadInvestments(int table, int fourSeat, int square, int cola, int colaBar)
+        {
+            TablePad?.RestoreInvestment(table);
+            FourSeatPad?.RestoreInvestment(fourSeat);
+            SquarePad?.RestoreInvestment(square);
+            ColaPad?.RestoreInvestment(cola);
+            ColaBarPad?.RestoreInvestment(colaBar);
+            pendingTableInvestment = 0;
+            pendingFourSeatInvestment = 0;
+            pendingSquareInvestment = 0;
+            pendingColaInvestment = 0;
+            pendingColaBarInvestment = 0;
+        }
+
+        void UnlockColaMachine()
+        {
+            if (HasColaMachine || player == null || wallet == null) return;
+            if (!HasWing) UnlockWing();
+            colaMachine = ExpandableGrill.CreateColaStarter(transform, player, wallet);
+            if (hiring != null && colaMachine.Station != null && colaMachine.Pickup != null)
+                hiring.RegisterCola(colaMachine.Station, colaMachine.Pickup.PickupPoint, colaServing,
+                    colaServing != null ? colaServing.DropZone : null);
+            if (upgradeHud != null && colaMachine.Upgrade != null)
+                upgradeHud.AddZone(colaMachine.Upgrade);
+        }
+
+        void UnlockColaBar()
+        {
+            if (HasColaBar) return;
+            if (!HasWing) UnlockWing();
+            Transform area = new GameObject("ColaCustomerArea").transform;
+            area.SetParent(transform, false);
+            Vector3 counter = ShopLayout.ColaCounter;
+            Material body = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.22f, 0.42f, 0.62f));
+            Material top = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.86f, 0.90f, 0.94f));
+            Part(area, "ColaCounter", counter + Vector3.up * 0.5f, new Vector3(3.2f, 1f, 1.4f), body, true);
+            Part(area, "ColaCounterTop", counter + Vector3.up * 1.05f, new Vector3(3.35f, 0.12f, 1.55f), top, true);
+            ShopFixtures.CreateStationLabel(area, "ColaCounterLabel", counter + Vector3.up * 1.85f, "COLA");
+
+            CustomerQueue queue = area.gameObject.AddComponent<CustomerQueue>();
+            queue.Product = KitchenProduct.Cola;
+            queue.Configure(ShopLayout.Entrance, ShopLayout.ColaQueueEntry, ShopLayout.ColaQueueSlots, counter);
+
+            CounterStock stock = ShopFixtures.CreateCounterStock(area, ShopLayout.ColaCounterTop, false,
+                KitchenProduct.Cola);
+            Transform circle = ShopFixtures.CreateCashierCircle(area, ShopLayout.ColaServingCircle);
+            circle.name = "ColaCashierCircle";
+            CounterDropZone drop = area.gameObject.AddComponent<CounterDropZone>();
+            drop.Configure(stock, circle, 1.05f, 0.25f, false, KitchenProduct.Cola);
+            colaServing = area.gameObject.AddComponent<BurgerServingZone>();
+            colaServing.Configure(queue, player, wallet, circle, ShopLayout.Exit, stock, dining, drop, 10, cash);
+            hiring?.RegisterCola(colaMachine != null ? colaMachine.Station : null,
+                colaMachine != null ? colaMachine.Pickup.PickupPoint : null, colaServing, drop);
         }
 
         void UnlockTable()
@@ -254,6 +383,9 @@ namespace BurgerShop.Restaurant
                     : title == "SQUARE" ? squareTable?.transform
                     : title == "GRILL" ? extraGrill?.transform
                     : title == "COUNTER" ? extraStock?.transform
+                    : title == "COLA" ? colaMachine?.transform
+                    : title == "BAR" ? colaServing?.transform
+                    : title == "WING" ? transform.Find("WingBackFloor") ?? transform.parent?.Find("WingBackFloor")
                     : title == "BOX" ? boxing?.transform
                     : driveThru?.transform;
                 UI.VisualMeshPulse.Play(look);
@@ -274,6 +406,21 @@ namespace BurgerShop.Restaurant
             {
                 Part(icon, "CarBody", center, new Vector3(0.9f, 0.24f, 0.5f), light);
                 Part(icon, "CarRoof", center + Vector3.up * 0.2f, new Vector3(0.4f, 0.22f, 0.45f), light);
+            }
+            else if (title == "WING")
+            {
+                Part(icon, "Floor", center, new Vector3(1.0f, 0.08f, 0.7f), light);
+                Part(icon, "Door", center + new Vector3(0.4f, 0.22f, 0f), new Vector3(0.12f, 0.45f, 0.35f), light);
+            }
+            else if (title == "COLA")
+            {
+                Part(icon, "Cup", center, new Vector3(0.35f, 0.4f, 0.35f), light);
+                Part(icon, "Straw", center + new Vector3(0.08f, 0.32f, 0f), new Vector3(0.06f, 0.28f, 0.06f), light);
+            }
+            else if (title == "BAR")
+            {
+                Part(icon, "Desk", center, new Vector3(0.9f, 0.22f, 0.45f), light);
+                Part(icon, "Top", center + Vector3.up * 0.18f, new Vector3(0.95f, 0.08f, 0.5f), light);
             }
             else if (title == "BOX")
             {
@@ -349,5 +496,7 @@ namespace BurgerShop.Restaurant
             expansion.Configure(hall, cashier, staff, carrier, earnings, cashFloor);
             return expansion;
         }
+
+        void OnDestroy() => ShopLayout.ResetWingLock();
     }
 }
