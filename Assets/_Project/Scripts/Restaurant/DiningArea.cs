@@ -97,9 +97,9 @@ namespace BurgerShop.Restaurant
                 tables[i]?.BindCash(cash);
         }
 
-        public DiningTable AddTable(Vector3 position)
+        public DiningTable AddTable(Vector3 position, DiningTableKind kind = DiningTableKind.Pair)
         {
-            DiningTable table = DiningTable.Create(transform, position);
+            DiningTable table = DiningTable.Create(transform, position, kind);
             int count = tables != null ? tables.Length : 0;
             var next = new DiningTable[count + 1];
             if (tables != null)

@@ -366,6 +366,60 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(data.IsValid, Is.False);
         }
 
+        [Test] public void Version9RoundTripRestoresFourSeatAndSquarePurchases()
+        {
+            var data = ProgressV6(90);
+            data.version = 9;
+            data.boughtFourSeatTable = true;
+            data.boughtSquareTable = true;
+            data.fourSeatInvestment = 200;
+            data.squareTableInvestment = 150;
+            data.fourSeatSet = 3;
+            data.fourSeatUpgradeInvestment = 80;
+            data.squareTableSet = 0;
+            data.squareTableUpgradeInvestment = 40;
+            Assert.That(store.Save(data), Is.True);
+            Assert.That(new LocalSaveStore(directory).Load(out var loaded), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(loaded.version, Is.EqualTo(9));
+            Assert.That(loaded.ResolvedBoughtFourSeatTable, Is.True);
+            Assert.That(loaded.ResolvedBoughtSquareTable, Is.True);
+            Assert.That(loaded.fourSeatSet, Is.EqualTo(3));
+            Assert.That(loaded.fourSeatUpgradeInvestment, Is.EqualTo(80));
+            Assert.That(loaded.squareTableUpgradeInvestment, Is.EqualTo(40));
+            Assert.That(loaded.coins, Is.EqualTo(90));
+        }
+
+        [Test] public void Version8AndOlderResolveNewTablesUnbought()
+        {
+            var v8 = ProgressV6(88);
+            v8.version = 8;
+            v8.boughtExtraTable = true;
+            v8.tableInvestment = 150;
+            Assert.That(store.Save(v8), Is.True);
+            Assert.That(store.Load(out var data), Is.EqualTo(SaveLoadResult.Loaded));
+            Assert.That(data.version, Is.EqualTo(8));
+            Assert.That(data.ResolvedBoughtFourSeatTable, Is.False);
+            Assert.That(data.ResolvedBoughtSquareTable, Is.False);
+            Assert.That(data.ResolvedFourSeatSet, Is.Zero);
+            Assert.That(data.coins, Is.EqualTo(88));
+        }
+
+        [Test] public void Version9RejectsUnboughtSquareWithUpgradeInvestment()
+        {
+            var data = ProgressV6();
+            data.version = 9;
+            data.boughtSquareTable = false;
+            data.squareTableSet = 2;
+            data.squareTableUpgradeInvestment = 80;
+            Assert.That(data.IsValid, Is.False);
+            Assert.That(store.Save(data), Is.False);
+            data = ProgressV6();
+            data.version = 9;
+            data.boughtFourSeatTable = false;
+            data.fourSeatInvestment = 201;
+            Assert.That(data.IsValid, Is.False);
+        }
+
         [Test] public void Version2RejectsHiredCountOutsideZeroToThree()
         {
             var data = ProgressV2();

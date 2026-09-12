@@ -5,6 +5,13 @@ using UnityEngine;
 
 namespace BurgerShop.Restaurant
 {
+    public enum DiningTableKind
+    {
+        Pair = 0,
+        FourSeat = 1,
+        Square = 2
+    }
+
     public sealed class DiningTable : MonoBehaviour
     {
         public const int TrashPerGuest = 2;
@@ -68,6 +75,7 @@ namespace BurgerShop.Restaurant
         public float EatSeconds { get; private set; } = TableSetCatalog.StarterEatSeconds;
         public int MealPay { get; private set; } = TableSetCatalog.StarterPay;
         public TableSetId SetId { get; private set; } = TableSetId.Starter;
+        public DiningTableKind Kind { get; private set; } = DiningTableKind.Pair;
         public int FurnitureLevel => TableSetCatalog.Get(SetId).FurnitureLevel;
         public Vector3 WaitPosition => waitPosition;
         public Vector3 Center => transform.position;
@@ -278,28 +286,82 @@ namespace BurgerShop.Restaurant
             return visual;
         }
 
-        public static DiningTable Create(Transform parent, Vector3 position)
+        public static DiningTable Create(Transform parent, Vector3 position,
+            DiningTableKind kind = DiningTableKind.Pair)
         {
             GameObject root = new GameObject("DiningTable");
             root.transform.SetParent(parent, false);
             root.transform.position = position;
             DiningTable table = root.AddComponent<DiningTable>();
+            table.Kind = kind;
             Material red = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.86f, 0.22f, 0.18f));
             Material wood = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.42f, 0.28f, 0.18f));
             Material seat = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.18f, 0.42f, 0.72f));
             Material steel = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.35f, 0.38f, 0.42f));
-
-            Part(root.transform, "Top", PrimitiveType.Cube, new Vector3(0f, 0.72f, 0f), new Vector3(1.25f, 0.12f, 1.25f), red);
-            Part(root.transform, "Leg", PrimitiveType.Cube, new Vector3(0f, 0.34f, 0f), new Vector3(0.18f, 0.68f, 0.18f), wood);
-            Chair(root.transform, "ChairA", new Vector3(0f, 0f, 0.95f), seat, steel);
-            Chair(root.transform, "ChairB", new Vector3(0f, 0f, -0.95f), seat, steel);
-
-            Vector3[] sit =
+            Vector3[] sit;
+            Vector3 wait;
+            if (kind == DiningTableKind.FourSeat)
             {
-                position + new Vector3(0f, 0f, 0.95f),
-                position + new Vector3(0f, 0f, -0.95f)
-            };
-            table.Configure(sit, position + new Vector3(-1.15f, 0f, 0f), TableSetCatalog.StarterEatSeconds);
+                Part(root.transform, "Top", PrimitiveType.Cube, new Vector3(0f, 0.72f, 0f),
+                    new Vector3(1.20f, 0.12f, 2.10f), red);
+                Part(root.transform, "LegN", PrimitiveType.Cube, new Vector3(0f, 0.34f, 0.65f),
+                    new Vector3(0.16f, 0.68f, 0.16f), wood);
+                Part(root.transform, "LegS", PrimitiveType.Cube, new Vector3(0f, 0.34f, -0.65f),
+                    new Vector3(0.16f, 0.68f, 0.16f), wood);
+                Vector3[] chairs =
+                {
+                    new Vector3(-0.90f, 0f, -0.62f),
+                    new Vector3(-0.90f, 0f, 0.62f),
+                    new Vector3(0.90f, 0f, -0.62f),
+                    new Vector3(0.90f, 0f, 0.62f)
+                };
+                string[] names = { "ChairA", "ChairB", "ChairC", "ChairD" };
+                sit = new Vector3[chairs.Length];
+                for (int i = 0; i < chairs.Length; i++)
+                {
+                    Chair(root.transform, names[i], chairs[i], seat, steel, false);
+                    sit[i] = position + chairs[i];
+                }
+                wait = position + new Vector3(0f, 0f, -1.50f);
+            }
+            else if (kind == DiningTableKind.Square)
+            {
+                Part(root.transform, "Top", PrimitiveType.Cube, new Vector3(0f, 0.72f, 0f),
+                    new Vector3(1.05f, 0.12f, 1.05f), red);
+                Part(root.transform, "LegNW", PrimitiveType.Cube, new Vector3(-0.38f, 0.34f, 0.38f),
+                    new Vector3(0.10f, 0.68f, 0.10f), wood);
+                Part(root.transform, "LegNE", PrimitiveType.Cube, new Vector3(0.38f, 0.34f, 0.38f),
+                    new Vector3(0.10f, 0.68f, 0.10f), wood);
+                Part(root.transform, "LegSW", PrimitiveType.Cube, new Vector3(-0.38f, 0.34f, -0.38f),
+                    new Vector3(0.10f, 0.68f, 0.10f), wood);
+                Part(root.transform, "LegSE", PrimitiveType.Cube, new Vector3(0.38f, 0.34f, -0.38f),
+                    new Vector3(0.10f, 0.68f, 0.10f), wood);
+                Chair(root.transform, "ChairA", new Vector3(0f, 0f, 0.82f), seat, steel, true);
+                Chair(root.transform, "ChairB", new Vector3(0f, 0f, -0.82f), seat, steel, true);
+                sit = new[]
+                {
+                    position + new Vector3(0f, 0f, 0.82f),
+                    position + new Vector3(0f, 0f, -0.82f)
+                };
+                wait = position + new Vector3(-1.05f, 0f, 0f);
+            }
+            else
+            {
+                Part(root.transform, "Top", PrimitiveType.Cube, new Vector3(0f, 0.72f, 0f),
+                    new Vector3(1.25f, 0.12f, 1.25f), red);
+                Part(root.transform, "Leg", PrimitiveType.Cube, new Vector3(0f, 0.34f, 0f),
+                    new Vector3(0.18f, 0.68f, 0.18f), wood);
+                Chair(root.transform, "ChairA", new Vector3(0f, 0f, 0.95f), seat, steel, false);
+                Chair(root.transform, "ChairB", new Vector3(0f, 0f, -0.95f), seat, steel, false);
+                sit = new[]
+                {
+                    position + new Vector3(0f, 0f, 0.95f),
+                    position + new Vector3(0f, 0f, -0.95f)
+                };
+                wait = position + new Vector3(-1.15f, 0f, 0f);
+            }
+
+            table.Configure(sit, wait, TableSetCatalog.StarterEatSeconds);
             table.ApplySet(TableSetId.Starter);
             return table;
         }
@@ -307,14 +369,16 @@ namespace BurgerShop.Restaurant
         void Recolor(TableSet set)
         {
             Paint(transform.Find("Top"), set.TableColor);
-            PaintChair(transform.Find("ChairA"), set);
-            PaintChair(transform.Find("ChairB"), set);
+            foreach (Transform child in transform)
+                if (child.name.StartsWith("Chair"))
+                    PaintChair(child, set);
         }
 
         static void PaintChair(Transform chair, TableSet set)
         {
             if (chair == null) return;
             Paint(chair.Find("Seat"), set.ChairColor);
+            Paint(chair.Find("BackCushion"), set.ChairColor);
         }
 
         static void Paint(Transform part, Color color)
@@ -324,7 +388,8 @@ namespace BurgerShop.Restaurant
             if (renderer != null) renderer.sharedMaterial = BurgerShop.Core.RuntimeMaterials.Create(color);
         }
 
-        static void Chair(Transform parent, string name, Vector3 local, Material cushion, Material frame)
+        static void Chair(Transform parent, string name, Vector3 local, Material cushion, Material frame,
+            bool tallBack)
         {
             Transform chair = new GameObject(name).transform;
             chair.SetParent(parent, false);
@@ -334,7 +399,13 @@ namespace BurgerShop.Restaurant
             if (towardTable.sqrMagnitude > 0.0001f)
                 chair.localRotation = Quaternion.LookRotation(towardTable);
             Part(chair, "Seat", PrimitiveType.Cube, new Vector3(0f, 0.38f, 0f), new Vector3(0.62f, 0.12f, 0.58f), cushion);
-            Part(chair, "Back", PrimitiveType.Cube, new Vector3(0f, 0.72f, -0.24f), new Vector3(0.62f, 0.55f, 0.1f), frame);
+            float backHeight = tallBack ? 0.88f : 0.55f;
+            float backY = tallBack ? 0.90f : 0.72f;
+            Part(chair, "Back", PrimitiveType.Cube, new Vector3(0f, backY, -0.26f),
+                new Vector3(0.62f, backHeight, tallBack ? 0.12f : 0.1f), frame);
+            if (tallBack)
+                Part(chair, "BackCushion", PrimitiveType.Cube, new Vector3(0f, backY, -0.18f),
+                    new Vector3(0.50f, backHeight * 0.72f, 0.08f), cushion);
             Part(chair, "PostL", PrimitiveType.Cube, new Vector3(-0.22f, 0.18f, 0.18f), new Vector3(0.08f, 0.36f, 0.08f), frame);
             Part(chair, "PostR", PrimitiveType.Cube, new Vector3(0.22f, 0.18f, 0.18f), new Vector3(0.08f, 0.36f, 0.08f), frame);
         }

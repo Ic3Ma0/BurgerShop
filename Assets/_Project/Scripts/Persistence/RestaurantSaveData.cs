@@ -8,7 +8,7 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 8;
+        public const int CurrentVersion = 9;
 
         public int version;
         public long coins;
@@ -42,6 +42,14 @@ namespace BurgerShop.Persistence
         public int table1Investment;
         public int table2Investment;
         public int extraTableInvestment;
+        public bool boughtFourSeatTable;
+        public bool boughtSquareTable;
+        public int fourSeatInvestment;
+        public int squareTableInvestment;
+        public int fourSeatSet;
+        public int squareTableSet;
+        public int fourSeatUpgradeInvestment;
+        public int squareTableUpgradeInvestment;
 
         public int ResolvedHiredCount => version >= 2
             ? hiredWorkerCount
@@ -66,6 +74,14 @@ namespace BurgerShop.Persistence
         public int ResolvedTable1Investment => version >= 8 ? table1Investment : 0;
         public int ResolvedTable2Investment => version >= 8 ? table2Investment : 0;
         public int ResolvedExtraTableInvestment => version >= 8 ? extraTableInvestment : 0;
+        public bool ResolvedBoughtFourSeatTable => version >= 9 && boughtFourSeatTable;
+        public bool ResolvedBoughtSquareTable => version >= 9 && boughtSquareTable;
+        public int ResolvedFourSeatInvestment => version >= 9 ? fourSeatInvestment : 0;
+        public int ResolvedSquareTableInvestment => version >= 9 ? squareTableInvestment : 0;
+        public int ResolvedFourSeatSet => version >= 9 ? fourSeatSet : 0;
+        public int ResolvedSquareTableSet => version >= 9 ? squareTableSet : 0;
+        public int ResolvedFourSeatUpgradeInvestment => version >= 9 ? fourSeatUpgradeInvestment : 0;
+        public int ResolvedSquareTableUpgradeInvestment => version >= 9 ? squareTableUpgradeInvestment : 0;
 
         public bool IsValid
         {
@@ -102,7 +118,18 @@ namespace BurgerShop.Persistence
                     || !Restaurant.TableSetCatalog.IsConsistent(table2Set, table2Investment)
                     || !Restaurant.TableSetCatalog.IsConsistent(extraTableSet, extraTableInvestment))
                     return false;
-                return boughtExtraTable || (extraTableSet == 0 && extraTableInvestment == 0);
+                if (!(boughtExtraTable || (extraTableSet == 0 && extraTableInvestment == 0)))
+                    return false;
+                if (version < 9) return true;
+                if (fourSeatInvestment < 0 || fourSeatInvestment > Restaurant.ShopExpansion.FourSeatCost
+                    || squareTableInvestment < 0 || squareTableInvestment > Restaurant.ShopExpansion.SquareTableCost)
+                    return false;
+                if (!Restaurant.TableSetCatalog.IsConsistent(fourSeatSet, fourSeatUpgradeInvestment)
+                    || !Restaurant.TableSetCatalog.IsConsistent(squareTableSet, squareTableUpgradeInvestment))
+                    return false;
+                if (!boughtFourSeatTable && (fourSeatSet != 0 || fourSeatUpgradeInvestment != 0))
+                    return false;
+                return boughtSquareTable || (squareTableSet == 0 && squareTableUpgradeInvestment == 0);
             }
         }
 
@@ -190,6 +217,15 @@ namespace BurgerShop.Persistence
                     table2Set.ToString(CultureInfo.InvariantCulture), extraTableSet.ToString(CultureInfo.InvariantCulture),
                     table0Investment.ToString(CultureInfo.InvariantCulture), table1Investment.ToString(CultureInfo.InvariantCulture),
                     table2Investment.ToString(CultureInfo.InvariantCulture), extraTableInvestment.ToString(CultureInfo.InvariantCulture));
+            if (version >= 9)
+                value += "|" + string.Join("|",
+                    boughtFourSeatTable ? "1" : "0", boughtSquareTable ? "1" : "0",
+                    fourSeatInvestment.ToString(CultureInfo.InvariantCulture),
+                    squareTableInvestment.ToString(CultureInfo.InvariantCulture),
+                    fourSeatSet.ToString(CultureInfo.InvariantCulture),
+                    squareTableSet.ToString(CultureInfo.InvariantCulture),
+                    fourSeatUpgradeInvestment.ToString(CultureInfo.InvariantCulture),
+                    squareTableUpgradeInvestment.ToString(CultureInfo.InvariantCulture));
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }

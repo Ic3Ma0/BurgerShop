@@ -42,7 +42,8 @@ namespace BurgerShop.Restaurant
         public static readonly Vector3 ExtraCounterTop = new Vector3(ExtraCounter.x, 1.05f, ExtraCounter.z);
         public static readonly Vector3 ExtraServingCircle = new Vector3(0.6f, 0.02f, 8f);
 
-        // Dining: −X, 2×2 grid. Extra table completes the southwest cell. Trash on the west edge.
+        // Dining: −X, 2×2 grid. Extra pair completes the southwest cell.
+        // 031 four-seat / square sit one row north (z=12). Trash on the west edge.
         public static readonly Vector3[] Tables =
         {
             new Vector3(-8f, 0f, 7f),
@@ -51,6 +52,10 @@ namespace BurgerShop.Restaurant
         };
         public static readonly Vector3 ExtraTable = new Vector3(-12f, 0f, 3f);
         public static readonly Vector3 TableUnlock = Pad(ExtraTable);
+        public static readonly Vector3 FourSeatTable = new Vector3(-8f, 0f, 12f);
+        public static readonly Vector3 FourSeatUnlock = Pad(FourSeatTable);
+        public static readonly Vector3 SquareTable = new Vector3(-12f, 0f, 12f);
+        public static readonly Vector3 SquareUnlock = Pad(SquareTable);
         public static readonly Vector3 TableUpgradeOffset = new Vector3(1.55f, 0.02f, 0f);
         public static Vector3 TableUpgradePad(Vector3 table) => table + TableUpgradeOffset;
         public static readonly Vector3 TrashBin = new Vector3(-13f, 0f, 0f);

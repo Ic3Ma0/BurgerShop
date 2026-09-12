@@ -9,6 +9,8 @@ namespace BurgerShop.Restaurant
     public sealed class ShopExpansion : MonoBehaviour
     {
         public const int TableCost = 150;
+        public const int FourSeatCost = 200;
+        public const int SquareTableCost = 150;
         public const int GrillCost = 200;
         public const int CounterCost = 250;
         public const int BoxingCost = 150;
@@ -24,6 +26,8 @@ namespace BurgerShop.Restaurant
         CashFloor cash;
         UpgradeHud upgradeHud;
         DiningTable extraTable;
+        DiningTable fourSeatTable;
+        DiningTable squareTable;
         ExpandableGrill extraGrill;
         CounterStock extraStock;
         CounterDropZone extraDrop;
@@ -34,11 +38,15 @@ namespace BurgerShop.Restaurant
         public event Action PurchaseCompleted;
 
         public FacilityUnlockZone TablePad { get; private set; }
+        public FacilityUnlockZone FourSeatPad { get; private set; }
+        public FacilityUnlockZone SquarePad { get; private set; }
         public FacilityUnlockZone GrillPad { get; private set; }
         public FacilityUnlockZone CounterPad { get; private set; }
         public FacilityUnlockZone BoxingPad { get; private set; }
         public FacilityUnlockZone DriveThruPad { get; private set; }
         public bool HasExtraTable => extraTable != null;
+        public bool HasFourSeatTable => fourSeatTable != null;
+        public bool HasSquareTable => squareTable != null;
         public bool HasExtraGrill => extraGrill != null;
         public bool HasExtraCounter => extraStock != null;
         public bool HasBoxing => boxing != null;
@@ -47,6 +55,8 @@ namespace BurgerShop.Restaurant
         public DriveThruLane DriveThru => driveThru;
         public int ExtraGrillLevel => extraGrill != null && extraGrill.Upgrade != null ? extraGrill.Upgrade.Level : 0;
         public DiningTable ExtraTable => extraTable;
+        public DiningTable FourSeatTable => fourSeatTable;
+        public DiningTable SquareTable => squareTable;
         public ExpandableGrill ExtraGrill => extraGrill;
         public CounterStock ExtraStock => extraStock;
         public CounterDropZone ExtraDrop => extraDrop;
@@ -56,8 +66,10 @@ namespace BurgerShop.Restaurant
             get
             {
                 if (wallet == null) return null;
-                FacilityUnlockZone[] pads = { TablePad, BoxingPad, GrillPad, CounterPad, DriveThruPad };
-                string[] names = { "a table", "a boxing table", "a grill", "a counter", "a drive-thru" };
+                FacilityUnlockZone[] pads =
+                    { TablePad, FourSeatPad, SquarePad, BoxingPad, GrillPad, CounterPad, DriveThruPad };
+                string[] names =
+                    { "a table", "a 4-seat table", "a square table", "a boxing table", "a grill", "a counter", "a drive-thru" };
                 for (int i = 0; i < pads.Length; i++)
                     if (pads[i] != null && !pads[i].IsPurchased && (wallet.Coins > 0 || pads[i].Invested > 0))
                         return $"Install {names[i]} - Remaining {pads[i].Remaining}";
@@ -76,6 +88,12 @@ namespace BurgerShop.Restaurant
             cash = cashFloor;
             if (TablePad == null)
                 TablePad = MakePad("TableUnlockPad", ShopLayout.TableUnlock, TableCost, "TABLE", UnlockTable);
+            if (FourSeatPad == null)
+                FourSeatPad = MakePad("FourSeatUnlockPad", ShopLayout.FourSeatUnlock, FourSeatCost, "4-SEAT",
+                    UnlockFourSeat);
+            if (SquarePad == null)
+                SquarePad = MakePad("SquareUnlockPad", ShopLayout.SquareUnlock, SquareTableCost, "SQUARE",
+                    UnlockSquare);
             if (GrillPad == null)
                 GrillPad = MakePad("GrillUnlockPad", ShopLayout.GrillUnlock, GrillCost, "GRILL", UnlockGrill);
             if (CounterPad == null)
@@ -95,12 +113,22 @@ namespace BurgerShop.Restaurant
         }
 
         public void Restore(bool table, bool grill, bool counter, int grillLevel,
-            bool boxingStation = false, bool lane = false)
+            bool boxingStation = false, bool lane = false, bool fourSeat = false, bool square = false)
         {
             if (table && !HasExtraTable)
             {
                 UnlockTable();
                 TablePad?.RestorePurchased();
+            }
+            if (fourSeat && !HasFourSeatTable)
+            {
+                UnlockFourSeat();
+                FourSeatPad?.RestorePurchased();
+            }
+            if (square && !HasSquareTable)
+            {
+                UnlockSquare();
+                SquarePad?.RestorePurchased();
             }
             if (grill && !HasExtraGrill)
             {
@@ -126,9 +154,12 @@ namespace BurgerShop.Restaurant
             }
         }
 
-        public void RestoreInvestments(int table, int grill, int counter, int box, int lane)
+        public void RestoreInvestments(int table, int grill, int counter, int box, int lane,
+            int fourSeat = 0, int square = 0)
         {
             TablePad?.RestoreInvestment(table);
+            FourSeatPad?.RestoreInvestment(fourSeat);
+            SquarePad?.RestoreInvestment(square);
             GrillPad?.RestoreInvestment(grill);
             CounterPad?.RestoreInvestment(counter);
             BoxingPad?.RestoreInvestment(box);
@@ -140,6 +171,20 @@ namespace BurgerShop.Restaurant
             if (HasExtraTable || dining == null) return;
             extraTable = dining.AddTable(ShopLayout.ExtraTable);
             extraTable.gameObject.name = "ExtraDiningTable";
+        }
+
+        void UnlockFourSeat()
+        {
+            if (HasFourSeatTable || dining == null) return;
+            fourSeatTable = dining.AddTable(ShopLayout.FourSeatTable, DiningTableKind.FourSeat);
+            fourSeatTable.gameObject.name = "FourSeatDiningTable";
+        }
+
+        void UnlockSquare()
+        {
+            if (HasSquareTable || dining == null) return;
+            squareTable = dining.AddTable(ShopLayout.SquareTable, DiningTableKind.Square);
+            squareTable.gameObject.name = "SquareDiningTable";
         }
 
         void UnlockGrill()
@@ -204,7 +249,13 @@ namespace BurgerShop.Restaurant
             zone.Configure(wallet, player, pad, cost, title, () =>
             {
                 unlocked();
-                Transform look = title=="TABLE"?extraTable?.transform:title=="GRILL"?extraGrill?.transform:title=="COUNTER"?extraStock?.transform:title=="BOX"?boxing?.transform:driveThru?.transform;
+                Transform look = title == "TABLE" ? extraTable?.transform
+                    : title == "4-SEAT" ? fourSeatTable?.transform
+                    : title == "SQUARE" ? squareTable?.transform
+                    : title == "GRILL" ? extraGrill?.transform
+                    : title == "COUNTER" ? extraStock?.transform
+                    : title == "BOX" ? boxing?.transform
+                    : driveThru?.transform;
                 UI.VisualMeshPulse.Play(look);
                 PurchaseCompleted?.Invoke();
             }, label);
@@ -228,6 +279,18 @@ namespace BurgerShop.Restaurant
             {
                 Part(icon, "Box", center, new Vector3(0.65f, 0.35f, 0.65f), light);
                 Part(icon, "Lid", center + Vector3.up * 0.22f, new Vector3(0.72f, 0.07f, 0.72f), light);
+            }
+            else if (title == "4-SEAT")
+            {
+                Part(icon, "Top", center, new Vector3(0.55f, 0.12f, 1.05f), light);
+                Part(icon, "Stem", center - Vector3.up * 0.25f, new Vector3(0.13f, 0.4f, 0.13f), light);
+            }
+            else if (title == "SQUARE")
+            {
+                Part(icon, "Top", center, new Vector3(0.55f, 0.12f, 0.55f), light);
+                Part(icon, "Stem", center - Vector3.up * 0.25f, new Vector3(0.12f, 0.4f, 0.12f), light);
+                Part(icon, "BackA", center + new Vector3(0f, 0.22f, -0.28f), new Vector3(0.4f, 0.35f, 0.08f), light);
+                Part(icon, "BackB", center + new Vector3(0f, 0.22f, 0.28f), new Vector3(0.4f, 0.35f, 0.08f), light);
             }
             else
             {

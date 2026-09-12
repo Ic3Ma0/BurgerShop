@@ -180,6 +180,35 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
+        public void BuyingFourSeatAndSquareAddsUpgradePadsOnlyAfterPurchase()
+        {
+            Assert.That(board.ZoneCount, Is.EqualTo(3));
+            Assert.That(GameObject.Find("Chair4UnlockPad"), Is.Null);
+            Assert.That(GameObject.Find("Chair5UnlockPad"), Is.Null);
+            wallet.RestoreProgress(200, 0);
+            HoldFacility(expansion.FourSeatPad, 3f);
+            Assert.That(board.ZoneCount, Is.EqualTo(4));
+            Assert.That(board.ZoneAt(4).Table, Is.SameAs(expansion.FourSeatTable));
+            Assert.That(board.ZoneAt(4).PadPosition, Is.EqualTo(ShopLayout.TableUpgradePad(ShopLayout.FourSeatTable)));
+            Assert.That(board.ZoneAt(5), Is.Null);
+            wallet.RestoreProgress(150, 0);
+            HoldFacility(expansion.SquarePad, 3f);
+            Assert.That(board.ZoneCount, Is.EqualTo(5));
+            Assert.That(board.ZoneAt(5).Table, Is.SameAs(expansion.SquareTable));
+            Assert.That(board.ZoneAt(5).PadPosition, Is.EqualTo(ShopLayout.TableUpgradePad(ShopLayout.SquareTable)));
+            string[] chairs = { "ChairA", "ChairB", "ChairC", "ChairD" };
+            for (int i = 0; i < chairs.Length; i++)
+            {
+                Transform chair = board.ZoneAt(4).Table.transform.Find(chairs[i]);
+                Vector3 toward = board.ZoneAt(4).Table.Center - chair.position;
+                toward.y = 0f;
+                Vector3 forward = chair.forward;
+                forward.y = 0f;
+                Assert.That(Vector3.Dot(forward.normalized, toward.normalized), Is.GreaterThan(0.9f), chairs[i]);
+            }
+        }
+
+        [Test]
         public void InvestingEightyOpensTableChangePopupWithoutRaisingPayYet()
         {
             wallet.RestoreProgress(80, 0);
@@ -342,7 +371,7 @@ namespace BurgerShop.Tests.EditMode
                 persistence.Configure(wallet, upgrade, hiring, null, expansion, null, board, directory);
                 Assert.That(persistence.Flush(), Is.True);
                 Assert.That(new LocalSaveStore(directory).Load(out RestaurantSaveData data), Is.EqualTo(SaveLoadResult.Loaded));
-                Assert.That(data.version, Is.EqualTo(8));
+                Assert.That(data.version, Is.EqualTo(RestaurantSaveData.CurrentVersion));
                 Assert.That(data.table0Set, Is.EqualTo((int)TableSetId.Patio));
                 Assert.That(data.table1Investment, Is.EqualTo(80));
                 Assert.That(data.table1Set, Is.Zero);
@@ -387,6 +416,48 @@ namespace BurgerShop.Tests.EditMode
                 Assert.That(board.ZoneAt(0).Invested, Is.Zero);
                 Assert.That(board.ZoneAt(3), Is.Not.Null);
                 Assert.That(board.ZoneAt(3).SetId, Is.EqualTo(TableSetId.Starter));
+                Assert.That(expansion.HasFourSeatTable, Is.False);
+                Assert.That(expansion.HasSquareTable, Is.False);
+                Assert.That(board.ZoneAt(4), Is.Null);
+                Assert.That(board.ZoneAt(5), Is.Null);
+            }
+            finally
+            {
+                if (Directory.Exists(directory)) Directory.Delete(directory, true);
+            }
+        }
+
+        [Test]
+        public void SaveRestoresFourSeatPatioWithoutChargingAgain()
+        {
+            string directory = Path.Combine(Path.GetTempPath(), "BurgerShopFourSeat-" + System.Guid.NewGuid().ToString("N"));
+            try
+            {
+                wallet.RestoreProgress(280, 0);
+                HoldFacility(expansion.FourSeatPad, 3f);
+                Hold(board.ZoneAt(4), 2f);
+                hud.RefreshNow();
+                hud.ClickSelect(2);
+                var upgrade = root.AddComponent<GrillUpgradeZone>();
+                upgrade.Configure(grill, wallet, player, root.transform);
+                var persistence = root.AddComponent<RestaurantPersistence>();
+                persistence.Configure(wallet, upgrade, hiring, null, expansion, null, board, directory);
+                Assert.That(persistence.Flush(), Is.True);
+                Assert.That(new LocalSaveStore(directory).Load(out RestaurantSaveData data), Is.EqualTo(SaveLoadResult.Loaded));
+                Assert.That(data.version, Is.EqualTo(9));
+                Assert.That(data.boughtFourSeatTable, Is.True);
+                Assert.That(data.fourSeatSet, Is.EqualTo((int)TableSetId.Patio));
+                Assert.That(data.coins, Is.EqualTo(0));
+
+                Object.DestroyImmediate(persistence);
+                expansion.FourSeatTable.ApplySet(TableSetId.Starter);
+                persistence = root.AddComponent<RestaurantPersistence>();
+                persistence.Configure(wallet, upgrade, hiring, null, expansion, null, board, directory);
+                Assert.That(expansion.HasFourSeatTable, Is.True);
+                Assert.That(expansion.FourSeatTable.SetId, Is.EqualTo(TableSetId.Patio));
+                Assert.That(expansion.FourSeatTable.MealPay, Is.EqualTo(15));
+                Assert.That(board.ZoneAt(4).HasChosenSet, Is.True);
+                Assert.That(wallet.Coins, Is.Zero);
             }
             finally
             {

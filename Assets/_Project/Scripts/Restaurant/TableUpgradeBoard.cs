@@ -8,11 +8,14 @@ namespace BurgerShop.Restaurant
     public sealed class TableUpgradeBoard : MonoBehaviour
     {
         public const int StarterTableCount = 3;
+        public const int ExtraPairIndex = 3;
+        public const int FourSeatIndex = 4;
+        public const int SquareIndex = 5;
         DiningArea dining;
         ShopExpansion expansion;
         RestaurantWallet wallet;
         BurgerInventory player;
-        readonly TableUpgradeZone[] zones = new TableUpgradeZone[StarterTableCount + 1];
+        readonly TableUpgradeZone[] zones = new TableUpgradeZone[SquareIndex + 1];
 
         public event Action Changed;
 
@@ -64,19 +67,22 @@ namespace BurgerShop.Restaurant
             wallet = earnings;
             player = carrier;
             BindStarterTables();
-            EnsureExtraTable();
+            EnsurePurchasedTables();
             if (expansion != null) expansion.PurchaseCompleted += OnFacilityBought;
         }
 
         public void Restore(int table0Set, int table1Set, int table2Set, int extraSet,
-            int table0Invest, int table1Invest, int table2Invest, int extraInvest)
+            int table0Invest, int table1Invest, int table2Invest, int extraInvest,
+            int fourSeatSet = 0, int squareSet = 0, int fourSeatInvest = 0, int squareInvest = 0)
         {
             BindStarterTables();
-            EnsureExtraTable();
+            EnsurePurchasedTables();
             ZoneAt(0)?.Restore(table0Set, table0Invest);
             ZoneAt(1)?.Restore(table1Set, table1Invest);
             ZoneAt(2)?.Restore(table2Set, table2Invest);
-            if (ZoneAt(3) != null) ZoneAt(3).Restore(extraSet, extraInvest);
+            if (ZoneAt(ExtraPairIndex) != null) ZoneAt(ExtraPairIndex).Restore(extraSet, extraInvest);
+            if (ZoneAt(FourSeatIndex) != null) ZoneAt(FourSeatIndex).Restore(fourSeatSet, fourSeatInvest);
+            if (ZoneAt(SquareIndex) != null) ZoneAt(SquareIndex).Restore(squareSet, squareInvest);
         }
 
         void OnDestroy()
@@ -86,7 +92,7 @@ namespace BurgerShop.Restaurant
 
         void OnFacilityBought()
         {
-            EnsureExtraTable();
+            EnsurePurchasedTables();
             Changed?.Invoke();
         }
 
@@ -98,12 +104,12 @@ namespace BurgerShop.Restaurant
                 EnsureZone(i, dining.Tables[i]);
         }
 
-        void EnsureExtraTable()
+        void EnsurePurchasedTables()
         {
-            DiningTable extra = expansion != null ? expansion.ExtraTable : null;
-            if (extra == null && dining != null && dining.TableCount > StarterTableCount)
-                extra = dining.Tables[StarterTableCount];
-            if (extra != null) EnsureZone(StarterTableCount, extra);
+            if (expansion == null) return;
+            if (expansion.ExtraTable != null) EnsureZone(ExtraPairIndex, expansion.ExtraTable);
+            if (expansion.FourSeatTable != null) EnsureZone(FourSeatIndex, expansion.FourSeatTable);
+            if (expansion.SquareTable != null) EnsureZone(SquareIndex, expansion.SquareTable);
         }
 
         void EnsureZone(int index, DiningTable table)

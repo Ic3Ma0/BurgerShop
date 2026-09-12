@@ -31,6 +31,8 @@ namespace BurgerShop.UI
         bool sawCounter;
         bool sawBoxing;
         bool sawDriveThru;
+        bool sawFourSeat;
+        bool sawSquare;
         bool boxedBurger;
         bool stockedPackage;
         int lastBoxed = -1;
@@ -66,6 +68,8 @@ namespace BurgerShop.UI
             sawCounter = expansion != null && expansion.HasExtraCounter;
             sawBoxing = expansion != null && expansion.HasBoxing;
             sawDriveThru = expansion != null && expansion.HasDriveThru;
+            sawFourSeat = expansion != null && expansion.HasFourSeatTable;
+            sawSquare = expansion != null && expansion.HasSquareTable;
             lastBoxed = inventory != null ? inventory.BoxedCount : 0;
             lastPackage = PackageCount();
             celebrateLeft = 0f;
@@ -106,11 +110,15 @@ namespace BurgerShop.UI
             if (expansion != null)
             {
                 if (expansion.HasExtraTable && !sawTable) Complete("Install a table");
+                if (expansion.HasFourSeatTable && !sawFourSeat) Complete("Install a 4-seat table");
+                if (expansion.HasSquareTable && !sawSquare) Complete("Install a square table");
                 if (expansion.HasExtraGrill && !sawGrill) Complete("Install a grill");
                 if (expansion.HasExtraCounter && !sawCounter) Complete("Install a counter");
                 if (expansion.HasBoxing && !sawBoxing) Complete("Install a boxing table");
                 if (expansion.HasDriveThru && !sawDriveThru) Complete("Install a drive-thru");
                 sawTable = expansion.HasExtraTable;
+                sawFourSeat = expansion.HasFourSeatTable;
+                sawSquare = expansion.HasSquareTable;
                 sawGrill = expansion.HasExtraGrill;
                 sawCounter = expansion.HasExtraCounter;
                 sawBoxing = expansion.HasBoxing;

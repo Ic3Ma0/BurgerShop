@@ -77,16 +77,22 @@ namespace BurgerShop.Tests.EditMode
         public void ThreeGreenPadsSitOnEmptyGroundWithListedPrices()
         {
             Assert.That(expansion.TablePad.Cost, Is.EqualTo(150));
+            Assert.That(expansion.FourSeatPad.Cost, Is.EqualTo(200));
+            Assert.That(expansion.SquarePad.Cost, Is.EqualTo(150));
             Assert.That(expansion.GrillPad.Cost, Is.EqualTo(200));
             Assert.That(expansion.CounterPad.Cost, Is.EqualTo(250));
             Assert.That(expansion.BoxingPad.Cost, Is.EqualTo(150));
             Assert.That(expansion.DriveThruPad.Cost, Is.EqualTo(250));
             Assert.That(expansion.TablePad.PadPosition, Is.EqualTo(ShopLayout.TableUnlock));
+            Assert.That(expansion.FourSeatPad.PadPosition, Is.EqualTo(ShopLayout.FourSeatUnlock));
+            Assert.That(expansion.SquarePad.PadPosition, Is.EqualTo(ShopLayout.SquareUnlock));
             Assert.That(expansion.GrillPad.PadPosition, Is.EqualTo(ShopLayout.GrillUnlock));
             Assert.That(expansion.CounterPad.PadPosition, Is.EqualTo(ShopLayout.CounterUnlock));
             Assert.That(expansion.BoxingPad.PadPosition, Is.EqualTo(ShopLayout.BoxingUnlock));
             Assert.That(expansion.DriveThruPad.PadPosition, Is.EqualTo(ShopLayout.DriveThruUnlock));
             Assert.That(GameObject.Find("TableUnlockPad"), Is.Not.Null);
+            Assert.That(GameObject.Find("FourSeatUnlockPad"), Is.Not.Null);
+            Assert.That(GameObject.Find("SquareUnlockPad"), Is.Not.Null);
             Assert.That(GameObject.Find("GrillUnlockPad"), Is.Not.Null);
             Assert.That(GameObject.Find("CounterUnlockPad"), Is.Not.Null);
             Assert.That(GameObject.Find("BoxingUnlockPad"), Is.Not.Null);
@@ -95,6 +101,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(expansion.HasDriveThru, Is.False);
             Assert.That(dining.TableCount, Is.EqualTo(3));
             Assert.That(expansion.HasExtraTable, Is.False);
+            Assert.That(expansion.HasFourSeatTable, Is.False);
+            Assert.That(expansion.HasSquareTable, Is.False);
             Assert.That(expansion.HasExtraGrill, Is.False);
             Assert.That(expansion.HasExtraCounter, Is.False);
             Assert.That(GameObject.Find("UpgradeSpot"), Is.Null);
@@ -106,7 +114,8 @@ namespace BurgerShop.Tests.EditMode
         {
             Vector3[] awayFromDoors =
             {
-                ShopLayout.TableUnlock, ShopLayout.GrillUnlock, ShopLayout.CounterUnlock,
+                ShopLayout.TableUnlock, ShopLayout.FourSeatUnlock, ShopLayout.SquareUnlock,
+                ShopLayout.GrillUnlock, ShopLayout.CounterUnlock,
                 ShopLayout.ExtraGrill, ShopLayout.ExtraGrillUpgrade, ShopLayout.ExtraCounter,
                 ShopLayout.BoxingUnlock, ShopLayout.BoxingCircle, ShopLayout.PackageCounter,
                 ShopLayout.DriveThruUnlock, ShopLayout.DriveThruCircle, ShopLayout.DriveThruWindow
@@ -123,6 +132,7 @@ namespace BurgerShop.Tests.EditMode
 
             Vector3[] notOnStarterTables =
             {
+                ShopLayout.FourSeatUnlock, ShopLayout.SquareUnlock,
                 ShopLayout.GrillUnlock, ShopLayout.CounterUnlock, ShopLayout.ExtraGrill, ShopLayout.ExtraCounter,
                 ShopLayout.BoxingUnlock, ShopLayout.BoxingCircle, ShopLayout.PackageCounter,
                 ShopLayout.DriveThruUnlock, ShopLayout.DriveThruCircle, ShopLayout.DriveThruWindow
@@ -135,6 +145,11 @@ namespace BurgerShop.Tests.EditMode
             }
 
             Assert.That(Horizontal(ShopLayout.TableUnlock, ShopLayout.ExtraTable), Is.LessThan(0.05f));
+            Assert.That(Horizontal(ShopLayout.FourSeatUnlock, ShopLayout.FourSeatTable), Is.LessThan(0.05f));
+            Assert.That(Horizontal(ShopLayout.SquareUnlock, ShopLayout.SquareTable), Is.LessThan(0.05f));
+            Assert.That(Horizontal(ShopLayout.FourSeatTable, ShopLayout.Tables[0]), Is.GreaterThan(ShopLayout.AisleMin));
+            Assert.That(Horizontal(ShopLayout.SquareTable, ShopLayout.Tables[2]), Is.GreaterThan(ShopLayout.AisleMin));
+            Assert.That(Horizontal(ShopLayout.FourSeatTable, ShopLayout.SquareTable), Is.GreaterThan(ShopLayout.AisleMin));
             Assert.That(Horizontal(ShopLayout.GrillUnlock, ShopLayout.ExtraGrill), Is.LessThan(0.05f));
             Assert.That(Horizontal(ShopLayout.CounterUnlock, ShopLayout.ExtraCounter), Is.LessThan(0.05f));
             Assert.That(Horizontal(ShopLayout.BoxingUnlock, ShopLayout.BoxingTable), Is.LessThan(0.05f));
@@ -156,6 +171,76 @@ namespace BurgerShop.Tests.EditMode
             AssertChairFaces(expansion.ExtraTable, "ChairB");
             Assert.That(expansion.TablePad.IsPurchased, Is.True);
             Assert.That(expansion.TablePad.gameObject.activeSelf, Is.False);
+        }
+
+        [Test]
+        public void FourSeatPadUnlocksFourFacingChairsAndHidesTheCircle()
+        {
+            wallet.RestoreProgress(200, 0);
+            Hold(expansion.FourSeatPad, 3f);
+            Assert.That(wallet.Coins, Is.Zero);
+            Assert.That(expansion.HasFourSeatTable, Is.True);
+            Assert.That(dining.TableCount, Is.EqualTo(4));
+            Assert.That(dining.SeatCount, Is.EqualTo(10));
+            Assert.That(expansion.FourSeatTable.Center, Is.EqualTo(ShopLayout.FourSeatTable));
+            Assert.That(expansion.FourSeatTable.Kind, Is.EqualTo(DiningTableKind.FourSeat));
+            Assert.That(expansion.FourSeatTable.SeatCount, Is.EqualTo(4));
+            AssertChairFaces(expansion.FourSeatTable, "ChairA");
+            AssertChairFaces(expansion.FourSeatTable, "ChairB");
+            AssertChairFaces(expansion.FourSeatTable, "ChairC");
+            AssertChairFaces(expansion.FourSeatTable, "ChairD");
+            Assert.That(expansion.FourSeatPad.IsPurchased, Is.True);
+            Assert.That(expansion.FourSeatPad.gameObject.activeSelf, Is.False);
+            Assert.That(expansion.HasExtraTable, Is.False);
+            Assert.That(expansion.HasSquareTable, Is.False);
+        }
+
+        [Test]
+        public void SquarePadUnlocksTallBackedChairsAndHidesTheCircle()
+        {
+            wallet.RestoreProgress(150, 0);
+            Hold(expansion.SquarePad, 3f);
+            Assert.That(wallet.Coins, Is.Zero);
+            Assert.That(expansion.HasSquareTable, Is.True);
+            Assert.That(expansion.SquareTable.Kind, Is.EqualTo(DiningTableKind.Square));
+            Assert.That(expansion.SquareTable.SeatCount, Is.EqualTo(2));
+            Assert.That(expansion.SquareTable.Center, Is.EqualTo(ShopLayout.SquareTable));
+            Assert.That(expansion.SquareTable.transform.Find("ChairA/Back").localScale.y, Is.GreaterThan(0.75f));
+            AssertChairFaces(expansion.SquareTable, "ChairA");
+            AssertChairFaces(expansion.SquareTable, "ChairB");
+            Assert.That(expansion.SquarePad.IsPurchased, Is.True);
+            Assert.That(expansion.SquarePad.gameObject.activeSelf, Is.False);
+        }
+
+        [Test]
+        public void RestoreSpawnsFourSeatAndSquareWithoutCharging()
+        {
+            wallet.RestoreProgress(40, 0);
+            expansion.Restore(false, false, false, 0, false, false, true, true);
+            Assert.That(expansion.HasFourSeatTable, Is.True);
+            Assert.That(expansion.HasSquareTable, Is.True);
+            Assert.That(expansion.FourSeatTable.SeatCount, Is.EqualTo(4));
+            Assert.That(expansion.SquareTable.Kind, Is.EqualTo(DiningTableKind.Square));
+            Assert.That(expansion.FourSeatPad.IsPurchased, Is.True);
+            Assert.That(expansion.SquarePad.IsPurchased, Is.True);
+            Assert.That(wallet.Coins, Is.EqualTo(40));
+            AssertChairFaces(expansion.FourSeatTable, "ChairD");
+            AssertChairFaces(expansion.SquareTable, "ChairA");
+        }
+
+        [Test]
+        public void ExtraPairAndFourSeatAreIndependentPurchases()
+        {
+            wallet.RestoreProgress(350, 0);
+            Hold(expansion.TablePad, 3f);
+            Hold(expansion.FourSeatPad, 3f);
+            Assert.That(expansion.HasExtraTable, Is.True);
+            Assert.That(expansion.HasFourSeatTable, Is.True);
+            Assert.That(dining.TableCount, Is.EqualTo(5));
+            Assert.That(dining.SeatCount, Is.EqualTo(12));
+            Assert.That(wallet.Coins, Is.Zero);
+            AssertChairFaces(expansion.ExtraTable, "ChairA");
+            AssertChairFaces(expansion.FourSeatTable, "ChairD");
         }
 
         [Test]
@@ -510,7 +595,11 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void AC07AllFiveLabelsRemainVisibleAbovePlayerAndShowRemainingWhileInside()
         {
-            FacilityUnlockZone[] pads = { expansion.TablePad, expansion.GrillPad, expansion.CounterPad, expansion.BoxingPad, expansion.DriveThruPad };
+            FacilityUnlockZone[] pads =
+            {
+                expansion.TablePad, expansion.FourSeatPad, expansion.SquarePad, expansion.GrillPad,
+                expansion.CounterPad, expansion.BoxingPad, expansion.DriveThruPad
+            };
             foreach (var pad in pads)
             {
                 wallet.RestoreProgress(25, 0);

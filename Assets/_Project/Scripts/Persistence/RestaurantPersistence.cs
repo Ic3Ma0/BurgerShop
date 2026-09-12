@@ -74,13 +74,17 @@ namespace BurgerShop.Persistence
                 boost?.RestoreTiers(data.ResolvedPlayerSpeedTier, data.ResolvedPlayerCarryTier);
                 expansion?.Restore(data.ResolvedBoughtExtraTable, data.ResolvedBoughtExtraGrill,
                     data.ResolvedBoughtExtraCounter, data.ResolvedExtraGrillLevel,
-                    data.ResolvedBoughtBoxingStation, data.ResolvedBoughtDriveThru);
+                    data.ResolvedBoughtBoxingStation, data.ResolvedBoughtDriveThru,
+                    data.ResolvedBoughtFourSeatTable, data.ResolvedBoughtSquareTable);
                 if (data.version >= 7)
                     expansion?.RestoreInvestments(data.tableInvestment, data.grillInvestment, data.counterInvestment,
-                        data.boxingInvestment, data.driveThruInvestment);
+                        data.boxingInvestment, data.driveThruInvestment,
+                        data.ResolvedFourSeatInvestment, data.ResolvedSquareTableInvestment);
                 tableUpgrades?.Restore(data.ResolvedTable0Set, data.ResolvedTable1Set, data.ResolvedTable2Set,
                     data.ResolvedExtraTableSet, data.ResolvedTable0Investment, data.ResolvedTable1Investment,
-                    data.ResolvedTable2Investment, data.ResolvedExtraTableInvestment);
+                    data.ResolvedTable2Investment, data.ResolvedExtraTableInvestment,
+                    data.ResolvedFourSeatSet, data.ResolvedSquareTableSet,
+                    data.ResolvedFourSeatUpgradeInvestment, data.ResolvedSquareTableUpgradeInvestment);
                 lastChecksum = data.Checksum();
             }
             Status = LoadResult == SaveLoadResult.Loaded ? "PROGRESS RESTORED"
@@ -138,7 +142,15 @@ namespace BurgerShop.Persistence
                 table0Investment = tableUpgrades?.InvestedAt(0) ?? 0,
                 table1Investment = tableUpgrades?.InvestedAt(1) ?? 0,
                 table2Investment = tableUpgrades?.InvestedAt(2) ?? 0,
-                extraTableInvestment = tableUpgrades?.InvestedAt(3) ?? 0
+                extraTableInvestment = tableUpgrades?.InvestedAt(3) ?? 0,
+                boughtFourSeatTable = expansion != null && expansion.HasFourSeatTable,
+                boughtSquareTable = expansion != null && expansion.HasSquareTable,
+                fourSeatInvestment = expansion?.FourSeatPad?.Invested ?? 0,
+                squareTableInvestment = expansion?.SquarePad?.Invested ?? 0,
+                fourSeatSet = tableUpgrades?.SetAt(4) ?? 0,
+                squareTableSet = tableUpgrades?.SetAt(5) ?? 0,
+                fourSeatUpgradeInvestment = tableUpgrades?.InvestedAt(4) ?? 0,
+                squareTableUpgradeInvestment = tableUpgrades?.InvestedAt(5) ?? 0
             };
             string checksum = data.Checksum();
             if (checksum == lastChecksum) return true;
