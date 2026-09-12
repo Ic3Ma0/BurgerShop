@@ -1,0 +1,314 @@
+using System.Collections.Generic;
+using BurgerShop.Customer;
+using BurgerShop.Player;
+using UnityEngine;
+
+namespace BurgerShop.Restaurant
+{
+    public sealed class DiningTable : MonoBehaviour
+    {
+        public const int TrashPerGuest = 2;
+
+        Vector3[] seats;
+        CustomerAgent[] occupants;
+        int[] trashOnSeat;
+        int[] outstanding;
+        List<Transform>[] piles;
+        readonly List<TrashMotion> pickups = new List<TrashMotion>();
+        Vector3 waitPosition;
+        TrashInventory collector;
+        CashFloor cash;
+        float pickupRadius = 1.35f;
+        float pickupInterval = 0.25f;
+        float pickupCooldown;
+
+        public int SeatCount => seats?.Length ?? 0;
+        public int OccupiedSeats
+        {
+            get
+            {
+                int count = 0;
+                if (occupants == null) return 0;
+                for (int i = 0; i < occupants.Length; i++)
+                    if (occupants[i] != null) count++;
+                return count;
+            }
+        }
+        public int TrashCount
+        {
+            get
+            {
+                int count = 0;
+                if (trashOnSeat == null) return 0;
+                for (int i = 0; i < trashOnSeat.Length; i++) count += trashOnSeat[i];
+                return count;
+            }
+        }
+        public int OutstandingTrash
+        {
+            get
+            {
+                int count = 0;
+                if (outstanding == null) return 0;
+                for (int i = 0; i < outstanding.Length; i++) count += outstanding[i];
+                return count;
+            }
+        }
+        public bool IsDirty => TrashCount > 0;
+        public bool HasAvailableSeat
+        {
+            get
+            {
+                if (seats == null || IsDirty) return false;
+                for (int i = 0; i < seats.Length; i++)
+                    if (SeatIsOpen(i, null)) return true;
+                return false;
+            }
+        }
+        public float EatSeconds { get; private set; } = 3f;
+        public Vector3 WaitPosition => waitPosition;
+        public Vector3 Center => transform.position;
+
+        public void Configure(Vector3[] sitPositions, Vector3 wait, float eatSeconds = 3f)
+        {
+            seats = (Vector3[])sitPositions.Clone();
+            occupants = new CustomerAgent[seats.Length];
+            trashOnSeat = new int[seats.Length];
+            outstanding = new int[seats.Length];
+            piles = new List<Transform>[seats.Length];
+            for (int i = 0; i < piles.Length; i++)
+                piles[i] = new List<Transform>();
+            waitPosition = wait;
+            EatSeconds = Mathf.Max(0.1f, eatSeconds);
+            pickupCooldown = 0f;
+        }
+
+        public void BindCollector(TrashInventory bag, float radius = 1.35f, float interval = 0.25f)
+        {
+            collector = bag;
+            pickupRadius = Mathf.Max(0.1f, radius);
+            pickupInterval = Mathf.Max(0.05f, interval);
+            pickupCooldown = 0f;
+        }
+
+        public void BindCash(CashFloor floor) => cash = floor;
+
+        public void LeaveMealCash() => cash?.DropAtTable(this, CashFloor.DiningDrop);
+
+        public bool IsSeatBlocked(int seatIndex)
+        {
+            return seats != null && seatIndex >= 0 && seatIndex < seats.Length && IsDirty;
+        }
+
+        public bool HasPendingPickups => pickups.Count > 0;
+        public bool IsCollectorInRange => IsActorInRange(collector != null ? collector.transform : null);
+
+        public bool IsActorInRange(Transform actor)
+        {
+            if (actor == null) return false;
+            Vector3 offset = actor.position - Center;
+            offset.y = 0f;
+            return offset.sqrMagnitude <= pickupRadius * pickupRadius;
+        }
+
+        public bool TryAssignSeat(CustomerAgent guest, out Vector3 sitPosition, out int seatIndex)
+        {
+            sitPosition = waitPosition;
+            seatIndex = -1;
+            if (guest == null || seats == null) return false;
+            for (int i = 0; i < occupants.Length; i++)
+            {
+                if (!SeatIsOpen(i, guest)) continue;
+                occupants[i] = guest;
+                sitPosition = seats[i];
+                seatIndex = i;
+                return true;
+            }
+            return false;
+        }
+
+        bool SeatIsOpen(int seatIndex, CustomerAgent guest)
+        {
+            if (IsDirty) return false;
+            if (occupants[seatIndex] != null)
+                return occupants[seatIndex] == guest;
+            return true;
+        }
+
+        public void Release(CustomerAgent guest)
+        {
+            if (guest == null || occupants == null) return;
+            for (int i = 0; i < occupants.Length; i++)
+                if (occupants[i] == guest) occupants[i] = null;
+        }
+
+        public void LeaveMealTrash(int seatIndex)
+        {
+            if (seats == null || seatIndex < 0 || seatIndex >= seats.Length) return;
+            for (int i = 0; i < TrashPerGuest; i++)
+            {
+                Transform visual = SpawnTrash(seatIndex, trashOnSeat[seatIndex]);
+                piles[seatIndex].Add(visual);
+                trashOnSeat[seatIndex]++;
+                outstanding[seatIndex]++;
+            }
+        }
+
+        public void NotifyTrashDisposed(int seatIndex)
+        {
+            if (outstanding == null || seatIndex < 0 || seatIndex >= outstanding.Length) return;
+            if (outstanding[seatIndex] > 0) outstanding[seatIndex]--;
+        }
+
+        public bool TryPickupTrash(TrashInventory bag)
+        {
+            if (bag != collector) collector = bag;
+            return TryBeginPickup(bag, out TrashMotion started) && CompletePickupNow(started);
+        }
+
+        public bool TryBeginPickup(TrashInventory bag, out TrashMotion motion) => TryStartPickup(bag, out motion);
+
+        bool CompletePickupNow(TrashMotion started)
+        {
+            if (started == null) return false;
+            started.Advance(TrashMotion.Duration);
+            return true;
+        }
+
+        bool TryStartPickup(TrashInventory bag, out TrashMotion motion)
+        {
+            motion = null;
+            if (bag == null || trashOnSeat == null) return false;
+            for (int seat = 0; seat < trashOnSeat.Length; seat++)
+            {
+                if (trashOnSeat[seat] <= 0 || piles[seat].Count == 0) continue;
+                Transform visual = piles[seat][piles[seat].Count - 1];
+                piles[seat].RemoveAt(piles[seat].Count - 1);
+                motion = visual.gameObject.AddComponent<TrashMotion>();
+                int capturedSeat = seat;
+                TrashMotion launched = motion;
+                launched.Launch(bag.transform, new Vector3(0f, 1.55f, 0.15f), Vector3.up * 0.55f, Vector3.one,
+                    () => FinishPickup(capturedSeat, visual, launched, bag));
+                pickups.Add(launched);
+                return true;
+            }
+            return false;
+        }
+
+        void FinishPickup(int seat, Transform visual, TrashMotion motion, TrashInventory bag)
+        {
+            pickups.Remove(motion);
+            if (trashOnSeat != null && seat >= 0 && seat < trashOnSeat.Length && trashOnSeat[seat] > 0)
+                trashOnSeat[seat]--;
+            if (bag != null && bag.TryCollect(this, seat, visual))
+                return;
+            if (piles == null || seat < 0 || seat >= piles.Length || visual == null) return;
+            piles[seat].Add(visual);
+            if (trashOnSeat != null) trashOnSeat[seat]++;
+        }
+
+        void TickPickups(float deltaTime)
+        {
+            for (int i = pickups.Count - 1; i >= 0; i--)
+                pickups[i]?.Advance(deltaTime);
+        }
+
+        void Update()
+        {
+            if (Application.isPlaying) Advance(Time.deltaTime);
+        }
+
+        public void Advance(float deltaTime)
+        {
+            if (deltaTime <= 0f) return;
+            int flying = pickups.Count;
+            TickPickups(deltaTime);
+            bool completed = flying > 0 && pickups.Count < flying;
+            if (collector == null || !collector.isActiveAndEnabled) return;
+            if (!IsCollectorInRange)
+            {
+                pickupCooldown = 0f;
+                return;
+            }
+            if (completed)
+            {
+                pickupCooldown = pickupInterval;
+                return;
+            }
+            pickupCooldown = Mathf.Max(0f, pickupCooldown - deltaTime);
+            if (pickupCooldown <= 0f && TryStartPickup(collector, out TrashMotion started))
+            {
+                pickupCooldown = pickupInterval;
+                started.Advance(deltaTime);
+            }
+        }
+
+        Transform SpawnTrash(int seatIndex, int pileIndex)
+        {
+            Transform visual = TrashVisual.Create(transform, seatIndex * 10 + pileIndex);
+            Vector3 seat = seats[seatIndex];
+            Vector3 toward = Center - seat;
+            toward.y = 0f;
+            if (toward.sqrMagnitude < 0.0001f) toward = Vector3.right;
+            toward.Normalize();
+            Vector3 side = Vector3.Cross(Vector3.up, toward);
+            float spread = pileIndex % 2 == 0 ? -0.18f : 0.18f;
+            visual.position = seat + toward * 0.40f + side * spread + Vector3.up * 1.02f;
+            visual.rotation = Quaternion.Euler(0f, pileIndex * 40f, 0f);
+            return visual;
+        }
+
+        public static DiningTable Create(Transform parent, Vector3 position)
+        {
+            GameObject root = new GameObject("DiningTable");
+            root.transform.SetParent(parent, false);
+            root.transform.position = position;
+            DiningTable table = root.AddComponent<DiningTable>();
+            Material red = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.86f, 0.22f, 0.18f));
+            Material wood = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.42f, 0.28f, 0.18f));
+            Material seat = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.18f, 0.42f, 0.72f));
+            Material steel = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.35f, 0.38f, 0.42f));
+
+            Part(root.transform, "Top", PrimitiveType.Cube, new Vector3(0f, 0.72f, 0f), new Vector3(1.25f, 0.12f, 1.25f), red);
+            Part(root.transform, "Leg", PrimitiveType.Cube, new Vector3(0f, 0.34f, 0f), new Vector3(0.18f, 0.68f, 0.18f), wood);
+            Chair(root.transform, "ChairA", new Vector3(0f, 0f, 0.95f), seat, steel);
+            Chair(root.transform, "ChairB", new Vector3(0f, 0f, -0.95f), seat, steel);
+
+            Vector3[] sit =
+            {
+                position + new Vector3(0f, 0f, 0.95f),
+                position + new Vector3(0f, 0f, -0.95f)
+            };
+            table.Configure(sit, position + new Vector3(-1.15f, 0f, 0f), 3f);
+            return table;
+        }
+
+        static void Chair(Transform parent, string name, Vector3 local, Material cushion, Material frame)
+        {
+            Transform chair = new GameObject(name).transform;
+            chair.SetParent(parent, false);
+            chair.localPosition = local;
+            Vector3 towardTable = Vector3.zero - local;
+            towardTable.y = 0f;
+            if (towardTable.sqrMagnitude > 0.0001f)
+                chair.localRotation = Quaternion.LookRotation(towardTable);
+            Part(chair, "Seat", PrimitiveType.Cube, new Vector3(0f, 0.38f, 0f), new Vector3(0.62f, 0.12f, 0.58f), cushion);
+            Part(chair, "Back", PrimitiveType.Cube, new Vector3(0f, 0.72f, -0.24f), new Vector3(0.62f, 0.55f, 0.1f), frame);
+            Part(chair, "PostL", PrimitiveType.Cube, new Vector3(-0.22f, 0.18f, 0.18f), new Vector3(0.08f, 0.36f, 0.08f), frame);
+            Part(chair, "PostR", PrimitiveType.Cube, new Vector3(0.22f, 0.18f, 0.18f), new Vector3(0.08f, 0.36f, 0.08f), frame);
+        }
+
+        static void Part(Transform parent, string name, PrimitiveType type, Vector3 localPosition, Vector3 localScale, Material material)
+        {
+            GameObject part = GameObject.CreatePrimitive(type);
+            part.name = name;
+            part.transform.SetParent(parent, false);
+            part.transform.localPosition = localPosition;
+            part.transform.localScale = localScale;
+            part.GetComponent<Renderer>().sharedMaterial = material;
+            Collider collider = part.GetComponent<Collider>();
+            collider.enabled = false;
+            BurgerVisual.Release(collider);
+        }
+    }
+}

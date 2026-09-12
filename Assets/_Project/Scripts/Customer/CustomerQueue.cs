@@ -19,6 +19,8 @@ namespace BurgerShop.Customer
         bool shuttingDown;
         CustomerAgent departingCustomer;
 
+        public Func<int> OrderQuantityFactory { get; set; } = OrderQuantities.Dining;
+
         public int Count => customers.Count;
         public int Capacity => slotDistance?.Length ?? 0;
         public bool IsFull => Count >= Capacity;
@@ -90,7 +92,7 @@ namespace BurgerShop.Customer
             if (Count > 0 && customers[Count - 1].DistanceAlongPath < minimumGap)
                 return;
 
-            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, route[0]);
+            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, route[0], OrderQuantityFactory());
             arriving.AssignSlot(Count);
             arriving.Removed += OnCustomerRemoved;
             customers.Add(arriving);

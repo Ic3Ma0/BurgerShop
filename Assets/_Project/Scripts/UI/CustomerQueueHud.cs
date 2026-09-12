@@ -15,6 +15,8 @@ namespace BurgerShop.UI
         {
             queue = customerQueue;
             label = text;
+            if (label != null) label.raycastTarget = false;
+            HudChrome.HideFromDefaultScreen(gameObject);
             Refresh();
         }
 

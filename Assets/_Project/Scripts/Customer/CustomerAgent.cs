@@ -11,31 +11,45 @@ namespace BurgerShop.Customer
         Transform orderBubble;
         Material[] ownedMaterials;
         Transform carriedBurger;
+        readonly System.Collections.Generic.List<Transform> received = new System.Collections.Generic.List<Transform>();
         Vector3 burgerStart;
         Vector3[] exitRoute;
         int exitWaypoint;
         float departureTime;
+        DiningArea hall;
+        DiningTable table;
+        Vector3 seatPosition;
+        int seatIndex = -1;
+        float eatTime;
+        Phase phase;
         const float HandoffSeconds = 0.4f;
         const float DepartureSpeed = 2.4f;
 
+        enum Phase { None, Handoff, ToSeat, Eating, Exiting }
+
         public int TicketNumber { get; private set; }
         public int QueueIndex { get; private set; }
-        public int OrderSize => 1;
+        public CustomerOrder Order { get; private set; } = new CustomerOrder(1);
+        public int OrderSize => Order.Quantity;
+        public int RemainingQuantity => Order.Remaining;
         public float DistanceAlongPath { get; private set; }
         public bool HasReachedSlot { get; private set; }
         public bool HasOrdered { get; private set; }
         public bool IsDeparting { get; private set; }
+        public bool IsDining => phase == Phase.ToSeat || phase == Phase.Eating;
+        public bool IsEating => phase == Phase.Eating;
         public bool DepartureComplete { get; private set; }
         public int PaidAmount { get; private set; }
         public event Action<CustomerAgent> Removed;
 
-        internal static CustomerAgent Create(Transform parent, int ticket, Vector3 entrance)
+        internal static CustomerAgent Create(Transform parent, int ticket, Vector3 entrance, int quantity = 1)
         {
             GameObject root = new GameObject($"Customer_{ticket}");
             root.transform.SetParent(parent, false);
             root.transform.position = entrance;
             CustomerAgent agent = root.AddComponent<CustomerAgent>();
             agent.TicketNumber = ticket;
+            agent.Order = new CustomerOrder(quantity);
             Color[] shirts = { new Color(0.23f, 0.52f, 0.91f), new Color(0.70f, 0.35f, 0.69f), new Color(0.28f, 0.70f, 0.69f) };
             Material shirt = MaterialFor(shirts[(ticket - 1) % shirts.Length]);
             Material skin = MaterialFor(new Color(0.93f, 0.71f, 0.49f));
@@ -63,7 +77,7 @@ namespace BurgerShop.Customer
             label.characterSize = 0.12f;
             label.fontSize = 48;
             label.color = new Color(0.22f, 0.15f, 0.08f);
-            label.text = "x1";
+            label.text = "x" + quantity;
             foreach (Renderer renderer in agent.orderBubble.GetComponentsInChildren<Renderer>())
             {
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -102,12 +116,32 @@ namespace BurgerShop.Customer
             orderBubble.gameObject.SetActive(false);
         }
 
-        internal void BeginDeparture(Transform burger, Vector3[] waypoints, int payment)
+        internal void ReceiveItem(Transform burger)
+        {
+            if (!Order.Receive()) return;
+            if (burger != null)
+            {
+                burger.SetParent(transform, true);
+                burger.localPosition = new Vector3(0, 0.85f + received.Count * 0.15f, 0.6f);
+                burger.localRotation = Quaternion.identity;
+                received.Add(burger);
+            }
+            orderBubble.GetComponentInChildren<TextMesh>(true).text = "x" + Order.Remaining;
+        }
+
+        internal void BeginDeparture(Transform burger, Vector3[] waypoints, int payment, DiningArea dining = null,
+            bool alreadyReceived = false)
         {
             IsDeparting = true;
+            departureTime = alreadyReceived ? HandoffSeconds : 0f;
+            if (burger != null && !received.Contains(burger)) received.Add(burger);
             PaidAmount = payment;
-            exitRoute = (Vector3[])waypoints.Clone();
+            exitRoute = waypoints != null ? (Vector3[])waypoints.Clone() : Array.Empty<Vector3>();
             carriedBurger = burger;
+            hall = dining;
+            table = null;
+            seatIndex = -1;
+            eatTime = 0f;
             if (burger != null)
             {
                 burger.SetParent(transform, true);
@@ -120,6 +154,9 @@ namespace BurgerShop.Customer
             receipt.color = new Color(1f, 0.78f, 0.12f);
             receipt.text = $"+{payment}";
             orderBubble.gameObject.SetActive(true);
+            phase = Phase.Handoff;
+            if (hall != null)
+                hall.TryAssignSeat(this, out table, out seatPosition, out seatIndex);
         }
 
         void Update()
@@ -132,7 +169,7 @@ namespace BurgerShop.Customer
             if (!IsDeparting || DepartureComplete || deltaTime <= 0f) return;
             float previousTime = departureTime;
             departureTime += deltaTime;
-            if (carriedBurger != null)
+            if (carriedBurger != null && phase != Phase.Eating && phase != Phase.Exiting)
             {
                 float t = Mathf.Clamp01(departureTime / HandoffSeconds);
                 carriedBurger.localPosition = Vector3.Lerp(burgerStart, new Vector3(0f, 0.85f, 0.6f), t)
@@ -141,21 +178,70 @@ namespace BurgerShop.Customer
             }
             if (departureTime > 1.4f) orderBubble.gameObject.SetActive(false);
 
-            float remaining = Mathf.Max(0f, departureTime - HandoffSeconds) - Mathf.Max(0f, previousTime - HandoffSeconds);
-            float travel = remaining * DepartureSpeed;
-            while (travel > 0f && exitWaypoint < exitRoute.Length)
+            if (phase == Phase.Handoff)
+            {
+                if (departureTime < HandoffSeconds) return;
+                phase = hall != null || table != null ? Phase.ToSeat : Phase.Exiting;
+            }
+
+            float remaining = DepartureSpeed * (phase == Phase.Exiting && previousTime < HandoffSeconds
+                ? Mathf.Max(0f, departureTime - HandoffSeconds) - Mathf.Max(0f, previousTime - HandoffSeconds)
+                : deltaTime);
+
+            if (phase == Phase.ToSeat)
+            {
+                if (seatIndex < 0)
+                {
+                    if (hall != null)
+                        hall.TryAssignSeat(this, out table, out seatPosition, out seatIndex);
+                    else if (table != null && !table.IsDirty)
+                        table.TryAssignSeat(this, out seatPosition, out seatIndex);
+                }
+                Vector3 wait = table != null ? table.WaitPosition : (hall != null ? hall.WaitPosition : transform.position);
+                Vector3 target = seatIndex >= 0 ? seatPosition : wait;
+                if (!StepToward(target, ref remaining)) return;
+                if (seatIndex < 0)
+                {
+                    FaceTable();
+                    return;
+                }
+                FaceTable();
+                PlaceBurgerOnTable();
+                phase = Phase.Eating;
+                eatTime = 0f;
+            }
+
+            if (phase == Phase.Eating)
+            {
+                eatTime += deltaTime;
+                float need = table != null ? table.EatSeconds : 3f;
+                if (eatTime < need) return;
+                int finishedSeat = seatIndex;
+                DiningTable finishedTable = table;
+                if (finishedTable != null && finishedSeat >= 0)
+                {
+                    finishedTable.LeaveMealTrash(finishedSeat);
+                    finishedTable.LeaveMealCash();
+                }
+                finishedTable?.Release(this);
+                seatIndex = -1;
+                ReleaseMeal();
+                phase = Phase.Exiting;
+            }
+
+            while (remaining > 0f && exitWaypoint < exitRoute.Length)
             {
                 Vector3 offset = exitRoute[exitWaypoint] - transform.position;
                 float distance = offset.magnitude;
                 if (distance > 0.0001f)
                     transform.rotation = Quaternion.LookRotation(offset);
-                if (travel < distance)
+                if (remaining < distance)
                 {
-                    transform.position += offset.normalized * travel;
+                    transform.position += offset.normalized * remaining;
                     break;
                 }
                 transform.position = exitRoute[exitWaypoint++];
-                travel -= distance;
+                remaining -= distance;
             }
             if (exitWaypoint == exitRoute.Length)
             {
@@ -163,6 +249,65 @@ namespace BurgerShop.Customer
                 gameObject.SetActive(false);
                 BurgerVisual.Release(gameObject);
             }
+        }
+
+        bool StepToward(Vector3 target, ref float travel)
+        {
+            Vector3 offset = target - transform.position;
+            offset.y = 0f;
+            float distance = offset.magnitude;
+            if (distance <= 0.04f)
+            {
+                transform.position = new Vector3(target.x, transform.position.y, target.z);
+                return true;
+            }
+            if (distance > 0.0001f)
+                transform.rotation = Quaternion.LookRotation(offset);
+            if (travel < distance)
+            {
+                transform.position += offset.normalized * travel;
+                travel = 0f;
+                return false;
+            }
+            transform.position = new Vector3(target.x, transform.position.y, target.z);
+            travel -= distance;
+            return true;
+        }
+
+        void FaceTable()
+        {
+            if (table == null) return;
+            Vector3 look = table.Center - transform.position;
+            look.y = 0f;
+            if (look.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(look);
+        }
+
+        void PlaceBurgerOnTable()
+        {
+            if (carriedBurger == null || table == null) return;
+            carriedBurger.SetParent(transform, true);
+            Vector3 toward = table.Center - transform.position;
+            toward.y = 0f;
+            Vector3 place = table.Center + Vector3.up * 0.86f;
+            if (toward.sqrMagnitude > 0.0001f) place += toward.normalized * -0.22f;
+            carriedBurger.position = place;
+            carriedBurger.rotation = Quaternion.identity;
+            int index = 0;
+            foreach (Transform food in received)
+            {
+                if (food == null || food == carriedBurger) continue;
+                food.SetParent(transform, true);
+                food.position = place + new Vector3(0.24f * (++index), 0, 0);
+                food.rotation = Quaternion.identity;
+            }
+        }
+
+        void ReleaseMeal()
+        {
+            foreach (Transform food in received)
+                if (food != null) BurgerVisual.Release(food.gameObject);
+            received.Clear();
+            carriedBurger = null;
         }
 
         void LateUpdate()
@@ -173,6 +318,8 @@ namespace BurgerShop.Customer
 
         void OnDestroy()
         {
+            // Meal visuals remain owned children; Unity tears them down with the customer.
+            table?.Release(this);
             Removed?.Invoke(this);
             if (ownedMaterials != null)
                 foreach (Material material in ownedMaterials)

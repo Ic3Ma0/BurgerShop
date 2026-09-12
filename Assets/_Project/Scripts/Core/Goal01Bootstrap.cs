@@ -14,8 +14,6 @@ namespace BurgerShop.Core
 {
     public static class Goal01Bootstrap
     {
-        const float FloorSize = 20f;
-
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Install()
         {
@@ -23,28 +21,51 @@ namespace BurgerShop.Core
                 return;
 
             Transform root = new GameObject("Goal01").transform;
-            Material floorMat = CreateLit(new Color(0.76f, 0.62f, 0.42f));
-            Material wallMat = CreateLit(new Color(0.45f, 0.32f, 0.18f));
+            Material floorMat = CreateLit(new Color(0.80f, 0.68f, 0.50f));
+            Material wallMat = CreateLit(new Color(0.40f, 0.29f, 0.17f));
+            Material hrFloor = CreateLit(new Color(0.72f, 0.70f, 0.62f));
+            Material boostFloor = CreateLit(new Color(0.70f, 0.56f, 0.42f));
             Material playerMat = CreateLit(new Color(0.89f, 0.48f, 0.16f));
             Material markerMat = CreateLit(new Color(0.22f, 0.55f, 0.38f));
 
-            CreateFloor(root, floorMat);
-            CreateWalls(root, wallMat);
+            ShopLayout.CreateFloor(root, floorMat);
+            ShopLayout.CreateWalls(root, wallMat);
+            HrOffice office = HrOffice.Create(root, wallMat, hrFloor);
+            BoostRoom boostRoom = BoostRoom.Create(root, wallMat, boostFloor);
             CreateMarkers(root, markerMat);
-            ProductionStation station = CreateProductionStation(root);
             Transform player = CreatePlayer(root, playerMat);
             BurgerInventory inventory = player.gameObject.AddComponent<BurgerInventory>();
-            BurgerPickupZone pickup = CreatePickupZone(station, inventory);
+            TrashInventory trashBag = player.gameObject.AddComponent<TrashInventory>();
             ConfigureCamera(player);
             CustomerQueue customers = CreateCustomers(root);
+            DiningArea dining = DiningArea.Create(root, ShopLayout.Tables);
+            dining.BindCollector(trashBag);
+            TrashBin bin = TrashBin.Create(root, ShopLayout.TrashBin);
+            bin.Configure(trashBag);
+            CounterStock stock = ShopFixtures.CreateCounterStock(customers.transform, ShopLayout.CounterTop);
             RestaurantWallet wallet = root.gameObject.AddComponent<RestaurantWallet>();
             root.gameObject.AddComponent<SaleFeedback>().Configure(wallet);
-            BurgerServingZone serving = CreateServingZone(customers, inventory, wallet);
-            GrillUpgradeZone upgrade = CreateUpgradeZone(root, station, inventory, wallet);
-            WorkerHiringZone hiring = CreateHiringZone(root, station, serving, pickup, inventory, wallet);
+            CashFloor cash = root.gameObject.AddComponent<CashFloor>();
+            cash.Configure(wallet, player, ShopLayout.CounterCash);
+            dining.BindCash(cash);
+            ExpandableGrill starter = ExpandableGrill.CreateStarter(root, inventory, wallet);
+            ProductionStation station = starter.Station;
+            BurgerPickupZone pickup = starter.Pickup;
+            GrillUpgradeZone upgrade = starter.Upgrade;
+            BurgerServingZone serving = CreateServingZone(customers, inventory, wallet, stock, dining, cash);
+            WorkerHiringZone hiring = CreateHiringZone(root, station, serving, pickup, inventory, wallet, dining, bin, office);
+            PlayerMotor motor = player.GetComponent<PlayerMotor>();
+            BoostUpgradeZone boost = CreateBoostZone(root, inventory, motor, wallet, boostRoom);
+            ShopExpansion expansion = ShopExpansion.Create(root, dining, serving, hiring, inventory, wallet, cash);
+            StaffUpgradeBoard staffUpgrades = root.gameObject.AddComponent<StaffUpgradeBoard>();
+            staffUpgrades.Configure(wallet, hiring, inventory);
+            SessionGoalTracker goals = root.gameObject.AddComponent<SessionGoalTracker>();
+            goals.Configure(inventory, station, stock, customers, wallet, serving, dining, trashBag, hiring, boost, expansion);
+            CreateJoystick(root, inventory, pickup, customers, wallet, upgrade, hiring, goals, trashBag, staffUpgrades,
+                boost);
+            expansion.BindUpgradeHud(Object.FindFirstObjectByType<UpgradeHud>());
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
-            persistence.Configure(wallet, upgrade, hiring);
-            CreateJoystick(root, inventory, pickup, customers, wallet, upgrade, hiring);
+            persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades);
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             root.gameObject.AddComponent<AndroidDiagnostics>().Configure(wallet, inventory, hiring, upgrade);
@@ -61,92 +82,40 @@ namespace BurgerShop.Core
             rect.sizeDelta = new Vector2(1000f, 28f);
             Text text = hud.GetComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 22;
+            text.fontSize = 18;
             text.alignment = TextAnchor.LowerCenter;
-            text.color = new Color(0.17f, 0.21f, 0.2f);
+            text.color = new Color(0.17f, 0.21f, 0.2f, 0.45f);
             text.raycastTarget = false;
             hud.AddComponent<SaveHud>().Configure(persistence, text);
         }
 
         static WorkerHiringZone CreateHiringZone(Transform root, ProductionStation station, BurgerServingZone serving,
-            BurgerPickupZone pickup, BurgerInventory inventory, RestaurantWallet wallet)
+            BurgerPickupZone pickup, BurgerInventory inventory, RestaurantWallet wallet, DiningArea dining, TrashBin bin,
+            HrOffice office)
         {
-            GameObject spot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            spot.name = "StaffHiringSpot";
-            spot.transform.SetParent(root, false);
-            spot.transform.position = new Vector3(0f, 0.02f, -5.5f);
-            spot.transform.localScale = new Vector3(2f, 0.02f, 2f);
-            spot.GetComponent<Collider>().enabled = false;
-            Object.Destroy(spot.GetComponent<Collider>());
-            ApplyMaterial(spot, CreateLit(new Color(0.12f, 0.76f, 0.87f)));
-            TextMesh marker = new GameObject("HiringMarkerLabel").AddComponent<TextMesh>();
-            marker.transform.SetParent(root, false);
-            marker.transform.position = spot.transform.position + Vector3.up * 1.3f;
-            marker.fontSize = 36;
-            marker.characterSize = 0.07f;
-            marker.anchor = TextAnchor.MiddleCenter;
-            marker.alignment = TextAlignment.Center;
-            marker.color = new Color(0.78f, 0.96f, 1f);
             WorkerHiringZone hiring = root.gameObject.AddComponent<WorkerHiringZone>();
-            hiring.Configure(station, serving, wallet, inventory, pickup.PickupPoint, spot.transform,
-                new Vector3(0.9f, 0f, 0.4f), marker);
+            hiring.Configure(station, serving, wallet, inventory, pickup.PickupPoint, office.HirePoint,
+                ShopLayout.Aisle, serving.DropZone, office.HireLabel, dining, bin);
             return hiring;
         }
 
-        static GrillUpgradeZone CreateUpgradeZone(Transform root, ProductionStation station, BurgerInventory inventory, RestaurantWallet wallet)
+        static BoostUpgradeZone CreateBoostZone(Transform root, BurgerInventory inventory, PlayerMotor motor,
+            RestaurantWallet wallet, BoostRoom room)
         {
-            GameObject spot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            spot.name = "GrillUpgradeSpot";
-            spot.transform.SetParent(root, false);
-            spot.transform.position = new Vector3(2f, 0.02f, -2.8f);
-            spot.transform.localScale = new Vector3(2f, 0.02f, 2f);
-            spot.GetComponent<Collider>().enabled = false;
-            Object.Destroy(spot.GetComponent<Collider>());
-            ApplyMaterial(spot, CreateLit(new Color(0.60f, 0.36f, 0.90f)));
-
-            GameObject labelObject = new GameObject("UpgradeMarkerLabel");
-            labelObject.transform.SetParent(root, false);
-            labelObject.transform.position = spot.transform.position + Vector3.up * 1.35f;
-            TextMesh label = labelObject.AddComponent<TextMesh>();
-            label.anchor = TextAnchor.MiddleCenter;
-            label.alignment = TextAlignment.Center;
-            label.fontSize = 36;
-            label.characterSize = 0.07f;
-            label.color = new Color(0.94f, 0.85f, 1f);
-
-            Transform[] lamps = new Transform[2];
-            Material lampMaterial = CreateLit(new Color(0.40f, 0.82f, 1f));
-            for (int i = 0; i < lamps.Length; i++)
-            {
-                GameObject lamp = CreateStationPart(station.transform, $"UpgradeLamp_{i + 1}",
-                    new Vector3(-1.3f + i * 0.45f, 1.3f, 0.8f), new Vector3(0.25f, 0.25f, 0.25f), lampMaterial);
-                lamp.GetComponent<Collider>().enabled = false;
-                Object.Destroy(lamp.GetComponent<Collider>());
-                lamps[i] = lamp.transform;
-            }
-            GrillUpgradeZone upgrade = root.gameObject.AddComponent<GrillUpgradeZone>();
-            upgrade.Configure(station, wallet, inventory, spot.transform, label, lamps);
-            return upgrade;
+            BoostUpgradeZone boost = root.gameObject.AddComponent<BoostUpgradeZone>();
+            boost.Configure(wallet, inventory, motor, room.BoostPoint, room.BoostLabel);
+            return boost;
         }
 
-        static BurgerServingZone CreateServingZone(CustomerQueue queue, BurgerInventory inventory, RestaurantWallet wallet)
+        static BurgerServingZone CreateServingZone(CustomerQueue queue, BurgerInventory inventory, RestaurantWallet wallet,
+            CounterStock stock, DiningArea dining, CashFloor cash)
         {
-            GameObject spot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            spot.name = "ServingSpot";
-            spot.transform.SetParent(queue.transform, false);
-            spot.transform.position = new Vector3(0.9f, 0.02f, 3.3f);
-            spot.transform.localScale = new Vector3(1.7f, 0.02f, 1.7f);
-            spot.GetComponent<Collider>().enabled = false;
-            Object.Destroy(spot.GetComponent<Collider>());
-            ApplyMaterial(spot, CreateLit(new Color(1f, 0.70f, 0.16f)));
-
-            Vector3[] exit = { new Vector3(-4.4f, 0f, 1.7f), new Vector3(-7.8f, 0f, 1.7f), new Vector3(-7.8f, 0f, 5.8f) };
+            Transform circle = ShopFixtures.CreateCashierCircle(queue.transform, ShopLayout.ServingCircle);
+            CounterDropZone drop = queue.gameObject.AddComponent<CounterDropZone>();
+            drop.Configure(stock, circle);
+            Vector3[] exit = ShopLayout.Exit;
             BurgerServingZone serving = queue.gameObject.AddComponent<BurgerServingZone>();
-            serving.Configure(queue, inventory, wallet, spot.transform, exit);
-            GameObject exitMarker = CreateStationPart(queue.transform, "CustomerExit", exit[exit.Length - 1] + Vector3.up * 0.02f,
-                new Vector3(1.4f, 0.04f, 1.4f), CreateLit(new Color(0.65f, 0.75f, 0.48f)));
-            exitMarker.GetComponent<Collider>().enabled = false;
-            Object.Destroy(exitMarker.GetComponent<Collider>());
+            serving.Configure(queue, inventory, wallet, circle, exit, stock, dining, drop, 10, cash);
             return serving;
         }
 
@@ -154,85 +123,19 @@ namespace BurgerShop.Core
         {
             Transform restaurant = new GameObject("CustomerArea").transform;
             restaurant.SetParent(root, false);
-            Vector3 counterPosition = new Vector3(-2f, 0f, 3.3f);
+            Vector3 counterPosition = ShopLayout.Counter;
             Material counter = CreateLit(new Color(0.38f, 0.49f, 0.58f));
-            Material slotsMaterial = CreateLit(new Color(0.42f, 0.70f, 0.93f));
             Material top = CreateLit(new Color(0.90f, 0.88f, 0.78f));
             CreateStationPart(restaurant, "OrderCounter", counterPosition + Vector3.up * 0.5f, new Vector3(3.2f, 1f, 1.4f), counter);
             CreateStationPart(restaurant, "OrderCounterTop", counterPosition + Vector3.up * 1.05f, new Vector3(3.35f, 0.12f, 1.55f), top);
 
-            Vector3 entrance = new Vector3(-8.2f, 0f, -4.4f);
-            Vector3 queueEntry = new Vector3(-2f, 0f, -4.4f);
-            Vector3[] slots = { new Vector3(-2f, 0f, 1.7f), new Vector3(-2f, 0f, -0.1f), new Vector3(-2f, 0f, -1.9f) };
-            for (int i = 0; i < slots.Length; i++)
-            {
-                GameObject marker = CreateStationPart(restaurant, $"QueueSlot_{i + 1}", slots[i] + Vector3.up * 0.015f,
-                    new Vector3(1.1f, 0.02f, 1.1f), slotsMaterial);
-                marker.GetComponent<Collider>().enabled = false;
-                Object.Destroy(marker.GetComponent<Collider>());
-            }
-            GameObject entranceMarker = CreateStationPart(restaurant, "CustomerEntrance", entrance + Vector3.up * 0.025f,
-                new Vector3(1.4f, 0.04f, 1.4f), slotsMaterial);
-            entranceMarker.GetComponent<Collider>().enabled = false;
-            Object.Destroy(entranceMarker.GetComponent<Collider>());
+            Vector3 entrance = ShopLayout.Entrance;
+            Vector3 queueEntry = ShopLayout.QueueEntry;
+            Vector3[] slots = ShopLayout.QueueSlots;
 
             CustomerQueue queue = restaurant.gameObject.AddComponent<CustomerQueue>();
             queue.Configure(entrance, queueEntry, slots, counterPosition);
             return queue;
-        }
-
-        static ProductionStation CreateProductionStation(Transform root)
-        {
-            Transform station = new GameObject("BurgerGrill").transform;
-            station.SetParent(root, false);
-            station.position = new Vector3(4.5f, 0f, 2.5f);
-
-            Material steel = CreateLit(new Color(0.24f, 0.28f, 0.31f));
-            Material grill = CreateLit(new Color(0.08f, 0.09f, 0.10f));
-            Material tray = CreateLit(new Color(0.63f, 0.68f, 0.70f));
-            Material progress = CreateLit(new Color(0.25f, 0.87f, 0.34f));
-
-            CreateStationPart(station, "Counter", new Vector3(0f, 0.55f, 0f), new Vector3(3.4f, 1.1f, 2.2f), steel);
-            CreateStationPart(station, "GrillTop", new Vector3(-0.55f, 1.15f, 0f), new Vector3(1.8f, 0.16f, 1.7f), grill);
-            CreateStationPart(station, "OutputTray", new Vector3(1.05f, 1.16f, 0f), new Vector3(0.95f, 0.12f, 1.5f), tray);
-
-            Transform output = new GameObject("BurgerOutput").transform;
-            output.SetParent(station, false);
-            output.localPosition = new Vector3(1.05f, 1.27f, 0f);
-
-            CreateStationPart(station, "ProgressBack", new Vector3(0f, 1.55f, -1.12f), new Vector3(1.5f, 0.14f, 0.08f), grill);
-            GameObject fillObject = CreateStationPart(station, "ProgressFill", new Vector3(-0.75f, 1.55f, -1.17f), new Vector3(0f, 0.1f, 0.1f), progress);
-
-            GameObject labelObject = new GameObject("GrillStatus");
-            labelObject.transform.SetParent(station, false);
-            labelObject.transform.localPosition = new Vector3(0f, 3.2f, 0f);
-            TextMesh label = labelObject.AddComponent<TextMesh>();
-            label.anchor = TextAnchor.MiddleCenter;
-            label.alignment = TextAlignment.Center;
-            label.characterSize = 0.12f;
-            label.fontSize = 42;
-            label.color = new Color(1f, 0.92f, 0.72f);
-
-            ProductionStation production = station.gameObject.AddComponent<ProductionStation>();
-            production.Configure(output, fillObject.transform, label, 3f, 4);
-            return production;
-        }
-
-        static BurgerPickupZone CreatePickupZone(ProductionStation station, BurgerInventory inventory)
-        {
-            GameObject spot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            spot.name = "PickupSpot";
-            spot.transform.SetParent(station.transform, false);
-            spot.transform.localPosition = new Vector3(1.05f, 0.015f, -2.1f);
-            spot.transform.localScale = new Vector3(2f, 0.015f, 2f);
-            Collider collider = spot.GetComponent<Collider>();
-            collider.enabled = false;
-            Object.Destroy(collider);
-            ApplyMaterial(spot, CreateLit(new Color(0.24f, 0.77f, 0.46f)));
-
-            BurgerPickupZone zone = station.gameObject.AddComponent<BurgerPickupZone>();
-            zone.Configure(station, inventory, spot.transform);
-            return zone;
         }
 
         static GameObject CreateStationPart(Transform parent, string name, Vector3 localPosition, Vector3 localScale, Material material)
@@ -246,39 +149,9 @@ namespace BurgerShop.Core
             return part;
         }
 
-        static void CreateFloor(Transform root, Material material)
-        {
-            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            floor.name = "Floor";
-            floor.transform.SetParent(root, false);
-            floor.transform.position = new Vector3(0f, -0.1f, 0f);
-            floor.transform.localScale = new Vector3(FloorSize, 0.2f, FloorSize);
-            ApplyMaterial(floor, material);
-        }
-
-        static void CreateWalls(Transform root, Material material)
-        {
-            const float half = FloorSize * 0.5f;
-            const float height = 1.2f;
-            CreateWall(root, "Wall+Z", new Vector3(0f, height * 0.5f, half), new Vector3(FloorSize, height, 0.4f), material);
-            CreateWall(root, "Wall-Z", new Vector3(0f, height * 0.5f, -half), new Vector3(FloorSize, height, 0.4f), material);
-            CreateWall(root, "Wall+X", new Vector3(half, height * 0.5f, 0f), new Vector3(0.4f, height, FloorSize), material);
-            CreateWall(root, "Wall-X", new Vector3(-half, height * 0.5f, 0f), new Vector3(0.4f, height, FloorSize), material);
-        }
-
-        static void CreateWall(Transform root, string name, Vector3 position, Vector3 scale, Material material)
-        {
-            GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            wall.name = name;
-            wall.transform.SetParent(root, false);
-            wall.transform.position = position;
-            wall.transform.localScale = scale;
-            ApplyMaterial(wall, material);
-        }
-
         static void CreateMarkers(Transform root, Material material)
         {
-            float inset = FloorSize * 0.5f - 2f;
+            float inset = ShopLayout.WallHalf - 2f;
             Vector3[] corners =
             {
                 new Vector3(inset, 0.35f, inset),
@@ -304,7 +177,7 @@ namespace BurgerShop.Core
             player.name = "Player";
             player.tag = "Player";
             player.transform.SetParent(root, false);
-            player.transform.position = new Vector3(0f, 1.05f, 0f);
+            player.transform.position = ShopLayout.PlayerSpawn;
             ApplyMaterial(player, material);
 
             Collider primitiveCollider = player.GetComponent<Collider>();
@@ -347,7 +220,7 @@ namespace BurgerShop.Core
             follow.SetTarget(player);
         }
 
-        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers, RestaurantWallet wallet, GrillUpgradeZone upgrade, WorkerHiringZone hiring)
+        static void CreateJoystick(Transform root, BurgerInventory inventory, BurgerPickupZone pickup, CustomerQueue customers, RestaurantWallet wallet, GrillUpgradeZone upgrade, WorkerHiringZone hiring, SessionGoalTracker goals, TrashInventory trashBag, StaffUpgradeBoard staffUpgrades = null, BoostUpgradeZone playerBoost = null)
         {
             if (Object.FindFirstObjectByType<EventSystem>() == null)
             {
@@ -375,7 +248,7 @@ namespace BurgerShop.Core
             safeArea.AddComponent<SafeAreaFitter>();
             Transform uiRoot = safeArea.transform;
 
-            Sprite circle = CreateCircleSprite();
+            Sprite circle = HudChrome.Circle();
 
             GameObject padObject = new GameObject("VirtualJoystick", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             padObject.transform.SetParent(uiRoot, false);
@@ -405,182 +278,71 @@ namespace BurgerShop.Core
 
             padObject.AddComponent<VirtualJoystick>();
 
-            CreateHint(uiRoot);
-            CreateCarryHud(uiRoot, inventory, pickup, upgrade, hiring);
+            HudChrome.BuildTopBand(uiRoot);
+            StarProgressHud.Build(uiRoot, goals);
+            TaskCapsuleHud.Build(uiRoot, goals);
+            CreateCarryHud(uiRoot, inventory, pickup, upgrade, hiring, trashBag);
             CreateCustomerHud(uiRoot, customers);
-            CreateSalesHud(uiRoot, wallet);
+            SalesHud.Build(uiRoot, wallet);
             CreateUpgradeHud(uiRoot, upgrade);
             CreateStaffHud(uiRoot, hiring);
+            if (staffUpgrades != null)
+                StaffUpgradeHud.Build(uiRoot, staffUpgrades);
+            if (playerBoost != null)
+                PlayerUpgradeHud.Build(uiRoot, playerBoost);
         }
 
         static void CreateStaffHud(Transform canvas, WorkerHiringZone hiring)
         {
-            GameObject statusObject = new GameObject("StaffStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            statusObject.transform.SetParent(canvas, false);
-            RectTransform statusRect = statusObject.GetComponent<RectTransform>();
-            statusRect.anchorMin = statusRect.anchorMax = statusRect.pivot = new Vector2(0.5f, 1f);
-            statusRect.anchoredPosition = new Vector2(0f, -405f);
-            statusRect.sizeDelta = new Vector2(1000f, 100f);
-            Text status = statusObject.GetComponent<Text>();
-            status.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            status.fontSize = 26;
-            status.alignment = TextAnchor.UpperCenter;
-            status.color = new Color(0.68f, 0.96f, 1f);
-            status.raycastTarget = false;
+            Text status = HudChrome.Label(canvas, "StaffStatus", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(-24f, 196f), new Vector2(440f, 36f), 22, new Color(0.86f, 0.98f, 1f), TextAnchor.LowerRight, true, true);
 
-            GameObject panelObject = new GameObject("HiringPanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
-            panelObject.transform.SetParent(canvas, false);
-            RectTransform rect = panelObject.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 0f);
-            rect.anchoredPosition = new Vector2(-32f, 40f);
-            rect.sizeDelta = new Vector2(600f, 220f);
-            Image background = panelObject.GetComponent<Image>();
-            background.color = new Color(0.05f, 0.17f, 0.22f, 0.94f);
-            background.raycastTarget = false;
-            CanvasGroup group = panelObject.GetComponent<CanvasGroup>();
+            Image background = HudChrome.Panel(canvas, "HiringPanel", new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(-24f, 36f), new Vector2(460f, 150f), new Color(0.05f, 0.17f, 0.22f, 0.94f), 0.9f);
+            var group = background.gameObject.AddComponent<CanvasGroup>();
             group.blocksRaycasts = false;
             group.interactable = false;
-            GameObject textObject = new GameObject("HiringStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            textObject.transform.SetParent(panelObject.transform, false);
-            RectTransform textRect = textObject.GetComponent<RectTransform>();
-            textRect.anchorMin = textRect.anchorMax = textRect.pivot = new Vector2(0f, 1f);
-            textRect.anchoredPosition = new Vector2(20f, -20f);
-            textRect.sizeDelta = new Vector2(560f, 160f);
-            Text details = textObject.GetComponent<Text>();
-            details.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            details.fontSize = 27;
-            details.color = new Color(0.86f, 0.98f, 1f);
-            details.raycastTarget = false;
-            GameObject bar = new GameObject("HiringProgress", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            bar.transform.SetParent(panelObject.transform, false);
-            RectTransform barRect = bar.GetComponent<RectTransform>();
-            barRect.anchorMin = barRect.anchorMax = barRect.pivot = Vector2.zero;
-            barRect.anchoredPosition = new Vector2(20f, 20f);
-            barRect.sizeDelta = new Vector2(560f, 14f);
-            Image progress = bar.GetComponent<Image>();
-            progress.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f), Vector2.zero);
+            Text details = HudChrome.Label(background.transform, "HiringStatus", new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(18f, -16f), new Vector2(424f, 100f), 24,
+                new Color(0.86f, 0.98f, 1f), TextAnchor.UpperLeft, true, true);
+            Image progress = HudChrome.Panel(background.transform, "HiringProgress", Vector2.zero, Vector2.zero,
+                new Vector2(18f, 16f), new Vector2(424f, 12f), new Color(0.23f, 0.83f, 0.94f), 0.4f);
             progress.type = Image.Type.Filled;
             progress.fillMethod = Image.FillMethod.Horizontal;
-            progress.color = new Color(0.23f, 0.83f, 0.94f);
-            progress.raycastTarget = false;
-            panelObject.AddComponent<StaffHud>().Configure(hiring, status, details, progress, group);
+            background.gameObject.AddComponent<StaffHud>().Configure(hiring, status, details, progress, group);
         }
 
         static void CreateUpgradeHud(Transform canvas, GrillUpgradeZone upgrade)
         {
-            GameObject panelObject = new GameObject("UpgradePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
-            panelObject.transform.SetParent(canvas, false);
-            RectTransform rect = panelObject.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 0f);
-            rect.anchoredPosition = new Vector2(-32f, 40f);
-            rect.sizeDelta = new Vector2(600f, 220f);
-            Image background = panelObject.GetComponent<Image>();
-            background.color = new Color(0.16f, 0.10f, 0.24f, 0.92f);
-            background.raycastTarget = false;
-            CanvasGroup group = panelObject.GetComponent<CanvasGroup>();
+            Image background = HudChrome.Panel(canvas, "UpgradePanel", new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(-24f, 36f), new Vector2(460f, 150f), new Color(0.16f, 0.10f, 0.24f, 0.94f), 0.9f);
+            var group = background.gameObject.AddComponent<CanvasGroup>();
             group.blocksRaycasts = false;
             group.interactable = false;
-
-            GameObject textObject = new GameObject("UpgradeStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            textObject.transform.SetParent(panelObject.transform, false);
-            RectTransform textRect = textObject.GetComponent<RectTransform>();
-            textRect.anchorMin = textRect.anchorMax = textRect.pivot = new Vector2(0f, 1f);
-            textRect.anchoredPosition = new Vector2(20f, -20f);
-            textRect.sizeDelta = new Vector2(560f, 160f);
-            Text label = textObject.GetComponent<Text>();
-            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            label.fontSize = 27;
-            label.color = new Color(0.95f, 0.91f, 1f);
-            label.raycastTarget = false;
-
-            GameObject bar = new GameObject("UpgradeProgress", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            bar.transform.SetParent(panelObject.transform, false);
-            RectTransform barRect = bar.GetComponent<RectTransform>();
-            barRect.anchorMin = barRect.anchorMax = barRect.pivot = Vector2.zero;
-            barRect.anchoredPosition = new Vector2(20f, 20f);
-            barRect.sizeDelta = new Vector2(560f, 14f);
-            Image progress = bar.GetComponent<Image>();
-            progress.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f), Vector2.zero);
+            Text label = HudChrome.Label(background.transform, "UpgradeStatus", new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(18f, -16f), new Vector2(424f, 100f), 24,
+                new Color(0.95f, 0.91f, 1f), TextAnchor.UpperLeft, true, true);
+            Image progress = HudChrome.Panel(background.transform, "UpgradeProgress", Vector2.zero, Vector2.zero,
+                new Vector2(18f, 16f), new Vector2(424f, 12f), new Color(0.73f, 0.53f, 1f), 0.4f);
             progress.type = Image.Type.Filled;
             progress.fillMethod = Image.FillMethod.Horizontal;
-            progress.color = new Color(0.73f, 0.53f, 1f);
-            progress.raycastTarget = false;
-            panelObject.AddComponent<UpgradeHud>().Configure(upgrade, label, progress, group);
-        }
-
-        static void CreateSalesHud(Transform canvas, RestaurantWallet wallet)
-        {
-            GameObject hud = new GameObject("SalesStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            hud.transform.SetParent(canvas, false);
-            RectTransform rect = hud.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 1f);
-            rect.anchoredPosition = new Vector2(-36f, -32f);
-            rect.sizeDelta = new Vector2(240f, 160f);
-            Text text = hud.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 30;
-            text.alignment = TextAnchor.UpperRight;
-            text.color = new Color(1f, 0.83f, 0.26f);
-            text.raycastTarget = false;
-            hud.AddComponent<SalesHud>().Configure(wallet, text);
+            background.gameObject.AddComponent<UpgradeHud>().Configure(upgrade, label, progress, group);
         }
 
         static void CreateCustomerHud(Transform canvas, CustomerQueue customers)
         {
-            GameObject hud = new GameObject("CustomerStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            hud.transform.SetParent(canvas, false);
-            RectTransform rect = hud.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -280f);
-            rect.sizeDelta = new Vector2(1000f, 110f);
-            Text text = hud.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 28;
-            text.alignment = TextAnchor.UpperCenter;
-            text.color = new Color(0.68f, 0.88f, 1f);
-            text.raycastTarget = false;
-            hud.AddComponent<CustomerQueueHud>().Configure(customers, text);
+            Text text = HudChrome.Label(canvas, "CustomerStatus", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f), new Vector2(0f, -320f), new Vector2(1000f, 70f), 22,
+                new Color(0.68f, 0.88f, 1f), TextAnchor.UpperCenter, false, true);
+            text.gameObject.AddComponent<CustomerQueueHud>().Configure(customers, text);
         }
 
-        static void CreateCarryHud(Transform canvas, BurgerInventory inventory, BurgerPickupZone pickup, GrillUpgradeZone upgrade, WorkerHiringZone hiring)
+        static void CreateCarryHud(Transform canvas, BurgerInventory inventory, BurgerPickupZone pickup, GrillUpgradeZone upgrade, WorkerHiringZone hiring, TrashInventory trashBag)
         {
-            GameObject hud = new GameObject("CarryStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            hud.transform.SetParent(canvas, false);
-            RectTransform rect = hud.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -128f);
-            rect.sizeDelta = new Vector2(1000f, 130f);
-            Text text = hud.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 32;
-            text.alignment = TextAnchor.UpperCenter;
-            text.raycastTarget = false;
-            hud.AddComponent<CarryHud>().Configure(inventory, pickup, text, upgrade, hiring);
-        }
-
-        static void CreateHint(Transform canvas)
-        {
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font == null)
-                font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            if (font == null)
-                return;
-
-            GameObject hintObject = new GameObject("MoveHint", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            hintObject.transform.SetParent(canvas, false);
-            RectTransform rect = hintObject.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 1f);
-            rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -48f);
-            rect.sizeDelta = new Vector2(900f, 80f);
-            Text text = hintObject.GetComponent<Text>();
-            text.font = font;
-            text.fontSize = 36;
-            text.alignment = TextAnchor.UpperCenter;
-            text.color = new Color(1f, 0.97f, 0.9f, 0.9f);
-            text.raycastTarget = false;
-            text.text = Application.isMobilePlatform ? "Drag joystick to move" : "WASD / joystick to move";
+            Text text = HudChrome.Label(canvas, "CarryStatus", new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(24f, -88f), new Vector2(420f, 70f), 22,
+                Color.white, TextAnchor.UpperLeft, false, true);
+            text.gameObject.AddComponent<CarryHud>().Configure(inventory, pickup, text, upgrade, hiring, trashBag);
         }
 
         static Material CreateLit(Color color) => RuntimeMaterials.Create(color);
@@ -590,27 +352,6 @@ namespace BurgerShop.Core
             var renderer = instance.GetComponent<Renderer>();
             if (renderer != null)
                 renderer.sharedMaterial = material;
-        }
-
-        static Sprite CreateCircleSprite()
-        {
-            const int size = 64;
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            texture.wrapMode = TextureWrapMode.Clamp;
-            float center = (size - 1) * 0.5f;
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float dx = x - center;
-                    float dy = y - center;
-                    float d = Mathf.Sqrt(dx * dx + dy * dy) / center;
-                    texture.SetPixel(x, y, d <= 1f ? Color.white : Color.clear);
-                }
-            }
-
-            texture.Apply();
-            return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 64f);
         }
     }
 }

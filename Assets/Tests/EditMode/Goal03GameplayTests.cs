@@ -65,10 +65,15 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(station.Stock, Is.EqualTo(4));
 
             Vector3 start = inventory.transform.position;
-            deadline = Time.time + 2f;
+            deadline = Time.time + 5f;
             while (!pickup.IsInRange && Time.time < deadline)
             {
-                inputDriver.State = new KeyboardState(Key.W, Key.D);
+                Vector3 offset = pickup.PickupPosition - inventory.transform.position;
+                offset.y = 0f;
+                if (Mathf.Abs(offset.x) > Mathf.Abs(offset.z))
+                    inputDriver.State = offset.x > 0 ? new KeyboardState(Key.W, Key.D) : new KeyboardState(Key.S, Key.A);
+                else
+                    inputDriver.State = offset.z > 0 ? new KeyboardState(Key.W, Key.A) : new KeyboardState(Key.S, Key.D);
                 yield return null;
             }
             inputDriver.State = new KeyboardState();
@@ -142,8 +147,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(stack.childCount, Is.EqualTo(4));
             Assert.That(Vector3.Distance(stack.position, inventory.transform.TransformPoint(new Vector3(0f, 0.1f, 0.8f))), Is.LessThan(0.001f));
 
-            Vector3 cameraOffset = Quaternion.Euler(0f, 45f, 0f) * Vector3.back * 13f;
-            cameraOffset.y = 11f;
+            Vector3 cameraOffset = Quaternion.Euler(0f, 45f, 0f) * Vector3.back * 16f;
+            cameraOffset.y = 13f;
             Assert.That(Vector3.Distance(Camera.main.transform.position, inventory.transform.position + cameraOffset), Is.LessThan(0.05f));
             LogAssert.NoUnexpectedReceived();
             RestoreInput();

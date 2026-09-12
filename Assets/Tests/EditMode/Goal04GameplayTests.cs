@@ -1,5 +1,6 @@
 using System.Collections;
 using BurgerShop.Customer;
+using BurgerShop.Restaurant;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -21,8 +22,15 @@ namespace BurgerShop.Tests.EditMode
             Time.captureDeltaTime = 1f / 60f;
             yield return null;
             CustomerQueue queue = Object.FindFirstObjectByType<CustomerQueue>();
+            queue.OrderQuantityFactory = () => 1;
             Assert.That(queue, Is.Not.Null);
             Assert.That(queue.Capacity, Is.EqualTo(3));
+            Assert.That(GameObject.Find("QueueSlot_1"), Is.Null);
+            Assert.That(GameObject.Find("QueueSlot_2"), Is.Null);
+            Assert.That(GameObject.Find("QueueSlot_3"), Is.Null);
+            Assert.That(GameObject.Find("CustomerEntrance"), Is.Null);
+            Assert.That(GameObject.Find("PickupSpot"), Is.Not.Null);
+            Assert.That(Object.FindObjectsByType<DiningTable>(FindObjectsSortMode.None).Length, Is.EqualTo(3));
             Text hud = GameObject.Find("CustomerStatus").GetComponent<Text>();
             Assert.That(hud.text, Does.Contain("0/3"));
             Assert.That(queue.TryDequeueReadyCustomer(out _), Is.False);

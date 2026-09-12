@@ -64,7 +64,7 @@ namespace BurgerShop.Persistence
             try { envelope = JsonUtility.FromJson<Envelope>(File.ReadAllText(source)); }
             catch (ArgumentException) { return SaveLoadResult.Unreadable; }
             if (envelope?.data == null) return SaveLoadResult.Unreadable;
-            if (envelope.data.version > 1) return SaveLoadResult.NewerVersion;
+            if (envelope.data.version > RestaurantSaveData.CurrentVersion) return SaveLoadResult.NewerVersion;
             if (!envelope.data.IsValid || envelope.checksum != envelope.data.Checksum()) return SaveLoadResult.Unreadable;
             data = envelope.data;
             return SaveLoadResult.Loaded;

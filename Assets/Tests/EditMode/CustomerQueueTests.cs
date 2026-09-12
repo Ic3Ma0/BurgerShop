@@ -15,6 +15,7 @@ namespace BurgerShop.Tests.EditMode
         {
             root = new GameObject("QueueTest");
             queue = root.AddComponent<CustomerQueue>();
+            queue.OrderQuantityFactory = () => 1;
             Configure();
         }
 
@@ -160,6 +161,21 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(queue.Count, Is.Zero);
             Assert.That(body == null, Is.True);
             Assert.That(icon == null, Is.True);
+        }
+
+        [Test]
+        public void ThreeSlotQueueWorksWithoutNamedFloorMarkers()
+        {
+            Assert.That(GameObject.Find("QueueSlot_1"), Is.Null);
+            Assert.That(GameObject.Find("QueueSlot_2"), Is.Null);
+            Assert.That(GameObject.Find("QueueSlot_3"), Is.Null);
+            Assert.That(GameObject.Find("CustomerEntrance"), Is.Null);
+            AdvanceSeconds(20f);
+            Assert.That(queue.Capacity, Is.EqualTo(3));
+            Assert.That(queue.Count, Is.EqualTo(3));
+            Assert.That(queue.ReadyCustomer, Is.Not.Null);
+            for (int i = 0; i < 3; i++)
+                Assert.That(Vector3.Distance(queue.Customers[i].transform.position, slots[i]), Is.LessThan(0.001f));
         }
 
         [Test]

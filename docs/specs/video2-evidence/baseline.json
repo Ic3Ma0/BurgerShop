@@ -1,0 +1,20 @@
+{
+  "video": "/Users/max/个人工作/应用开发/视频2.mp4",
+  "video_sha256": "3079e2d00c5bd082b9e5954d0e21a21497acac24198e6fc91f5aee7324e8c40d",
+  "duration_seconds": 413.737708,
+  "resolution": "432x960",
+  "head": "2158982c91d2b71c3b05ad41f01d3092b5c8c1cc",
+  "branch": "feat/counter-table-serve",
+  "note": "Working tree includes uncommitted modifications; hashes identify reviewed source files. No current Unity/device validation performed.",
+  "reviewed_files_sha256": {
+    "Assets/_Project/Scripts/Restaurant/FacilityUnlockZone.cs": "907c896271160ea65c0ebbffb516ebf5612fd19895c1d02da976970ec30b9670",
+    "Assets/_Project/Scripts/Restaurant/BoxingStation.cs": "d4b37b0c2c1cfd0b89a017eb66a60d329b6bbba216fd1a1655a1a2c8263f5486",
+    "Assets/_Project/Scripts/Restaurant/RestaurantWorker.cs": "d8f5a45b6255d63b146f6b81a0e22fa2ee2cdf50220f45e20a75880f4ab42905",
+    "Assets/_Project/Scripts/Restaurant/BurgerServingZone.cs": "9d7ca09d6243d6526f3c5aa705d285b9c28bcd53431bc59d3b24c59c6334de09",
+    "Assets/_Project/Scripts/Restaurant/DriveThruLane.cs": "9127df61aac911ab1c2c7096ec470cfe0ff4a8a2521e763385b57a49efd200ff",
+    "Assets/_Project/Scripts/Customer/CustomerAgent.cs": "261bac645e3c02b5dbea4ff3ff1f0b46c69657ff647821ac5db1fe833f4a1855",
+    "Assets/_Project/Scripts/Persistence/RestaurantSaveData.cs": "6e69ca9b69f2d1c1a4cb577934ceeb26a3e9e9e842746fb61faf5fa0d3ffb422",
+    "Assets/_Project/Scripts/Restaurant/StaffUpgradeBoard.cs": "13f9a2935cdad758c89ee98a64350f1652c6eb7d4dd2b744c73fae46c77838dc",
+    "Assets/_Project/Scripts/UI/SessionGoalTracker.cs": "7420b9da0f32a350ceefe8418ff50615a486802ed01bd367d65155d180324161"
+  }
+}

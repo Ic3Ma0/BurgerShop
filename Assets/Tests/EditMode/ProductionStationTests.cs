@@ -49,6 +49,18 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
+        public void RaisingCapacityResumesProductionWithoutLosingStock()
+        {
+            station.Advance(10f);
+            Assert.That(station.Stock, Is.EqualTo(2));
+            station.SetCapacity(6);
+            Assert.That(station.Capacity, Is.EqualTo(6));
+            Assert.That(station.Stock, Is.EqualTo(2));
+            station.Advance(8f);
+            Assert.That(station.Stock, Is.EqualTo(6));
+        }
+
+        [Test]
         public void EmptyStationCannotProvideBurger()
         {
             Assert.That(station.TryTakeBurger(), Is.False);

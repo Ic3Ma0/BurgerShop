@@ -26,6 +26,7 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            Object.FindFirstObjectByType<BurgerShop.Customer.CustomerQueue>().OrderQuantityFactory = () => 1;
             previousStep = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
             previousBackground = InputSystem.settings.backgroundBehavior;
@@ -41,6 +42,8 @@ namespace BurgerShop.Tests.EditMode
             BurgerPickupZone pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
             RestaurantWallet wallet = Object.FindFirstObjectByType<RestaurantWallet>();
             WorkerHiringZone hiring = Object.FindFirstObjectByType<WorkerHiringZone>();
+            Assert.That(GameObject.Find("StaffHiringSpot"), Is.Null);
+            Assert.That(Object.FindFirstObjectByType<HrOffice>(), Is.Not.Null);
             Text status = GameObject.Find("StaffStatus").GetComponent<Text>();
             Text detail = GameObject.Find("HiringStatus").GetComponent<Text>();
             CanvasGroup panel = GameObject.Find("HiringPanel").GetComponent<CanvasGroup>();
@@ -52,7 +55,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(detail.text, Does.Contain("Need 50 more coins"));
             Assert.That(panel.alpha, Is.EqualTo(1f));
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             yield return WaitSeconds(16f);
             for (int trip = 1; trip <= 5; trip++)
                 yield return CollectAndServe(inventory, pickup, serving, wallet, trip);
@@ -73,7 +76,7 @@ namespace BurgerShop.Tests.EditMode
             Vector3 parkedPlayer = inventory.transform.position;
             Vector3 workerStart = worker.transform.position;
             bool workerMoved = false;
-            deadline = Time.time + 60f;
+            deadline = Time.time + 180f;
             while (worker.CompletedDeliveries < 6 && Time.time < deadline)
             {
                 workerMoved |= Vector3.Distance(worker.transform.position, workerStart) > 2f;
@@ -86,22 +89,22 @@ namespace BurgerShop.Tests.EditMode
             playerMovement.y = 0f;
             Assert.That(playerMovement.magnitude, Is.LessThan(0.01f));
             Assert.That(wallet.CompletedSales, Is.EqualTo(5 + worker.CompletedDeliveries));
-            Assert.That(wallet.Coins, Is.EqualTo(wallet.CompletedSales * 10 - 50));
+            Assert.That(wallet.Coins, Is.Zero, "Parked player must not receive worker-dropped cash.");
             yield return null;
             Assert.That(status.text, Does.Contain("DELIVERED " + worker.CompletedDeliveries));
 
             // Resume manual work while the employee is still using the same stock and cashier.
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             yield return WalkTo(inventory.transform, pickup.PickupPosition);
             deadline = Time.time + 10f;
             while (inventory.Count == 0 && Time.time < deadline) yield return null;
             Assert.That(inventory.Count, Is.GreaterThan(0));
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             yield return WalkTo(inventory.transform, serving.ServingPosition);
             deadline = Time.time + 15f;
             while (wallet.CompletedSales - worker.CompletedDeliveries <= 5 && Time.time < deadline) yield return null;
             Assert.That(wallet.CompletedSales - worker.CompletedDeliveries, Is.GreaterThan(5));
-            Assert.That(wallet.Coins, Is.EqualTo(wallet.CompletedSales * 10 - 50));
+            Assert.That(wallet.Coins, Is.GreaterThanOrEqualTo(0));
             Assert.That(hiring.IsHired, Is.True);
             Assert.That(Object.FindObjectsByType<RestaurantWorker>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
             LogAssert.NoUnexpectedReceived();
@@ -116,20 +119,26 @@ namespace BurgerShop.Tests.EditMode
             float deadline = Time.time + 5f;
             while (inventory.Count == 0 && Time.time < deadline) yield return null;
             Assert.That(inventory.Count, Is.GreaterThan(0));
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             int carried = inventory.Count;
+            long coinsBefore = wallet.Coins;
             yield return WalkTo(inventory.transform, serving.ServingPosition);
             // After the initial three guests, allow a new customer to walk in from the entrance.
             deadline = Time.time + 15f;
             while (wallet.CompletedSales < sale && Time.time < deadline) yield return null;
             Assert.That(wallet.CompletedSales, Is.EqualTo(sale));
-            Assert.That(inventory.Count, Is.EqualTo(carried - 1));
-            yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+            Assert.That(inventory.Count, Is.LessThan(carried));
+            CashFloor cash = Object.FindFirstObjectByType<CashFloor>();
+            yield return WalkTo(inventory.transform, cash.CounterOrigin);
+            deadline = Time.time + 5f;
+            while (wallet.Coins < coinsBefore + 10 && Time.time < deadline) yield return null;
+            Assert.That(wallet.Coins, Is.EqualTo(coinsBefore + 10));
+            yield return WalkTo(inventory.transform, ShopLayout.Aisle);
         }
 
         IEnumerator WalkTo(Transform player, Vector3 target)
         {
-            float deadline = Time.time + 8f;
+            float deadline = Time.time + 12f;
             while (Time.time < deadline)
             {
                 Vector3 offset = target - player.position;

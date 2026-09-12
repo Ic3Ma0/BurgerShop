@@ -7,48 +7,60 @@ namespace BurgerShop.Economy
     {
         RestaurantWallet wallet;
         AudioSource source;
-        AudioClip chime;
+        AudioClip coin;
+        AudioClip spend;
+
+        public int CoinPlayCount { get; private set; }
+        public int SpendPlayCount { get; private set; }
 
         public void Configure(RestaurantWallet earnings)
         {
-            if (wallet != null) wallet.SaleRecorded -= Play;
-            if (wallet != null) wallet.CoinsSpent -= Play;
+            if (wallet != null)
+            {
+                wallet.SaleRecorded -= PlayCoin;
+                wallet.CoinsSpent -= PlaySpend;
+            }
             wallet = earnings;
             source = GetComponent<AudioSource>();
             if (source == null) source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
             source.spatialBlend = 0f;
-            source.volume = 0.25f;
-            if (chime == null)
+            source.volume = 0.28f;
+            if (coin == null) coin = CoinSfx.CreateCoin();
+            if (spend == null) spend = CoinSfx.CreateSpend();
+            source.clip = coin;
+            if (wallet != null)
             {
-                const int sampleRate = 22050;
-                float[] samples = new float[(int)(sampleRate * 0.28f)];
-                for (int i = 0; i < samples.Length; i++)
-                {
-                    float time = (float)i / sampleRate;
-                    float noteTime = time < 0.12f ? time : time - 0.12f;
-                    float frequency = time < 0.12f ? 659.25f : 987.77f;
-                    float envelope = Mathf.Min(1f, noteTime / 0.005f) * Mathf.Exp(-noteTime * 28f);
-                    samples[i] = Mathf.Sin(2f * Mathf.PI * frequency * noteTime) * envelope * 0.5f;
-                }
-                chime = AudioClip.Create("SaleChime", samples.Length, 1, sampleRate, false);
-                chime.SetData(samples, 0);
+                wallet.SaleRecorded += PlayCoin;
+                wallet.CoinsSpent += PlaySpend;
             }
-            source.clip = chime;
-            if (wallet != null) wallet.SaleRecorded += Play;
-            if (wallet != null) wallet.CoinsSpent += Play;
         }
 
-        void Play(int amount)
+        void PlayCoin(int amount)
         {
-            if (isActiveAndEnabled && source != null) source.PlayOneShot(chime);
+            if (!isActiveAndEnabled || source == null || coin == null) return;
+            CoinPlayCount++;
+            source.PlayOneShot(coin, 1f);
+        }
+
+        void PlaySpend(int amount)
+        {
+            if (!isActiveAndEnabled || source == null || spend == null) return;
+            SpendPlayCount++;
+            source.PlayOneShot(spend, 0.7f);
         }
 
         void OnDestroy()
         {
-            if (wallet != null) wallet.SaleRecorded -= Play;
-            if (wallet != null) wallet.CoinsSpent -= Play;
-            if (chime != null) BurgerVisual.Release(chime);
+            if (wallet != null)
+            {
+                wallet.SaleRecorded -= PlayCoin;
+                wallet.CoinsSpent -= PlaySpend;
+            }
+            if (coin != null) BurgerVisual.Release(coin);
+            if (spend != null) BurgerVisual.Release(spend);
+            coin = null;
+            spend = null;
         }
     }
 }

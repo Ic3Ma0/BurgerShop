@@ -15,6 +15,8 @@ namespace BurgerShop.Tests.EditMode
         GrillUpgradeZone upgrade;
         Transform output;
         Transform[] lamps;
+        Transform[] extras;
+        StationUpgradeFeedback feedback;
 
         [SetUp]
         public void SetUp()
@@ -38,8 +40,17 @@ namespace BurgerShop.Tests.EditMode
                 lamps[i] = new GameObject("Lamp").transform;
                 lamps[i].SetParent(root.transform);
             }
+            Transform visual = new GameObject("GrillVisual").transform;
+            visual.SetParent(root.transform, false);
+            extras = new Transform[2];
+            for (int i = 0; i < extras.Length; i++)
+            {
+                extras[i] = new GameObject("Burner_" + (i + 1)).transform;
+                extras[i].SetParent(visual, false);
+            }
+            feedback = StationUpgradeFeedback.Attach(visual, extras);
             upgrade = root.AddComponent<GrillUpgradeZone>();
-            upgrade.Configure(grill, wallet, player, point, null, lamps);
+            upgrade.Configure(grill, wallet, player, point, null, lamps, feedback);
         }
 
         [TearDown]
@@ -104,6 +115,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallet.Coins, Is.EqualTo(10));
             Assert.That(wallet.CompletedSales, Is.EqualTo(1));
             Assert.That(grill.ProductionSeconds, Is.EqualTo(2f));
+            Assert.That(grill.Capacity, Is.EqualTo(6));
             Assert.That(lamps[0].gameObject.activeSelf, Is.True);
             Assert.That(lamps[1].gameObject.activeSelf, Is.False);
             Assert.That(upgrade.NextCost, Is.EqualTo(60));
@@ -122,6 +134,7 @@ namespace BurgerShop.Tests.EditMode
             Wait(1.5f);
             Assert.That(upgrade.Level, Is.EqualTo(3));
             Assert.That(grill.ProductionSeconds, Is.EqualTo(1.5f));
+            Assert.That(grill.Capacity, Is.EqualTo(8));
             Assert.That(wallet.Coins, Is.EqualTo(30));
             Assert.That(lamps[1].gameObject.activeSelf, Is.True);
             Leave();
@@ -227,6 +240,86 @@ namespace BurgerShop.Tests.EditMode
                 Assert.Throws<System.ArgumentOutOfRangeException>(() => grill.SetProductionSeconds(invalid));
             Assert.That(grill.ProductionSeconds, Is.EqualTo(3f));
             Assert.That(grill.NormalizedProgress, Is.EqualTo(0.5f).Within(0.001f));
+        }
+
+        [Test]
+        public void UpgradeRaisesStockCapFromFourToSixToEight()
+        {
+            Assert.That(ProductionStation.CapacityForLevel(1), Is.EqualTo(4));
+            Assert.That(ProductionStation.CapacityForLevel(2), Is.EqualTo(6));
+            Assert.That(ProductionStation.CapacityForLevel(3), Is.EqualTo(8));
+            grill.Advance(100f);
+            Assert.That(grill.Stock, Is.EqualTo(4));
+            wallet.RecordSale(90);
+            Enter();
+            Wait(1.5f);
+            Assert.That(grill.Capacity, Is.EqualTo(6));
+            grill.Advance(100f);
+            Assert.That(grill.Stock, Is.EqualTo(6));
+            Leave();
+            Enter();
+            Wait(1.5f);
+            Assert.That(grill.Capacity, Is.EqualTo(8));
+            grill.Advance(100f);
+            Assert.That(grill.Stock, Is.EqualTo(8));
+        }
+
+        [Test]
+        public void UpgradeRevealsANewPartPopsLvThenPunchSettles()
+        {
+            Assert.That(extras[0].gameObject.activeSelf, Is.False);
+            Assert.That(feedback.ShowsMax, Is.False);
+            wallet.RecordSale(30);
+            Enter();
+            Wait(1.5f);
+            Assert.That(upgrade.Level, Is.EqualTo(2));
+            Assert.That(lamps[0].gameObject.activeSelf, Is.True);
+            Assert.That(extras[0].gameObject.activeSelf, Is.True);
+            Assert.That(extras[1].gameObject.activeSelf, Is.False);
+            Assert.That(feedback.ActivePartCount, Is.EqualTo(1));
+            Assert.That(feedback.PopupText, Is.EqualTo("LV2"));
+            Assert.That(feedback.IsPopupPlaying, Is.True);
+            Assert.That(feedback.IsPunching, Is.True);
+            upgrade.Advance(0.08f);
+            Assert.That(feedback.PunchScale, Is.GreaterThan(1.02f));
+            upgrade.Advance(0.4f);
+            Assert.That(feedback.IsPunching, Is.False);
+            Assert.That(feedback.PunchScale, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(extras[0].gameObject.activeSelf, Is.True);
+        }
+
+        [Test]
+        public void MaxUpgradeLeavesStaticMaxAndRestoreDoesNotReplay()
+        {
+            wallet.RecordSale(90);
+            Enter();
+            Wait(1.5f);
+            Leave();
+            Enter();
+            Wait(1.5f);
+            Assert.That(upgrade.IsMaxLevel, Is.True);
+            Assert.That(extras[1].gameObject.activeSelf, Is.True);
+            Assert.That(feedback.PopupText, Is.EqualTo("LV3"));
+            Assert.That(feedback.ShowsMax, Is.True);
+            upgrade.Advance(1f);
+            Assert.That(feedback.IsPopupPlaying, Is.False);
+            Assert.That(feedback.IsPunching, Is.False);
+            Assert.That(feedback.ShowsMax, Is.True);
+            Wait(5f);
+            Assert.That(feedback.IsPunching, Is.False);
+            Assert.That(feedback.IsPopupPlaying, Is.False);
+            Assert.That(wallet.Coins, Is.Zero);
+
+            upgrade.RestoreLevel(1);
+            Assert.That(extras[0].gameObject.activeSelf, Is.False);
+            Assert.That(feedback.ShowsMax, Is.False);
+            Assert.That(feedback.IsPunching, Is.False);
+            upgrade.RestoreLevel(3);
+            Assert.That(extras[0].gameObject.activeSelf, Is.True);
+            Assert.That(extras[1].gameObject.activeSelf, Is.True);
+            Assert.That(feedback.ShowsMax, Is.True);
+            Assert.That(feedback.IsPunching, Is.False);
+            Assert.That(feedback.IsPopupPlaying, Is.False);
         }
     }
 }

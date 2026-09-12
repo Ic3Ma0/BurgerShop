@@ -17,7 +17,26 @@ namespace BurgerShop.Economy
             CompletedSales = completedSales;
         }
 
-        public bool CanRecordSale(int amount) => amount > 0 && Coins <= long.MaxValue - amount && CompletedSales < int.MaxValue;
+        public bool CanCompleteSale() => CompletedSales < int.MaxValue;
+
+        public bool CanCollectCoins(int amount) => amount > 0 && Coins <= long.MaxValue - amount;
+
+        public bool CanRecordSale(int amount) => amount > 0 && CanCompleteSale() && CanCollectCoins(amount);
+
+        public bool RecordCompletedSale()
+        {
+            if (!CanCompleteSale()) return false;
+            CompletedSales++;
+            return true;
+        }
+
+        public bool CollectCoins(int amount)
+        {
+            if (!CanCollectCoins(amount)) return false;
+            Coins += amount;
+            SaleRecorded?.Invoke(amount);
+            return true;
+        }
 
         public bool RecordSale(int amount)
         {
@@ -28,10 +47,13 @@ namespace BurgerShop.Economy
             return true;
         }
 
-        public bool TrySpend(int amount)
+        public bool TrySpend(int amount) => TrySpend(amount, null);
+
+        public bool TrySpend(int amount, Action commit)
         {
             if (amount <= 0 || Coins < amount) return false;
             Coins -= amount;
+            commit?.Invoke();
             CoinsSpent?.Invoke(amount);
             return true;
         }

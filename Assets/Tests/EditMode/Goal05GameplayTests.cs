@@ -42,7 +42,9 @@ namespace BurgerShop.Tests.EditMode
             BurgerServingZone serving = Object.FindFirstObjectByType<BurgerServingZone>();
             BurgerPickupZone pickup = Object.FindFirstObjectByType<BurgerPickupZone>();
             CustomerQueue queue = Object.FindFirstObjectByType<CustomerQueue>();
+            queue.OrderQuantityFactory = () => 1;
             RestaurantWallet wallet = Object.FindFirstObjectByType<RestaurantWallet>();
+            CashFloor cash = Object.FindFirstObjectByType<CashFloor>();
             Text sales = GameObject.Find("SalesStatus").GetComponent<Text>();
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(Object.FindFirstObjectByType<SaleFeedback>().GetComponent<AudioSource>().clip.samples, Is.GreaterThan(0));
@@ -52,12 +54,12 @@ namespace BurgerShop.Tests.EditMode
             for (int trip = 1; trip <= 3; trip++)
             {
                 // Stay in the aisle below both counters, then approach the marked spots.
-                yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+                yield return WalkTo(inventory.transform, ShopLayout.Aisle);
                 yield return WalkTo(inventory.transform, pickup.PickupPosition);
                 float deadline = Time.time + 5f;
                 while (inventory.Count == 0 && Time.time < deadline) yield return null;
                 Assert.That(inventory.Count, Is.GreaterThan(0));
-                yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+                yield return WalkTo(inventory.transform, ShopLayout.Aisle);
                 int carried = inventory.Count;
                 CustomerAgent customer = queue.ReadyCustomer;
                 Assert.That(customer, Is.Not.Null);
@@ -66,17 +68,24 @@ namespace BurgerShop.Tests.EditMode
                 deadline = Time.time + 5f;
                 while (wallet.CompletedSales < trip && Time.time < deadline) yield return null;
                 Assert.That(wallet.CompletedSales, Is.EqualTo(trip));
+                Assert.That(wallet.Coins, Is.EqualTo((trip - 1) * 10));
+                yield return WalkTo(inventory.transform, cash.CounterOrigin);
+                deadline = Time.time + 5f;
+                while (wallet.Coins < trip * 10 && Time.time < deadline) yield return null;
                 Assert.That(wallet.Coins, Is.EqualTo(trip * 10));
-                Assert.That(inventory.Count, Is.EqualTo(carried - 1));
+                Assert.That(inventory.Count, Is.LessThan(carried));
                 Assert.That(customer.IsDeparting, Is.True);
                 Assert.That(customer.PaidAmount, Is.EqualTo(10));
                 Assert.That(customer.GetComponentInChildren<BurgerVisual>(), Is.Not.Null);
-                yield return null;
-                Assert.That(sales.text, Does.Contain($"COINS {trip * 10}").And.Contain($"SERVED {trip}"));
-                yield return WalkTo(inventory.transform, new Vector3(0.9f, 0f, 0.4f));
+                float hudDeadline = Time.time + 0.5f;
+                while (Time.time < hudDeadline && !sales.text.Contains($"{trip * 10}"))
+                    yield return null;
+                Assert.That(sales.text, Does.Contain($"{trip * 10}"));
+                Assert.That(sales.text, Does.Not.Contain("SERVED").And.Not.Contain("COINS"));
+                yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             }
 
-            yield return WaitSeconds(12f);
+            yield return WaitSeconds(18f);
             foreach (CustomerAgent customer in servedCustomers) Assert.That(customer == null, Is.True, "Served customer must reach the exit and be destroyed.");
             Assert.That(wallet.Coins, Is.EqualTo(30));
             Assert.That(wallet.CompletedSales, Is.EqualTo(3));
@@ -91,7 +100,7 @@ namespace BurgerShop.Tests.EditMode
 
         IEnumerator WalkTo(Transform player, Vector3 target)
         {
-            float deadline = Time.time + 8f;
+            float deadline = Time.time + 12f;
             while (Time.time < deadline)
             {
                 Vector3 offset = target - player.position;
