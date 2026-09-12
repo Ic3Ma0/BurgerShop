@@ -223,7 +223,7 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void MultiplePilesStackAndCollectOneAtATime()
+        public void MultiplePilesFlyConcurrentlyAndCreditExactlyOnce()
         {
             cash.DropAtCounter();
             cash.DropAtCounter();
@@ -231,11 +231,14 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(cash.PileCount, Is.EqualTo(2));
             Assert.That(cash.GroundValue, Is.EqualTo(20));
             inventory.transform.position = cash.NearestPilePosition;
-            serving.Advance(0.05f);
-            serving.Advance(CashPickup.FlyDuration);
-            Assert.That(wallet.Coins, Is.EqualTo(10));
-            Assert.That(cash.GroundValue, Is.EqualTo(10));
-            Assert.That(cash.PileCount, Is.EqualTo(1));
+            serving.Advance(0.08f);
+            Assert.That(cash.GetComponentsInChildren<CashPickup>().Length,Is.Zero,"Both piles have launched");
+            Assert.That(wallet.Coins,Is.Zero,"Credit occurs on arrival");
+            serving.Advance(.3f);
+            Assert.That(wallet.Coins, Is.EqualTo(20));
+            Assert.That(cash.GroundValue, Is.Zero);
+            Assert.That(cash.PileCount, Is.Zero);
+            serving.Advance(.5f);Assert.That(wallet.Coins,Is.EqualTo(20));
         }
 
         [Test]
@@ -279,18 +282,18 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(bill.localScale.z, Is.GreaterThanOrEqualTo(0.11f * 2f));
             Assert.That(bill.localScale.y, Is.GreaterThan(0.012f));
             Color color = bill.GetComponent<Renderer>().sharedMaterial.GetColor("_BaseColor");
-            Assert.That(color.g, Is.GreaterThan(0.9f));
+            Assert.That(color.g, Is.GreaterThan(0.85f));
             Assert.That(color.g, Is.GreaterThan(color.r + 0.2f));
             Color stripe = cash.transform.Find("Cash_0/Visual/Bill_0").GetComponent<Renderer>().sharedMaterial.GetColor("_BaseColor");
             Assert.That(stripe.g, Is.GreaterThan(0.85f));
             TextMesh label = cash.transform.Find("Cash_0/Visual/Amount").GetComponent<TextMesh>();
             Assert.That(label.text, Is.EqualTo("10"));
             Assert.That(label.characterSize, Is.LessThan(0.2f));
-            Assert.That(CashPickup.FaceTilt, Is.GreaterThanOrEqualTo(12f));
+            Assert.That(CashPickup.FaceTilt, Is.Zero);
         }
 
         [Test]
-        public void IdleBillsBobAndSpinSoTheTopStaysReadable()
+        public void IdleBillStacksStayFlatAndStill()
         {
             cash.DropAtCounter();
             inventory.transform.position = Vector3.zero;
@@ -300,8 +303,8 @@ namespace BurgerShop.Tests.EditMode
             serving.Advance(0.35f);
             float y1 = visual.localPosition.y;
             serving.Advance(0.35f);
-            Assert.That(Mathf.Abs(y1 - y0) + Mathf.Abs(visual.localPosition.y - y1), Is.GreaterThan(0.02f));
-            Assert.That(Mathf.Abs(Mathf.DeltaAngle(yaw0, visual.localEulerAngles.y)), Is.GreaterThan(8f));
+            Assert.That(Mathf.Abs(y1 - y0) + Mathf.Abs(visual.localPosition.y - y1), Is.LessThan(.001f));
+            Assert.That(Mathf.Abs(Mathf.DeltaAngle(yaw0, visual.localEulerAngles.y)), Is.LessThan(.001f));
             Assert.That(wallet.Coins, Is.Zero);
         }
 

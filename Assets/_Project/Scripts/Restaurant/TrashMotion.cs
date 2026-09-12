@@ -14,12 +14,13 @@ namespace BurgerShop.Restaurant
         Vector3 startScale;
         Vector3 endScale;
         float age;
+        float duration=Duration;
         Action arrived;
         bool finished;
 
         public bool IsFinished => finished;
 
-        public void Launch(Transform target, Vector3 targetLocal, Vector3 hopOffset, Vector3 finalScale, Action onArrived)
+        public void Launch(Transform target, Vector3 targetLocal, Vector3 hopOffset, Vector3 finalScale, Action onArrived,float seconds=Duration)
         {
             transform.SetParent(null, true);
             follow = target;
@@ -29,6 +30,7 @@ namespace BurgerShop.Restaurant
             startScale = transform.localScale;
             endScale = finalScale;
             arrived = onArrived;
+            duration=Mathf.Max(.01f,seconds);
             age = 0f;
             finished = false;
         }
@@ -37,7 +39,7 @@ namespace BurgerShop.Restaurant
         {
             if (finished || deltaTime <= 0f) return;
             age += deltaTime;
-            float t = Mathf.Clamp01(age / Duration);
+            float t = Mathf.Clamp01(age / duration);
             float eased = t * t * (3f - 2f * t);
             Vector3 dest = follow != null ? follow.TransformPoint(followLocal) : followLocal;
             transform.position = Vector3.Lerp(origin, dest, eased) + hop * Mathf.Sin(t * Mathf.PI);

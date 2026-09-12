@@ -9,7 +9,7 @@ namespace BurgerShop.Restaurant
         public const int CounterDrop = 10;
         public const int DiningDrop = 10;
         public const float PickupRadius = 0.85f;
-        public const float PickupInterval = 0.25f;
+        public const float PickupInterval = 0.04f;
         public static readonly Vector3 CounterOffsetFromServing = new Vector3(-1.5f, 1.12f, 0.4f);
         public static readonly Vector3 TableOffsetFromCenter = new Vector3(1.15f, 0.04f, 0.35f);
 
@@ -81,25 +81,13 @@ namespace BurgerShop.Restaurant
         public void Advance(float deltaTime)
         {
             if (deltaTime <= 0f) return;
-            int flying = FlyingCount();
-            TickFlights(deltaTime);
-            bool completed = flying > 0 && FlyingCount() < flying;
-            if (collector == null || !collector.gameObject.activeInHierarchy) return;
-            if (NearestInRange() == null)
+            while(deltaTime>0.00001f)
             {
-                cooldown = 0f;
-                return;
-            }
-            if (completed)
-            {
-                cooldown = PickupInterval;
-                return;
-            }
-            cooldown = Mathf.Max(0f, cooldown - deltaTime);
-            if (cooldown <= 0f && TryBeginPickup(out TrashMotion started))
-            {
-                cooldown = PickupInterval;
-                started.Advance(deltaTime);
+                float dt=Mathf.Min(.02f,deltaTime);deltaTime-=dt;
+                TickFlights(dt);
+                if(collector==null||!collector.gameObject.activeInHierarchy)continue;
+                cooldown=Mathf.Max(0,cooldown-dt);
+                if(cooldown<=0&&TryBeginPickup(out _))cooldown=PickupInterval;
             }
         }
 
@@ -109,6 +97,9 @@ namespace BurgerShop.Restaurant
             CashPickup pile = NearestInRange();
             if (pile == null || pile.IsCollecting || wallet == null || !wallet.CanCollectCoins(pile.Value))
                 return false;
+            long reserved=0;
+            foreach(var pending in piles)if(pending!=null&&pending.IsCollecting)reserved+=pending.Value;
+            if(wallet.Coins>long.MaxValue-pile.Value-reserved)return false;
             CashPickup captured = pile;
             Vector3 pickupOrigin=pile.transform.position;
             captured.LaunchTo(collector, () => FinishCollect(captured,pickupOrigin));

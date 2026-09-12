@@ -28,7 +28,8 @@ namespace BurgerShop.Restaurant
         bool paused,unfocused;
         int spawnedRiders;
         ProductionStation source;
-        CourierConveyor intakeBelt,parcelBelt;
+        CourierConveyor intakeBelt,parcelBelt,machineBelt;
+        readonly List<TrashMotion> partsFlights=new List<TrashMotion>();
         float feedClock;
         public int InTransitCount => (intakeBelt?.Count??0)+(parcelBelt?.Count??0);
         public int InputCount=>raw.Count;
@@ -87,6 +88,7 @@ namespace BurgerShop.Restaurant
             parcelBelt=new CourierConveyor(area,"RedParcelChain",CourierConveyor.Rounded(
                 Machine+new Vector3(1.8f,1.1f,0),new Vector3(-3,1.1f,21),new Vector3(-3,1.1f,23),
                 Counter+new Vector3(-1.35f,1.1f,0)),dark,white);
+            machineBelt=new CourierConveyor(area,"InternalPackagingChain",new[]{Machine+new Vector3(0,1.1f,-1.05f),Machine+new Vector3(1.8f,1.1f,0)},dark,white);
             // Cut an actual conveyor aperture in the north wall at x=3.
             foreach(Transform part in area)
                 if(part.name=="OldNorthWall"&&part.position.x>0)part.gameObject.SetActive(false);
@@ -100,11 +102,13 @@ namespace BurgerShop.Restaurant
             machine.Find("WhiteFrame").gameObject.SetActive(false);
             foreach(Transform part in machine)if(part.name=="Roller")part.gameObject.SetActive(false);
             CourierVisuals.Part(machine,"TunnelRoof",new Vector3(0,1.95f,0),new Vector3(2.5f,.4f,1.6f),blue);
+            CourierVisuals.Part(machine,"TunnelPillar",new Vector3(-1.02f,.95f,0),new Vector3(.42f,1.6f,1.6f),blue);
             foreach(int side in new[]{-1,1})
-                CourierVisuals.Part(machine,"TunnelPillar",new Vector3(side*1.02f,.95f,0),new Vector3(.42f,1.6f,1.6f),blue);
+                CourierVisuals.Part(machine,"OutletPost",new Vector3(1.12f,.95f,side*.78f),new Vector3(.24f,1.6f,.24f),blue);
         }
         void AdvanceAutomation(float dt)
         {
+            machineBelt.Advance(dt,item=>false);
             intakeBelt.Advance(dt,item=>
             {
                 if(raw.Count>=Capacity)return false;
@@ -135,6 +139,8 @@ namespace BurgerShop.Restaurant
                 float dt=Mathf.Min(.05f,seconds);seconds-=dt;
                 transfer=Mathf.Max(0,transfer-dt);cooldown=Mathf.Max(0,cooldown-dt);partPickup=Mathf.Max(0,partPickup-dt);
                 if(source==null)TransferPlayer();else AdvanceAutomation(dt);
+            for(int i=partsFlights.Count-1;i>=0;i--)
+            {var motion=partsFlights[i];if(motion==null){partsFlights.RemoveAt(i);continue;}motion.Advance(dt);if(motion==null||motion.IsFinished)partsFlights.RemoveAt(i);}
                 Process(dt);AdvanceRiders(dt);AdvanceHandoff(dt);CollectParts();
             }
         }
@@ -213,7 +219,10 @@ namespace BurgerShop.Restaurant
             for(int i=partsPiles.Count-1;i>=0;i--)
             {
                 if(ShopLayout.Horizontal(player.transform.position,partsPiles[i].position)>.85f||!parts.TryCollect(partsAmounts[i]))continue;
-                BurgerVisual.Release(partsPiles[i].gameObject);partsPiles.RemoveAt(i);partsAmounts.RemoveAt(i);partPickup=.25f;break;
+                var collected=partsPiles[i];partsPiles.RemoveAt(i);partsAmounts.RemoveAt(i);
+                var motion=collected.gameObject.AddComponent<TrashMotion>();
+                motion.Launch(player.transform,new Vector3(0,1.45f,.1f),Vector3.up*.25f,Vector3.one*.15f,()=>BurgerVisual.Release(collected.gameObject),.18f);
+                collected.SetParent(area,true);partsFlights.Add(motion);partPickup=.04f;break;
             }
         }
         static void Stack(List<Transform> items,Vector3 point,float spacing)
