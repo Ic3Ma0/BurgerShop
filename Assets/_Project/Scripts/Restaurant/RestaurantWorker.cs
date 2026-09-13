@@ -156,6 +156,38 @@ namespace BurgerShop.Restaurant
             if (Application.isPlaying) Advance(Time.deltaTime);
         }
 
+        int restroomClean=-1,restroomStep,restroomRevision=-1;
+        Vector3[] restroomRoute;
+        public bool IsCleaningRestroom=>restroomClean>=0;
+        bool TickRestroomCleaning(float seconds)
+        {
+            var room=RestroomExpansion.Current;
+            if(room==null||!room.Built)return false;
+            if(restroomClean<0)
+            {
+                if(!CanClean||CarryingLoose||CarryingCola||CarryingBoxed||CarryingTrash)return false;
+                restroomClean=room.ClaimCleaning(this);if(restroomClean<0)return false;
+                restroomRoute=null;
+            }
+            if(!room.IsDirty(restroomClean)){room.ReleaseCleaner(this);restroomClean=-1;ChooseJob();return false;}
+            var layout=Building.FacilityLayout.Current;
+            if(restroomRoute==null||restroomRevision!=(layout?.Revision??-1))
+            {
+                restroomRoute=layout?.Route(transform.position,RestroomExpansion.UsePoint(restroomClean));restroomStep=0;restroomRevision=layout?.Revision??-1;
+                if(restroomRoute==null){room.ReleaseCleaner(this);restroomClean=-1;return false;}
+            }
+            float remaining=walkSpeed*seconds;
+            while(restroomStep<restroomRoute.Length)
+            {
+                Vector3 target=restroomRoute[restroomStep];target.y=transform.position.y;
+                Vector3 offset=target-transform.position;float distance=offset.magnitude;
+                if(distance>.01f)transform.rotation=Quaternion.LookRotation(offset);
+                if(distance>remaining){transform.position+=offset.normalized*remaining;return true;}
+                transform.position=target;remaining-=distance;restroomStep++;
+            }
+            if(room.Clean(restroomClean,seconds)){CompletedClears++;restroomClean=-1;ChooseJob();}
+            return true;
+        }
         int layoutRevision=-1;
         public void Advance(float deltaTime)
         {
@@ -169,6 +201,7 @@ namespace BurgerShop.Restaurant
                     State==WorkerState.BagTable?WorkerState.ToBagTable:State==WorkerState.BagCounter?WorkerState.ToBagCounter:State;
                 StartTrip(travel);
             }
+            if(TickRestroomCleaning(deltaTime))return;
             Trash?.AdvanceDumps(deltaTime);
             if (State == WorkerState.ToGrill || State == WorkerState.ToCounter
                 || State == WorkerState.ToTrash || State == WorkerState.ToBin
@@ -570,7 +603,7 @@ namespace BurgerShop.Restaurant
             else route = new[] { AtHeight(aisleCorner), AtHeight(destination) };
             if (ShopLayout.WingUnlocked && (destination.x > ShopLayout.WallHalf || transform.position.x > ShopLayout.WallHalf))
                 route = System.Array.ConvertAll(ShopLayout.WingRoute(transform.position, destination), AtHeight);
-            if(Building.FacilityLayout.Current?.HasCustomLayout==true)route=Building.FacilityLayout.Current.Route(transform.position,destination)??new[]{transform.position};
+            if(Building.FacilityLayout.Current?.HasCustomLayout==true||RestroomExpansion.Current?.Built==true)route=Building.FacilityLayout.Current.Route(transform.position,destination);
             waypoint = 0;
         }
 
@@ -644,8 +677,16 @@ namespace BurgerShop.Restaurant
 
         Vector3 AtHeight(Vector3 point) => new Vector3(point.x, transform.position.y, point.z);
 
+        float routeRetry;
+        const float RouteRetrySeconds=.5f;
         bool MoveAlongRoute(float deltaTime)
         {
+            if(route==null)
+            {
+                routeRetry-=deltaTime;
+                if(routeRetry<=0){routeRetry=RouteRetrySeconds;route=Building.FacilityLayout.Current?.Route(transform.position,DestinationFor(State));waypoint=0;}
+                if(route==null)return false;
+            }
             float remaining = WalkSpeed * deltaTime;
             while (waypoint < route.Length)
             {
@@ -667,6 +708,7 @@ namespace BurgerShop.Restaurant
         void KeepInPlayable()
         {
             Vector3 point = transform.position;
+            if(RestroomExpansion.Current?.Built==true&&RestroomExpansion.Floor.Contains(new Vector2(point.x,point.z)))return;
             Vector3 clamped = ShopLayout.ClampPlayable(point);
             if ((clamped - point).sqrMagnitude < 0.0001f) return;
             transform.position = new Vector3(clamped.x, point.y, clamped.z);
@@ -683,6 +725,7 @@ namespace BurgerShop.Restaurant
 
         void OnDestroy()
         {
+            RestroomExpansion.Current?.ReleaseCleaner(this);
             if (ownedMaterials == null) return;
             for (int i = 0; i < ownedMaterials.Length; i++)
             {
@@ -716,7 +759,7 @@ namespace BurgerShop.Restaurant
             worker.HeightScale = look.Height;
             worker.WearsHat = look.HasHat;
             worker.Slot = slot;
-            Part(root.transform, "Uniform", PrimitiveType.Capsule, new Vector3(0f, -0.3f, 0f), new Vector3(0.65f, 0.7f, 0.65f), uniform);
+            Part(root.transform, "Uniform", PrimitiveType.Capsule, new Vector3(0f, -.07f, 0f), new Vector3(.64f,.325f,.4f), uniform);
             Part(root.transform, "Head", PrimitiveType.Sphere, new Vector3(0f, 0.65f, 0f), Vector3.one * 0.5f, skin);
             if (look.HasHat)
                 Part(root.transform, "Hat", PrimitiveType.Cylinder, new Vector3(0f, look.HatY, 0f), look.HatScale, accent);
@@ -729,6 +772,7 @@ namespace BurgerShop.Restaurant
             if (look.HasScarf)
                 Part(root.transform, "Scarf", PrimitiveType.Cube, new Vector3(0f, 0.22f, 0.28f), new Vector3(0.55f, 0.12f, 0.18f), accent);
             Part(root.transform, "Nose", PrimitiveType.Sphere, new Vector3(0f, 0.64f, 0.25f), Vector3.one * 0.12f, skin);
+            BurgerShop.Core.HumanoidVisual.Add(root.transform,-1.05f,uniform,skin,accent);
             worker.label = new GameObject("WorkerLabel").AddComponent<TextMesh>();
             worker.label.transform.SetParent(root.transform, false);
             worker.label.transform.localPosition = new Vector3(0f, 1.95f, 0f);

@@ -44,8 +44,16 @@ namespace BurgerShop.Restaurant
         {
             if(offers.ContainsKey(offer.Id))return;
             offers.Add(offer.Id,offer);offer.BindPosition();
-            if(!offer.Id.StartsWith("table-")||GetComponent<TableUpgradeBoard>()==null)ShopFixtures.CreateActionCircle(offer.Target,"Upgrade_"+offer.Id,offer.Position,HudChrome.Gold);
+            if(FacilityDetailsHud.Current==null&&(!offer.Id.StartsWith("table-")||GetComponent<TableUpgradeBoard>()==null))ShopFixtures.CreateActionCircle(offer.Target,"Upgrade_"+offer.Id,offer.Position,HudChrome.Gold);
             offer.Apply(Level(offer.Id));
+        }
+        public void UseDirectInteraction()
+        {
+            foreach(var offer in offers.Values)
+            {
+                var circle=offer.Target!=null?offer.Target.Find("Upgrade_"+offer.Id):null;
+                if(circle!=null)circle.gameObject.SetActive(false);
+            }
         }
         public void Discover()
         {

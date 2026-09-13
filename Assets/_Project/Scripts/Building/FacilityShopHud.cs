@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using BurgerShop.Player;
 using BurgerShop.Restaurant;
 using BurgerShop.UI;
@@ -12,7 +13,20 @@ namespace BurgerShop.Building
     public sealed class FacilityShopHud : MonoBehaviour
     {
         FacilityLayout layout;
-        Transform panel,toolbar,preview;
+        Transform panel,toolbar,preview,backdrop,content;
+        Button buyTab,ownedTab,pickScene;
+        Text catalogHint,browseHint;
+        ScrollRect catalogScroll;
+        bool ownedPage;
+        int worldInputFrame=-1;
+        bool awaitDesktopMotion;
+        Vector2 initialPointer;
+        Vector2 fittedSize;
+        readonly List<Button> ownedButtons=new List<Button>();
+        readonly List<Text> prices=new List<Text>();
+        readonly List<Renderer> hiddenOriginals=new List<Renderer>();
+        internal bool IsOwnedPage=>ownedPage;
+        public bool IsOpen=>open;
         Text status;
         bool open,placing,dragging,desktopMoved;
         readonly List<RaycastResult> uiHits=new List<RaycastResult>();
@@ -21,10 +35,18 @@ namespace BurgerShop.Building
         string placementError="";
         Vector3 checkedPoint;float checkedYaw,nextCheck;int checkedRevision=-1;bool checkedValid;
         FacilityInstance checkedItem;string checkedError="";
-        Vector3 point;
+        Vector3 point,rawPoint;
+        float rawYaw;
+        bool alignmentMayAdvance;
+        readonly AlignmentHold alignment=new AlignmentHold();
+        PlacementAlignment.Pose alignedPose;
+        LineRenderer alignmentGuide;Material alignmentMaterial;
+        internal bool IsAligned=>alignment.Active;
+        internal float PreviewYaw=>yaw;
         CameraFollow follow;
         bool followWasEnabled;
         Material ghostMaterial;
+        Button restroomButton;
         readonly List<Button> buyButtons=new List<Button>();
         readonly List<FacilityKind> kinds=new List<FacilityKind>();
         public static FacilityShopHud Build(Transform parent,FacilityLayout layout)
@@ -49,29 +71,44 @@ namespace BurgerShop.Building
             foreach(var line in new[]{new Vector4(0,10,44,6),new Vector4(0,-10,38,6),new Vector4(-23,10,6,38),new Vector4(22,0,6,25),new Vector4(-31,29,20,6)})
                 {var stroke=HudChrome.Panel(cart.transform,"CartStroke",Vector2.one*.5f,Vector2.one*.5f,new Vector2(line.x,line.y),new Vector2(line.z,line.w),HudChrome.Ink);stroke.sprite=null;stroke.type=Image.Type.Simple;}
             foreach(int x in new[]{-12,16}){var wheel=HudChrome.Panel(cart.transform,"Wheel",Vector2.one*.5f,Vector2.one*.5f,new Vector2(x,-27),new Vector2(10,10),HudChrome.Ink);wheel.sprite=HudChrome.Circle();}
-            panel=HudChrome.Panel(transform,"Catalog",Vector2.one*.5f,Vector2.one*.5f,Vector2.zero,new Vector2(850,880),HudChrome.Cream).transform;
-            HudChrome.Label(panel,"Title",new Vector2(0,1),new Vector2(1,1),new Vector2(.5f,1),new Vector2(0,-18),new Vector2(800,50),32,HudChrome.Ink,TextAnchor.MiddleCenter,true,true).text="SUPERMARKET";
-            Button(panel,"MoveExisting","Move existing facilities",new Vector2(.5f,1),new Vector2(0,-80),new Vector2(550,65),()=>{panel.gameObject.SetActive(false);status.text="Click a facility to move it";});
-            var viewport=new GameObject("Viewport",typeof(RectTransform),typeof(Image),typeof(Mask)).transform;viewport.SetParent(panel,false);
-            var vr=(RectTransform)viewport;vr.anchorMin=Vector2.zero;vr.anchorMax=Vector2.one;vr.offsetMin=new Vector2(25,90);vr.offsetMax=new Vector2(-25,-165);viewport.GetComponent<Mask>().showMaskGraphic=false;
-            var content=new GameObject("Items",typeof(RectTransform)).transform;content.SetParent(viewport,false);
-            var cr=(RectTransform)content;cr.anchorMin=new Vector2(0,1);cr.anchorMax=Vector2.one;cr.pivot=new Vector2(.5f,1);cr.sizeDelta=new Vector2(0,1000);
-            var scroll=viewport.gameObject.AddComponent<ScrollRect>();scroll.viewport=vr;scroll.content=cr;scroll.horizontal=false;scroll.movementType=ScrollRect.MovementType.Clamped;
-            int row=0;
+            backdrop=HudChrome.Panel(transform,"CatalogBackdrop",Vector2.zero,Vector2.zero,Vector2.zero,Vector2.zero,new Color(.07f,.10f,.11f,.52f)).transform;
+            var shade=(RectTransform)backdrop;shade.anchorMax=Vector2.one;shade.offsetMin=shade.offsetMax=Vector2.zero;
+            backdrop.GetComponent<Image>().raycastTarget=true;
+            panel=HudChrome.Panel(transform,"Catalog",Vector2.one*.5f,Vector2.one*.5f,Vector2.zero,new Vector2(920,1100),HudChrome.Cream).transform;
+            HudChrome.Label(panel,"Title",new Vector2(.5f,1),new Vector2(.5f,1),new Vector2(.5f,1),new Vector2(0,-24),new Vector2(800,48),34,HudChrome.Ink,TextAnchor.MiddleCenter,true,false).text="SUPERMARKET";
+            buyTab=Button(panel,"BuyTab","Buy",new Vector2(.5f,1),new Vector2(-196,-86),new Vector2(380,64),()=>ShowCatalog(false));
+            ownedTab=Button(panel,"MoveExisting","My facilities",new Vector2(.5f,1),new Vector2(196,-86),new Vector2(380,64),()=>ShowCatalog(true));
+            catalogHint=HudChrome.Label(panel,"CatalogHint",new Vector2(.5f,1),new Vector2(.5f,1),new Vector2(.5f,1),new Vector2(0,-164),new Vector2(840,44),26,HudChrome.Ink,TextAnchor.MiddleCenter,false,false);
+            restroomButton=Button(panel,"BuyRestroom","Restroom expansion",new Vector2(.5f,1),new Vector2(0,-216),new Vector2(840,76),()=>
+            {
+                var room=layout.GetComponent<RestroomExpansion>();
+                if(room!=null&&room.TryPurchase())Close();else RefreshCatalog();
+            });
+            HudChrome.Icon(restroomButton.transform,"RoomPhoto",FacilityThumbnails.Restroom,new Vector2(0,.5f),new Vector2(0,.5f),new Vector2(16,0),new Vector2(148,92),Color.white);
+            var roomLabel=restroomButton.GetComponentInChildren<Text>();roomLabel.rectTransform.offsetMin=new Vector2(182,8);roomLabel.rectTransform.offsetMax=new Vector2(-18,-8);roomLabel.alignment=TextAnchor.MiddleLeft;roomLabel.horizontalOverflow=HorizontalWrapMode.Wrap;
+            var viewport=new GameObject("Viewport",typeof(RectTransform),typeof(Image),typeof(RectMask2D)).transform;viewport.SetParent(panel,false);
+            var vr=(RectTransform)viewport;vr.anchorMin=Vector2.zero;vr.anchorMax=Vector2.one;vr.offsetMin=new Vector2(26,104);vr.offsetMax=new Vector2(-26,-308);
+            viewport.GetComponent<Image>().color=new Color(1,1,1,0);
+            content=new GameObject("Items",typeof(RectTransform)).transform;content.SetParent(viewport,false);
+            var cr=(RectTransform)content;cr.anchorMin=new Vector2(0,1);cr.anchorMax=Vector2.one;cr.pivot=new Vector2(.5f,1);cr.sizeDelta=Vector2.zero;
+            catalogScroll=viewport.gameObject.AddComponent<ScrollRect>();catalogScroll.viewport=vr;catalogScroll.content=cr;catalogScroll.horizontal=false;catalogScroll.movementType=ScrollRect.MovementType.Clamped;
             foreach(var offer in FacilityCatalog.Offers)
             {
                 var kind=offer.Kind;
-                var button=Button(content,"Buy_"+kind,offer.Name,new Vector2(.5f,1),new Vector2(0,-row*80),new Vector2(760,70),()=>Purchase(kind));
-                buyButtons.Add(button);kinds.Add(kind);row++;
+                var button=Card("Buy_"+kind,kind,offer.Name,"Buy",()=>Purchase(kind),out var price);
+                buyButtons.Add(button);kinds.Add(kind);prices.Add(price);
             }
-            Button(panel,"Close","Close",new Vector2(.5f,0),new Vector2(0,12),new Vector2(250,65),Close);
+            pickScene=Button(panel,"PickInScene","Select in restaurant",new Vector2(.5f,0),new Vector2(-180,20),new Vector2(340,64),SelectInScene);
+            browseHint=HudChrome.Label(panel,"BrowseHint",new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(-180,20),new Vector2(340,64),24,HudChrome.Ink,TextAnchor.MiddleCenter,false,false);
+            browseHint.text="Swipe to browse";
+            Button(panel,"Close","Close",new Vector2(.5f,0),new Vector2(260,20),new Vector2(240,64),Close);
             toolbar=HudChrome.Panel(transform,"PlacementControls",new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(0,35),new Vector2(940,200),HudChrome.Cream).transform;
             status=HudChrome.Label(toolbar,"PlacementStatus",new Vector2(0,1),new Vector2(1,1),new Vector2(.5f,1),new Vector2(0,-12),new Vector2(900,70),24,HudChrome.Ink,TextAnchor.MiddleCenter,true,true);
             Button(toolbar,"RotateLeft","Rotate left",new Vector2(0,0),new Vector2(15,15),new Vector2(200,70),()=>Rotate(-FacilityCatalog.RotationStep));
             Button(toolbar,"RotateRight","Rotate right",new Vector2(0,0),new Vector2(230,15),new Vector2(200,70),()=>Rotate(FacilityCatalog.RotationStep));
             Button(toolbar,"Cancel","Cancel",new Vector2(0,0),new Vector2(465,15),new Vector2(170,70),CancelPlacement);
             Button(toolbar,"Done","Done",new Vector2(0,0),new Vector2(680,15),new Vector2(220,70),Done);
-            panel.gameObject.SetActive(false);toolbar.gameObject.SetActive(false);
+            panel.gameObject.SetActive(false);backdrop.gameObject.SetActive(false);toolbar.gameObject.SetActive(false);
         }
         public void Open()
         {
@@ -79,36 +116,134 @@ namespace BurgerShop.Building
             open=true;previousTimeScale=Time.timeScale;Time.timeScale=0;
             follow=Camera.main!=null?Camera.main.GetComponent<CameraFollow>():null;
             if(follow!=null){followWasEnabled=follow.enabled;follow.enabled=false;}
-            layout.Discover();RefreshCatalog();panel.gameObject.SetActive(true);toolbar.gameObject.SetActive(true);status.text="Choose an item, or move an existing facility";
+            ShowCatalog(false);
+        }
+        Button Card(string name,FacilityKind kind,string title,string action,UnityEngine.Events.UnityAction clicked,out Text detail)
+        {
+            var card=Button(content,name,"",new Vector2(0,1),Vector2.zero,new Vector2(420,308),clicked);
+            var rect=(RectTransform)card.transform;rect.pivot=new Vector2(0,1);
+            var label=card.GetComponentInChildren<Text>();label.text=title;label.fontSize=27;label.horizontalOverflow=HorizontalWrapMode.Wrap;
+            label.alignment=TextAnchor.UpperLeft;
+            var lr=label.rectTransform;lr.anchorMin=lr.anchorMax=new Vector2(0,1);lr.pivot=new Vector2(0,1);lr.anchoredPosition=new Vector2(18,-186);lr.sizeDelta=new Vector2(380,64);
+            var photoBackground=HudChrome.Panel(card.transform,"PhotoBackground",new Vector2(.5f,1),new Vector2(.5f,1),new Vector2(0,-10),new Vector2(392,162),new Color(.89f,.91f,.87f));
+            HudChrome.Icon(photoBackground.transform,"ProductPhoto",FacilityThumbnails.Get(kind),Vector2.one*.5f,Vector2.one*.5f,Vector2.zero,new Vector2(350,154),Color.white);
+            detail=HudChrome.Label(card.transform,"Detail",new Vector2(0,0),new Vector2(0,0),new Vector2(0,0),new Vector2(20,16),new Vector2(228,42),28,HudChrome.Green,TextAnchor.MiddleLeft,true,false);
+            var pill=HudChrome.Panel(card.transform,"ActionPill",new Vector2(1,0),new Vector2(1,0),new Vector2(-16,16),new Vector2(118,44),HudChrome.Green);
+            HudChrome.Label(pill.transform,"Action",Vector2.zero,Vector2.one,Vector2.one*.5f,Vector2.zero,Vector2.zero,25,Color.white,TextAnchor.MiddleCenter,true,false).text=action;
+            return card;
+        }
+        void ShowCatalog(bool owned)
+        {
+            ownedPage=owned;layout.Discover();RefreshCatalog();
+            panel.gameObject.SetActive(true);backdrop.gameObject.SetActive(true);toolbar.gameObject.SetActive(false);
+            catalogScroll.verticalNormalizedPosition=1;
+            FitCatalog();
+        }
+        void SelectInScene()
+        {
+            worldInputFrame=Time.frameCount;
+            panel.gameObject.SetActive(false);backdrop.gameObject.SetActive(false);toolbar.gameObject.SetActive(true);
+            status.text="Tap a facility to move it · Done to finish";
         }
         void RefreshCatalog()
         {
-            int row=0;
+            var restroom=layout.GetComponent<RestroomExpansion>();
+            restroomButton.GetComponentInChildren<Text>().text=restroom?.Built==true?"Restroom expansion\nBuilt":restroom?.Unlocked!=true?$"Restroom expansion\nUnlocks at Lv.{RestroomExpansion.UnlockRank}":$"Restroom expansion\n{restroom.Remaining} coins · Build";
+            restroomButton.gameObject.SetActive(!ownedPage&&restroom!=null);
+            restroomButton.interactable=restroom!=null&&!restroom.Built&&restroom.Unlocked&&layout.Wallet.Coins>=restroom.Remaining;
+
+            foreach(var old in ownedButtons){old.gameObject.SetActive(false);BurgerVisual.Release(old.gameObject);}ownedButtons.Clear();
             for(int i=0;i<buyButtons.Count;i++)
             {
-                bool unlocked=layout.Unlocked(kinds[i]);buyButtons[i].gameObject.SetActive(unlocked);if(!unlocked)continue;
-                ((RectTransform)buyButtons[i].transform).anchoredPosition=new Vector2(0,-row++*80);
-                buyButtons[i].GetComponentInChildren<Text>().text=FacilityCatalog.Get(kinds[i]).Name+"     "+layout.Price(kinds[i])+" coins";
+                bool visible=!ownedPage&&layout.Unlocked(kinds[i]);buyButtons[i].gameObject.SetActive(visible);
+                prices[i].text=layout.Price(kinds[i]).ToString("N0");
                 buyButtons[i].interactable=layout.Wallet.Coins>=layout.Price(kinds[i]);
+                var money=buyButtons[i].transform.Find("MoneyIcon");
+                if(money==null)FoodIcons.Add(buyButtons[i].transform,FoodIcon.Coin,Vector2.zero,32).name="MoneyIcon";
+                var mr=(RectTransform)buyButtons[i].transform.Find("MoneyIcon");mr.anchorMin=mr.anchorMax=Vector2.zero;mr.pivot=new Vector2(0,.5f);mr.anchoredPosition=new Vector2(18,37);
+                prices[i].rectTransform.anchoredPosition=new Vector2(56,16);
             }
-            ((RectTransform)buyButtons[0].transform.parent).sizeDelta=new Vector2(0,row*80);
+            if(ownedPage)
+            {
+                var counts=new Dictionary<FacilityKind,int>();
+                foreach(var instance in layout.Instances.Where(CanSelect).OrderBy(f=>f.Kind).ThenBy(f=>f.Id,System.StringComparer.Ordinal))
+                {
+                    counts.TryGetValue(instance.Kind,out int number);counts[instance.Kind]=++number;
+                    var button=Card("Move_"+instance.Id,instance.Kind,FacilityCatalog.Get(instance.Kind).Name+" #"+number,"Details",()=>{if(FacilityDetailsHud.Current!=null)FacilityDetailsHud.Current.Open(instance);else MoveExisting(instance);},out var detail);
+                    detail.text="Level "+instance.Capture().level;ownedButtons.Add(button);
+                }
+            }
+            buyTab.targetGraphic.color=ownedPage?HudChrome.TrackNavy:HudChrome.Green;
+            ownedTab.targetGraphic.color=ownedPage?HudChrome.Green:HudChrome.TrackNavy;
+            buyTab.GetComponentInChildren<Text>().color=ownedPage?HudChrome.Ink:Color.white;
+            ownedTab.GetComponentInChildren<Text>().color=ownedPage?Color.white:HudChrome.Ink;
+            catalogHint.text=ownedPage?"Choose a facility · Details / Move":"Choose a model · Pay after placement";
+            pickScene.gameObject.SetActive(ownedPage);
+            browseHint.gameObject.SetActive(!ownedPage);
+        }
+        internal static bool CanSelect(FacilityInstance instance)
+        {
+            if(instance==null||!instance.Available)return false;
+            return instance.GetComponentsInChildren<MeshRenderer>().Any(r=>r.enabled&&r.GetComponent<MeshFilter>()!=null&&r.GetComponent<TextMesh>()==null);
+        }
+        internal void MoveExisting(FacilityInstance instance)
+        {
+            if(!CanSelect(instance)||!layout.BeginMove(instance))return;
+            StartPreview(instance);SelectInScene();
+            var camera=Camera.main;
+            if(camera!=null)
+            {
+                var ray=camera.ViewportPointToRay(new Vector3(.5f,.57f,0));
+                if(new Plane(Vector3.up,Vector3.zero).Raycast(ray,out float distance))
+                    camera.transform.position=Core.StreetEnvironment.ClampCamera(camera,camera.transform.position+point-ray.GetPoint(distance));
+            }
+            status.text="Move "+FacilityCatalog.Get(instance.Kind).Name+" · Done to save";
+        }
+        void FitCatalog()
+        {
+            Vector2 available=((RectTransform)transform).rect.size;
+            if(available.x<1||available.y<1)return;
+            fittedSize=available;
+            var size=new Vector2(Mathf.Min(920,available.x-40),Mathf.Min(1200,available.y-64));
+            ((RectTransform)panel).sizeDelta=size;
+            float tabsWidth=Mathf.Min(380,(size.x-76)/2);
+            foreach(var tab in new[]{buyTab,ownedTab})((RectTransform)tab.transform).sizeDelta=new Vector2(tabsWidth,64);
+            ((RectTransform)buyTab.transform).anchoredPosition=new Vector2(-tabsWidth/2-6,-86);
+            ((RectTransform)ownedTab.transform).anchoredPosition=new Vector2(tabsWidth/2+6,-86);
+            catalogHint.rectTransform.sizeDelta=new Vector2(size.x-48,44);
+            ((RectTransform)restroomButton.transform).sizeDelta=new Vector2(size.x-52,104);
+            catalogScroll.viewport.offsetMax=new Vector2(-26,restroomButton.gameObject.activeSelf?-334:-218);
+            var cards=ownedPage?ownedButtons:buyButtons;
+            int columns=size.x>=700?2:1,index=0;
+            float width=(size.x-52-(columns-1)*20)/columns;
+            foreach(var card in cards)
+            {
+                if(!card.gameObject.activeSelf)continue;
+                var rect=(RectTransform)card.transform;rect.anchoredPosition=new Vector2((index%columns)*(width+20),-(index/columns)*328);rect.sizeDelta=new Vector2(width,308);index++;
+                ((RectTransform)card.transform.Find("Text")).sizeDelta=new Vector2(width-36,64);
+                ((RectTransform)card.transform.Find("PhotoBackground")).sizeDelta=new Vector2(width-24,162);
+                ((RectTransform)card.transform.Find("PhotoBackground/ProductPhoto")).sizeDelta=new Vector2(width-42,154);
+            }
+            ((RectTransform)content).sizeDelta=new Vector2(0,Mathf.CeilToInt(index/(float)columns)*328);
+            toolbar.localScale=Vector3.one*Mathf.Min(1,(available.x-32)/940);
         }
         void Purchase(FacilityKind kind)
         {
             var candidate=layout.BeginPurchase(kind);if(candidate==null){status.text=layout.LastError;return;}
-            StartPreview(candidate);panel.gameObject.SetActive(false);yaw=0;
+            StartPreview(candidate);SelectInScene();yaw=0;
         }
         void StartPreview(FacilityInstance source)
         {
             RemovePreview();placing=true;dragging=false;placementError="";checkedItem=null;yaw=source.transform.eulerAngles.y;
-            point=source.transform.position;
+            point=source.transform.position;rawPoint=point;rawYaw=yaw;alignment.Reset();alignmentMayAdvance=false;
+            awaitDesktopMotion=true;initialPointer=Mouse.current!=null?Mouse.current.position.ReadValue():Vector2.zero;
             preview=new GameObject("FacilityGhost").transform;
             ghostMaterial=Core.RuntimeMaterials.Create(new Color(.25f,.9f,.4f));
             foreach(var renderer in source.GetComponentsInChildren<MeshRenderer>(true))
             {
                 bool visible=true;for(var p=renderer.transform;p!=source.transform&&p!=null;p=p.parent)if(!p.gameObject.activeSelf){visible=false;break;}
                 if(!visible)continue;
-                var filter=renderer.GetComponent<MeshFilter>();if(filter==null||filter.sharedMesh==null)continue;
+                var filter=renderer.GetComponent<MeshFilter>();if(filter==null||filter.sharedMesh==null||!renderer.enabled||renderer.GetComponentInParent<Customer.CustomerAgent>()!=null||renderer.GetComponentInParent<RestaurantWorker>()!=null)continue;
                 var piece=new GameObject(renderer.name,typeof(MeshFilter),typeof(MeshRenderer)).transform;piece.SetParent(preview,false);
                 piece.localPosition=source.transform.InverseTransformPoint(renderer.transform.position);
                 piece.localRotation=Quaternion.Inverse(source.transform.rotation)*renderer.transform.rotation;
@@ -116,9 +251,40 @@ namespace BurgerShop.Building
                 piece.GetComponent<MeshFilter>().sharedMesh=filter.sharedMesh;
                 var materials=new Material[renderer.sharedMaterials.Length];for(int i=0;i<materials.Length;i++)materials[i]=ghostMaterial;
                 piece.GetComponent<MeshRenderer>().sharedMaterials=materials;
+                if(layout.Moving==source){hiddenOriginals.Add(renderer);renderer.enabled=false;}
             }
+            preview.SetPositionAndRotation(point,Quaternion.Euler(0,yaw,0));
         }
-        void Rotate(float delta){yaw+=delta;placementError="";}
+        void Rotate(float delta)
+        {yaw+=delta;rawYaw=yaw;rawPoint=point;alignment.Reset();alignmentMayAdvance=false;placementError="";}
+        internal void AdvanceAlignment(float seconds)
+        {
+            if(!placing||!alignmentMayAdvance)return;
+            bool attempt=alignment.ShouldAttempt(rawPoint,seconds);
+            if(!alignment.Active){point=rawPoint;yaw=rawYaw;}
+            if(!attempt)return;
+            var item=layout.Candidate!=null?layout.Candidate:layout.Moving;
+            bool found=false;PlacementAlignment.Pose best=default;
+            foreach(var neighbor in layout.Instances)
+            {
+                if(!PlacementAlignment.TryPose(item,rawPoint,rawYaw,neighbor,out var pose))continue;
+                if(!found||pose.Score<best.Score){found=true;best=pose;}
+            }
+            if(!found||!layout.CanPlace(item,best.Position,best.Yaw,true))return;
+            alignedPose=best;point=best.Position;yaw=best.Yaw;alignment.Lock(rawPoint);placementError="";
+        }
+        void DrawAlignment()
+        {
+            if(!alignment.Active){if(alignmentGuide!=null)alignmentGuide.enabled=false;return;}
+            if(alignmentGuide==null)
+            {
+                alignmentGuide=new GameObject("PlacementAlignmentGuide").AddComponent<LineRenderer>();
+                alignmentMaterial=Core.RuntimeMaterials.Create(new Color(.2f,.9f,1f),true);alignmentGuide.sharedMaterial=alignmentMaterial;
+                alignmentGuide.positionCount=2;alignmentGuide.useWorldSpace=true;alignmentGuide.startWidth=alignmentGuide.endWidth=.045f;
+                alignmentGuide.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;alignmentGuide.receiveShadows=false;
+            }
+            alignmentGuide.enabled=true;alignmentGuide.SetPosition(0,alignedPose.GuideStart);alignmentGuide.SetPosition(1,alignedPose.GuideEnd);
+        }
         bool PlaceCurrent()
         {
             if(!placing)return true;
@@ -135,7 +301,10 @@ namespace BurgerShop.Building
         // UI hover/click freezes the last world pose; touch retains drag/release/Done semantics.
         internal void MoveDesktopPointer(Vector2 pointer,bool clicked,bool overUi)
         {
+            if(overUi)alignmentMayAdvance=false;
             if(!placing||overUi)return;
+            if(awaitDesktopMotion&&pointer==initialPointer&&!clicked)return;
+            awaitDesktopMotion=false;
             var previous=point;
             MovePreviewPointer(pointer,true,true,false);dragging=false;
             desktopMoved=point!=previous;
@@ -145,12 +314,13 @@ namespace BurgerShop.Building
         internal void MovePreviewPointer(Vector2 pointer,bool pressed,bool held,bool overUi)
         {
             if(!placing)return;
+            if(overUi)alignmentMayAdvance=false;
             if(pressed)dragging=!overUi;
             if(!held){dragging=false;return;}
             if(!dragging||overUi||Camera.main==null)return;
             var ray=Camera.main.ScreenPointToRay(pointer);
             if(new Plane(Vector3.up,Vector3.zero).Raycast(ray,out var distance))
-            {var next=ray.GetPoint(distance);if((next-point).sqrMagnitude>.000001f)placementError="";point=next;}
+            {var next=ray.GetPoint(distance);if((next-rawPoint).sqrMagnitude>.000001f)placementError="";rawPoint=next;alignmentMayAdvance=true;if(!alignment.Active)point=next;AdvanceAlignment(0);}
         }
         bool OverUi(Vector2 pointer)
         {
@@ -161,17 +331,35 @@ namespace BurgerShop.Building
             foreach(var hit in uiHits)if(hit.module is GraphicRaycaster)return true;
             return false;
         }
-        void CancelPlacement(){dragging=false;layout.Cancel();RemovePreview();placing=false;status.text="Click a facility to move it";}
+        void CancelPlacement()
+        {
+            bool moving=layout.Moving!=null;
+            dragging=false;layout.Cancel();RemovePreview();placing=false;checkedItem=null;
+            if(open)ShowCatalog(moving||ownedPage);
+        }
         public void Close()
         {
-            if(!open)return;CancelPlacement();open=false;Time.timeScale=previousTimeScale;
+            if(!open)return;
+            open=false;dragging=false;layout.Cancel();RemovePreview();placing=false;checkedItem=null;Time.timeScale=previousTimeScale;
             if(follow!=null)follow.enabled=followWasEnabled;
-            panel.gameObject.SetActive(false);toolbar.gameObject.SetActive(false);
+            panel.gameObject.SetActive(false);backdrop.gameObject.SetActive(false);toolbar.gameObject.SetActive(false);
+            if(isActiveAndEnabled)StartCoroutine(RefreshAfterPlacement());else layout.RefreshNavigation();
         }
-        void RemovePreview(){if(preview!=null)BurgerVisual.Release(preview.gameObject);preview=null;if(ghostMaterial!=null)Destroy(ghostMaterial);ghostMaterial=null;}
+        System.Collections.IEnumerator RefreshAfterPlacement()
+        {
+            // Destroyed preview/old facility colliders disappear at frame end, before rebaking.
+            yield return null;
+            if(!open&&layout!=null)layout.RefreshNavigation();
+        }
+        void OnDisable()
+        {
+            if(open)Close();
+        }
+        void RemovePreview(){alignment.Reset();alignmentMayAdvance=false;if(alignmentGuide!=null)BurgerVisual.Release(alignmentGuide.gameObject);alignmentGuide=null;if(alignmentMaterial!=null)BurgerVisual.Release(alignmentMaterial);alignmentMaterial=null;foreach(var renderer in hiddenOriginals)if(renderer!=null)renderer.enabled=true;hiddenOriginals.Clear();if(preview!=null)BurgerVisual.Release(preview.gameObject);preview=null;if(ghostMaterial!=null)BurgerVisual.Release(ghostMaterial);ghostMaterial=null;}
         void Update()
         {
             if(!open)return;
+            if(fittedSize!=((RectTransform)transform).rect.size)FitCatalog();
             var keyboard=Keyboard.current;var mouse=Mouse.current;
             if(keyboard!=null&&keyboard.escapeKey.wasPressedThisFrame){if(placing)CancelPlacement();else Close();return;}
             var touch=Touchscreen.current?.primaryTouch;
@@ -184,13 +372,14 @@ namespace BurgerShop.Building
             {
                 int fingers=0;Vector2 delta=Vector2.zero;
                 foreach(var t in Touchscreen.current.touches)if(t.press.isPressed){fingers++;delta+=t.delta.ReadValue();}
-                if(fingers>=2){dragging=false;Camera.main.transform.position=Core.StreetEnvironment.ClampCamera(Camera.main,Camera.main.transform.position-new Vector3(delta.x,0,delta.y)*.015f/fingers);return;}
+                if(fingers>=2){alignmentMayAdvance=false;dragging=false;Camera.main.transform.position=Core.StreetEnvironment.ClampCamera(Camera.main,Camera.main.transform.position-new Vector3(delta.x,0,delta.y)*.015f/fingers);return;}
             }
             if(!panel.gameObject.activeSelf&&keyboard!=null)
             {
                 Vector3 pan=Vector3.zero;if(keyboard.wKey.isPressed)pan.z++;if(keyboard.sKey.isPressed)pan.z--;if(keyboard.aKey.isPressed)pan.x--;if(keyboard.dKey.isPressed)pan.x++;
                 Camera.main.transform.position=Core.StreetEnvironment.ClampCamera(Camera.main,Camera.main.transform.position+pan*12*Time.unscaledDeltaTime);
             }
+            if(Time.frameCount==worldInputFrame)return;
             bool ui=OverUi(pointer);
             if(placing)
             {
@@ -207,7 +396,7 @@ namespace BurgerShop.Building
                 foreach(var hit in hits)
                 {
                     var instance=hit.collider.GetComponentInParent<FacilityInstance>();
-                    if(instance==null||!layout.BeginMove(instance))continue;StartPreview(instance);break;
+                    if(!CanSelect(instance)||!layout.BeginMove(instance))continue;StartPreview(instance);break;
                 }
             }
         }
@@ -215,6 +404,7 @@ namespace BurgerShop.Building
         {
             // Touch release has no active pointer; rotation buttons must still repaint the preview.
             if(!open||!placing||preview==null)return;
+            AdvanceAlignment(Time.unscaledDeltaTime);DrawAlignment();
             preview.SetPositionAndRotation(point,Quaternion.Euler(0,yaw,0));
             var item=layout.Candidate!=null?layout.Candidate:layout.Moving;
             bool dirty=checkedItem!=item||checkedPoint!=point||checkedYaw!=yaw||checkedRevision!=layout.Revision;
@@ -229,7 +419,7 @@ namespace BurgerShop.Building
             bool valid=!dirty&&checkedValid&&string.IsNullOrEmpty(placementError);
             ghostMaterial.color=dirty?new Color(.95f,.75f,.25f):valid?new Color(.25f,.85f,.4f):new Color(.95f,.25f,.2f);
             status.text=!string.IsNullOrEmpty(placementError)?placementError:dirty?"Checking space and paths...":valid?
-                (Application.isMobilePlatform?"Drag to position · rotate · tap Done to place":"Move mouse · Q/E rotate · click to place · Done to finish"):checkedError;
+                alignment.Active?"Aligned · drag away to release · Done to place":(Application.isMobilePlatform?"Drag to position · rotate · tap Done to place":"Move mouse · Q/E rotate · click to place · Done to finish"):checkedError;
 
         }
         void OnDestroy(){Close();RemovePreview();}

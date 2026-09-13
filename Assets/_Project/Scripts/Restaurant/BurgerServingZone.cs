@@ -31,6 +31,7 @@ namespace BurgerShop.Restaurant
         bool paused;
         public const float HandoffDuration = 0.45f;
         public const float BetweenItems = 0.15f;
+        public static float CooldownForLevel(int level) => Mathf.Max(.05f, BetweenItems - .05f*(level-1));
         public bool IsHandoffActive => ownedCustomer != null && ownedCustomer.Order.InFlight;
         public int OwningCounter => ownedCustomer != null ? ownedCounter : -1;
         public CustomerAgent ActiveCustomer => ownedCustomer;
@@ -244,7 +245,7 @@ namespace BurgerShop.Restaurant
             CustomerAgent customer = ownedCustomer;
             customer.ReceiveItem(flyingBurger);
             DeliveredUnits++;
-            cooldown = Mathf.Max(.05f, BetweenItems - .05f*(StockAt(ownedCounter).ServiceLevel-1));
+            cooldown = CooldownForLevel(StockAt(ownedCounter).ServiceLevel);
             if (customer.Order.IsComplete && customer.Order.TrySettle())
             {
                 int amount = customer.OrderSize * price;

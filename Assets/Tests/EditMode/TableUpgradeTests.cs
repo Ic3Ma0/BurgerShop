@@ -119,7 +119,10 @@ namespace BurgerShop.Tests.EditMode
 
         void FillQueue()
         {
-            for (int i = 0; i < 1200; i++) queue.Advance(1f / 60f);
+            // BS-SPEC-046 moved arrival to the exterior sidewalk. Wait for arrival
+            // before testing table pay/eating duration, while keeping a bounded timeout.
+            for (int i = 0; i < 3600 && queue.ReadyCustomer == null; i++) queue.Advance(1f / 60f);
+            Assert.That(queue.ReadyCustomer, Is.Not.Null, "Customer must reach the cashier from the sidewalk");
         }
 
         CustomerAgent FinishMealOn(DiningTable table)

@@ -43,66 +43,54 @@ namespace BurgerShop.Restaurant
             Level = value;
             if(look != null) { look.gameObject.SetActive(false); BurgerVisual.Release(look.gameObject); }
             look = new GameObject("Look_Lv" + value).transform; look.SetParent(transform, false);
-            if(product==FoodIcon.Box){BuildBlueCounter(value);return;}
-            Color accent = product == FoodIcon.Cola ? new Color(.15f,.43f,.78f)
-                : product == FoodIcon.Bagged ? HudChrome.Green : HudChrome.Tomato;
-            Material paint = RuntimeMaterials.Create(accent);
-            Material cream = RuntimeMaterials.Create(HudChrome.Cream);
-            Material metal = RuntimeMaterials.Create(value == 3 ? HudChrome.Gold : new Color(.45f,.50f,.55f));
-            Material dark = RuntimeMaterials.Create(new Color(.13f,.18f,.21f));
-            Material light = RuntimeMaterials.Create(new Color(.45f,1f,.83f), true);
-            look.gameObject.AddComponent<BurgerVisual>().OwnMaterials(paint,cream,metal,dark,light);
-            float front = -depth * .5f - .025f;
-            Part("FrontPanel", new Vector3(0,height*.48f,front), new Vector3(width*.94f,height*.75f,.06f), value == 1 ? cream : paint);
-            Part("CounterRim", new Vector3(0,height+.08f,0), new Vector3(width+.08f,.10f,depth+.06f), value == 3 ? metal : paint);
-            Part("FrontStripe", new Vector3(0,height*.66f,front-.04f), new Vector3(width*.92f,.08f,.025f), value == 1 ? paint : cream);
-            if(value >= 2)
-            {
-                Part("RegisterBase", new Vector3(-width*.30f,height+.20f,0),new Vector3(.40f,.18f,.35f),dark);
-                Part("RegisterScreen", new Vector3(-width*.30f,height+.43f,.04f),new Vector3(.46f,.36f,.09f),dark);
-                Part("Display", new Vector3(-width*.30f,height+.43f,-.012f),new Vector3(.36f,.24f,.018f),light);
-                for(int i=0;i<3;i++) Part("Drawer_"+i,new Vector3(width*.20f,height*(.25f+i*.15f),front-.04f),new Vector3(width*.35f,.055f,.035f),metal);
-                Part("LeftTrim",new Vector3(-width*.45f,height*.48f,front-.045f),new Vector3(.09f,height*.80f,.04f),metal);
-                Part("RightTrim",new Vector3(width*.45f,height*.48f,front-.045f),new Vector3(.09f,height*.80f,.04f),metal);
-            }
-            if(value == 3)
-            {
-                // Posts at the back leave the stock and handoff area visible from the game camera.
-                for(int side=-1;side<=1;side+=2)
-                    Part("CanopyPost_"+side,new Vector3(side*width*.44f,height+.65f,depth*.38f),new Vector3(.10f,1.30f,.10f),metal);
-                Part("Canopy",new Vector3(0,height+1.27f,depth*.30f),new Vector3(width+.12f,.24f,.45f),paint);
-                Part("CanopyLight",new Vector3(0,height+1.12f,depth*.30f),new Vector3(width*.90f,.035f,.38f),light);
-                var badge = new GameObject("ProductBadge",typeof(SpriteRenderer));badge.transform.SetParent(look,false);
-                badge.transform.localPosition=new Vector3(0,height+1.27f,depth*.30f-.235f);
-                badge.transform.localScale=Vector3.one*.34f;
-                badge.GetComponent<SpriteRenderer>().sprite=FoodIcons.Get(product);
-                Part("FootRail",new Vector3(0,.14f,front-.02f),new Vector3(width*.92f,.09f,.10f),metal);
-            }
+            BuildRestaurantCounter(value);
         }
-        void BuildBlueCounter(int level)
+        void BuildRestaurantCounter(int level)
         {
-            var cyan=RuntimeMaterials.Create(new Color(.40f,.71f,.78f));
-            var dark=RuntimeMaterials.Create(new Color(.08f,.16f,.21f));
-            var trim=RuntimeMaterials.Create(level==3?new Color(.74f,.90f,.94f):new Color(.25f,.48f,.56f));
-            look.gameObject.AddComponent<BurgerVisual>().OwnMaterials(cyan,dark,trim);
-            Part("BlueWorktop",new Vector3(0,height+.07f,0),new Vector3(width+.10f,.12f,depth+.08f),cyan);
-            for(int side=-1;side<=1;side+=2)for(int i=0;i<(width>3?3:2);i++)
+            bool packing=product==FoodIcon.Box;bool prep=packing&&width>3;
+            var cream=RuntimeMaterials.Create(RestaurantStyle.Cream);
+            var ink=RuntimeMaterials.Create(RestaurantStyle.Ink);
+            var steel=RuntimeMaterials.Create(RestaurantStyle.Steel);
+            var accent=RuntimeMaterials.Create(packing||product==FoodIcon.Cola?RestaurantStyle.Blue:RestaurantStyle.Red);
+            var wood=RuntimeMaterials.Create(new Color(.63f,.39f,.20f));
+            var glow=RuntimeMaterials.Create(new Color(.53f,.83f,.76f),true);
+            look.gameObject.AddComponent<BurgerVisual>().OwnMaterials(cream,ink,steel,accent,wood,glow);
+            RestaurantStyle.Block(look,"Worktop",new Vector3(0,height+.075f,0),new Vector3(width+.14f,.16f,depth+.14f),packing?steel:cream);
+            Part("FrontPanel",new Vector3(0,height*.47f,-depth*.5f-.04f),new Vector3(width+.02f,height*.80f,.12f),cream);
+            Part("BaseTrim",new Vector3(0,.10f,0),new Vector3(width+.06f,.15f,depth+.08f),ink);
+            for(int side=-1;side<=1;side+=2)
             {
-                int count=width>3?3:2;float panel=width/count;
-                float x=-width*.5f+panel*(i+.5f);
-                Part("BlueCabinet",new Vector3(x,height*.47f,side*(depth*.5f+.02f)),new Vector3(panel-.10f,height*.77f,.045f),cyan);
-                Part("Handle",new Vector3(x,height*.68f,side*(depth*.5f+.05f)),new Vector3(.28f,.045f,.035f),dark);
+                Part("EndPanel",new Vector3(side*(width*.5f+.025f),height*.47f,0),new Vector3(.10f,height*.80f,depth),packing?accent:cream);
+                Part("BrandBand",new Vector3(0,height*.72f,side*(depth*.5f+.12f)),new Vector3(width,.12f,.04f),accent);
             }
-            Part("BaseTrim",new Vector3(0,.09f,0),new Vector3(width+.05f,.12f,depth+.06f),dark);
-            if(level>=2)Part("UpgradeTrim",new Vector3(0,height*.82f,-depth*.5f-.055f),new Vector3(width,.045f,.035f),trim);
-            if(level==3)foreach(int side in new[]{-1,1})Part("PremiumCorner",new Vector3(side*(width*.5f-.05f),height*.5f,-depth*.5f-.055f),new Vector3(.09f,height*.8f,.05f),trim);
-            if(width>3)
+            int panels=width>3?3:2;
+            for(int i=0;i<panels;i++)
             {
-                for(int i=0;i<40;i++)
-                {
-                    float angle=i*Mathf.PI*2/40;
-                    Part("IngredientRing",new Vector3(1.2f+Mathf.Sin(angle)*.47f,height+.138f,Mathf.Cos(angle)*.47f),new Vector3(.06f,.012f,.06f),trim);
-                }
+                float x=(i-(panels-1)*.5f)*width/panels;
+                Part("DrawerHandle",new Vector3(x,height*.50f,-depth*.5f-.12f),new Vector3(.30f,.05f,.035f),ink);
+                if(level>=2)Part("DrawerJoint",new Vector3(x+width/panels*.47f,height*.39f,-depth*.5f-.11f),new Vector3(.018f,height*.50f,.015f),steel);
+            }
+            if(prep)
+            {
+                RestaurantStyle.Block(look,"PrepBoard",new Vector3(width*.24f,height+.18f,0),new Vector3(width*.30f,.07f,depth*.70f),wood);
+                Part("BoxDivider",new Vector3(-width*.36f,height+.35f,depth*.28f),new Vector3(width*.20f,.42f,.08f),accent);
+                if(level>=2)Part("WrappingShelf",new Vector3(-width*.35f,height+.53f,depth*.20f),new Vector3(width*.23f,.055f,.40f),steel);
+            }
+            else
+            {
+                RestaurantStyle.Block(look,"RegisterBase",new Vector3(-width*.32f,height+.22f,0),new Vector3(.46f,.20f,.38f),ink);
+                var monitor=RestaurantStyle.Block(look,"RegisterScreen",new Vector3(-width*.32f,height+.47f,.08f),new Vector3(.5f,.36f,.08f),ink);monitor.transform.localRotation=Quaternion.Euler(-12,0,0);
+                Part("RegisterDisplay",new Vector3(-width*.32f,height+.48f,.026f),new Vector3(.38f,.23f,.025f),glow);
+                RestaurantStyle.Block(look,"ServingTray",new Vector3(width*.24f,height+.19f,.1f),new Vector3(width*.32f,.05f,depth*.55f),steel);
+            }
+            if(level==3)
+            {
+                foreach(int side in new[]{-1,1})Part("MenuPost",new Vector3(side*width*.43f,height+.52f,depth*.38f),new Vector3(.06f,.8f,.06f),steel);
+                RestaurantStyle.Block(look,"MenuHeader",new Vector3(0,height+.91f,depth*.38f),new Vector3(width*.94f,.32f,.14f),accent);
+                Part("MenuLight",new Vector3(0,height+.72f,depth*.38f),new Vector3(width*.83f,.025f,.12f),cream);
+                var badge=new GameObject("ProductBadge",typeof(SpriteRenderer));badge.transform.SetParent(look,false);
+                badge.transform.localPosition=new Vector3(0,height+.91f,depth*.38f-.08f);badge.transform.localScale=Vector3.one*.25f;
+                badge.GetComponent<SpriteRenderer>().sprite=FoodIcons.Get(product);
             }
         }
         void Part(string name, Vector3 position, Vector3 scale, Material material)

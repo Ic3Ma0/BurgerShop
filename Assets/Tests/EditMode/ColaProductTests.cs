@@ -274,8 +274,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(colaMachine.Station.Capacity, Is.EqualTo(6));
             Assert.That(colaMachine.ActiveLookName, Is.EqualTo("Look_Lv2"));
             Assert.That(colaMachine.ActiveLookScale, Is.EqualTo(ExpandableGrill.LookScales[1]));
-            Assert.That(colaMachine.ActiveLook.Find("GrillDeck_2"), Is.Not.Null);
-            Assert.That(colaMachine.ActiveLook.Find("Chimney"), Is.Not.Null);
+            Assert.That(colaMachine.ActiveLook.Find("Nozzle_1"), Is.Not.Null);
+            Assert.That(colaMachine.ActiveLook.Find("SelectionPanel"), Is.Not.Null);
             inventory.transform.position = Vector3.zero;
             colaMachine.Upgrade.Advance(0.1f);
             inventory.transform.position = colaMachine.Upgrade.UpgradePosition + Vector3.up;

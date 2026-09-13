@@ -25,7 +25,9 @@ namespace BurgerShop.Customer
         const float HandoffSeconds = 0.4f;
         const float DepartureSpeed = 1.92f;
 
-        enum Phase { None, Handoff, ToSeat, Eating, Exiting }
+        enum Phase { None, Handoff, ToSeat, Eating, Restroom, Exiting }
+        int restroomSlot=-1,restroomStage;float restroomTime,restroomWait;
+        public bool IsUsingRestroom=>phase==Phase.Restroom;
 
         int lockedMealTip = 10;
         public void LockMealTip(int tip) => lockedMealTip=tip;
@@ -70,13 +72,14 @@ namespace BurgerShop.Customer
             Material bubble = MaterialFor(new Color(1f, 0.98f, 0.90f), true);
             agent.ownedMaterials = new[] { shirt, skin, hair, bubble };
 
-            Part(root.transform, "Body", PrimitiveType.Capsule, new Vector3(0f, 0.70f, 0f), new Vector3(0.65f, 0.65f, 0.65f), shirt);
+            Part(root.transform, "Body", PrimitiveType.Capsule, new Vector3(0f, .98f, 0f), new Vector3(.64f,.325f,.4f), shirt);
             Part(root.transform, "Head", PrimitiveType.Sphere, new Vector3(0f, 1.48f, 0f), Vector3.one * 0.55f, skin);
-            Part(root.transform, "Hair", PrimitiveType.Cube, new Vector3(0f, 1.69f, -0.03f), new Vector3(0.55f, 0.14f, 0.48f), hair);
+            Part(root.transform, "Hair", PrimitiveType.Sphere, new Vector3(0f, 1.69f, -0.03f), new Vector3(0.55f, 0.23f, 0.48f), hair);
             Part(root.transform, "Nose", PrimitiveType.Sphere, new Vector3(0f, 1.47f, 0.28f), new Vector3(0.14f, 0.12f, 0.15f), skin);
 
+            BurgerShop.Core.HumanoidVisual.Add(root.transform,0,shirt,skin,hair);
             if (kind == CustomerKind.BigEater)
-                root.transform.Find("Body").localScale = new Vector3(1.05f, .70f, .9f);
+                root.transform.Find("Body").localScale = new Vector3(1.05f, .35f, .9f);
             if (kind == CustomerKind.Calling)
                 Part(root.transform, "Phone", PrimitiveType.Cube, new Vector3(.31f,1.4f,.16f), new Vector3(.09f,.32f,.17f), hair);
             agent.orderBubble = new GameObject("OrderBubble").transform;
@@ -272,12 +275,17 @@ namespace BurgerShop.Customer
                     for (int i = 1; i < exitRoute.Length; i++) leaving.Add(exitRoute[i]);
                     exitRoute = leaving.ToArray(); exitWaypoint = 0;
                 }
-                phase = Phase.Exiting;
+                phase = RestroomExpansion.Current?.TryVisit(this)==true?Phase.Restroom:Phase.Exiting;
+            }
+            if(phase==Phase.Restroom)
+            {
+                if(TickRestroom(deltaTime,ref remaining))return;
+                phase=Phase.Exiting;wingWalk=null;
             }
 
             while (remaining > 0f && exitWaypoint < exitRoute.Length)
             {
-                if(Building.FacilityLayout.Current?.HasCustomLayout==true)
+                if(Building.FacilityLayout.Current?.HasCustomLayout==true||RestroomExpansion.Current?.Built==true)
                 {
                     if(!StepToward(exitRoute[exitWaypoint],ref remaining))break;
                     exitWaypoint++;continue;
@@ -302,6 +310,39 @@ namespace BurgerShop.Customer
             }
         }
 
+        bool TickRestroom(float seconds,ref float travel)
+        {
+            var room=RestroomExpansion.Current;if(room==null||!room.Built)return false;
+            if(restroomStage==0)
+            {
+                if(!StepToward(RestroomExpansion.Door,ref travel))return true;
+                restroomStage=1;
+            }
+            if(restroomStage==1)
+            {
+                restroomSlot=room.Acquire(this);
+                if(restroomSlot<0)
+                {
+                    StepToward(room.WaitPoint(this),ref travel);restroomWait+=seconds;
+                    if(restroomWait>RestroomExpansion.MaxWaitSeconds){room.Release(this);return false;}return true;
+                }
+                restroomStage=2;
+            }
+            if(restroomStage==2)
+            {
+                if(!StepToward(RestroomExpansion.UsePoint(restroomSlot),ref travel))return true;
+                restroomTime+=seconds;if(restroomTime<RestroomExpansion.UseSeconds)return true;
+                room.FinishUse(this,restroomSlot);restroomTime=0;restroomStage=3;
+            }
+            if(restroomStage==3)
+            {
+                if(!StepToward(RestroomExpansion.Wash,ref travel))return true;
+                restroomTime+=seconds;if(restroomTime<RestroomExpansion.WashSeconds)return true;
+                restroomStage=4;
+            }
+            if(!StepToward(RestroomExpansion.Door+Vector3.forward,ref travel))return true;
+            room.Release(this);return false;
+        }
         Vector3[] wingWalk;
         Vector3 wingTarget;
         int wingStep;
@@ -312,7 +353,7 @@ namespace BurgerShop.Customer
             {
                 wingTarget = target;
                 layoutRevision=Building.FacilityLayout.Current?.Revision??-1;
-                wingWalk = Building.FacilityLayout.Current?.HasCustomLayout==true?Building.FacilityLayout.Current.Route(transform.position,target):ShopLayout.WingRoute(transform.position,target);
+                wingWalk = (Building.FacilityLayout.Current?.HasCustomLayout==true||RestroomExpansion.Current?.Built==true)?Building.FacilityLayout.Current.Route(transform.position,target):ShopLayout.WingRoute(transform.position,target);
                 if(wingWalk==null)return false;
                 wingStep = 0;
             }
@@ -392,6 +433,7 @@ namespace BurgerShop.Customer
         void OnDestroy()
         {
             // Meal visuals remain owned children; Unity tears them down with the customer.
+            RestroomExpansion.Current?.Release(this);
             table?.Release(this);
             Removed?.Invoke(this);
             if (ownedMaterials != null)

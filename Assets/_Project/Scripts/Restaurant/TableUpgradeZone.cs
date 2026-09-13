@@ -19,6 +19,7 @@ namespace BurgerShop.Restaurant
         bool paused;
         bool unfocused;
 
+        public bool DirectInteraction { get; private set; }
         public DiningTable Table => table;
         public int SlotIndex { get; private set; }
         public int Cost => TableSetCatalog.UpgradeCost;
@@ -32,7 +33,7 @@ namespace BurgerShop.Restaurant
         public RestaurantWallet Wallet => wallet;
         public BurgerInventory Player => player;
         public bool IsSelected => selected;
-        public bool IsAvailable => isActiveAndEnabled && !IsPurchased && !HasChosenSet && wallet != null
+        public bool IsAvailable => !DirectInteraction && isActiveAndEnabled && !IsPurchased && !HasChosenSet && wallet != null
             && wallet.isActiveAndEnabled && player != null && player.isActiveAndEnabled && !paused && !unfocused;
         public bool IsInRange => player != null && !IsPurchased && !HasChosenSet
             && DistanceSquared <= Radius * Radius;
@@ -67,6 +68,7 @@ namespace BurgerShop.Restaurant
             if (isActiveAndEnabled) InvestZoneRegistry.Register(this);
             ResetEntry();
             RefreshMarker();
+            if (UI.FacilityDetailsHud.Current != null) UseDirectInteraction();
         }
 
         public void Restore(int setId, int investment)
@@ -110,11 +112,32 @@ namespace BurgerShop.Restaurant
             return true;
         }
 
+        public void UseDirectInteraction()
+        {
+            DirectInteraction = true;
+            ResetEntry();
+            InvestZoneRegistry.Unregister(this);
+            HidePad();
+        }
+
+        public bool TryBuySet(TableSetId id, int expectedInvestment)
+        {
+            if (table == null || !table.isActiveAndEnabled || wallet == null || !wallet.isActiveAndEnabled
+                || HasChosenSet || !TableSetCatalog.IsChoice(id) || Invested != expectedInvestment) return false;
+            if (Remaining == 0) return TryChoose(id);
+            return wallet.TrySpend(Remaining, () =>
+            {
+                Invested = Cost;
+                IsPurchased = PendingChoice = true;
+                TryChoose(id);
+            });
+        }
+
         void Update() => Advance(Time.deltaTime);
 
         public void Advance(float deltaTime)
         {
-            if (deltaTime <= 0f || HasChosenSet) return;
+            if (DirectInteraction || deltaTime <= 0f || HasChosenSet) return;
             if (PendingChoice)
             {
                 ResetEntry();
@@ -157,7 +180,7 @@ namespace BurgerShop.Restaurant
         void LateUpdate()
         {
             if (marker == null) return;
-            marker.gameObject.SetActive(!HasChosenSet);
+            marker.gameObject.SetActive(!DirectInteraction && !HasChosenSet);
             if (Camera.main != null) marker.transform.rotation = Camera.main.transform.rotation;
         }
 
@@ -165,12 +188,12 @@ namespace BurgerShop.Restaurant
         {
             if (marker == null) return;
             marker.text = HasChosenSet ? "" : PendingChoice ? "PICK SET" : $"TABLE\nRemaining {Remaining}";
-            marker.gameObject.SetActive(!HasChosenSet);
+            marker.gameObject.SetActive(!DirectInteraction && !HasChosenSet);
         }
 
         public void SetRankVisible(bool visible)
         {
-            bool show=visible && !HasChosenSet;
+            bool show=visible && !DirectInteraction && !HasChosenSet;
             if(pad!=null)pad.gameObject.SetActive(show);
             if(marker!=null)marker.gameObject.SetActive(show);
         }
@@ -183,7 +206,7 @@ namespace BurgerShop.Restaurant
 
         void ShowPad()
         {
-            if (pad != null) pad.gameObject.SetActive(true);
+            if (pad != null) pad.gameObject.SetActive(!DirectInteraction);
         }
     }
 }

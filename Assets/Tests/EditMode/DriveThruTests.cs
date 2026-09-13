@@ -277,7 +277,8 @@ namespace BurgerShop.Tests.EditMode
             serving.DropZone.Advance(0.01f);
             Assert.That(serving.DropZone.TryDepositFrom(player), Is.True);
             Assert.That(stock.Count, Is.EqualTo(1));
-            for (int i = 0; i < 1200; i++) queue.Advance(1f / 60f);
+            // Exterior sidewalk approach in spec 046 adds walking distance at unchanged speed.
+            for (int i = 0; i < 3600 && queue.ReadyCustomer==null; i++) queue.Advance(1f / 60f);
             player.transform.position = serving.ServingPosition + Vector3.up;
             Assert.That(serving.TryServeFrom(player), Is.True);
             serving.Advance(BurgerServingZone.HandoffDuration);

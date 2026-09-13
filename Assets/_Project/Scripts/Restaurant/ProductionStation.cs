@@ -175,50 +175,6 @@ namespace BurgerShop.Restaurant
         }
     }
 
-    static class BurgerVisualFactory
-    {
-        public static Transform Create(Transform parent, int index)
-        {
-            Transform burger = new GameObject($"Burger_{index + 1}").transform;
-            burger.SetParent(parent, false);
-            burger.localPosition = new Vector3(0f, index * 0.34f, 0f);
-
-            Material bun = CreateMaterial(new Color(0.95f, 0.61f, 0.20f));
-            Material patty = CreateMaterial(new Color(0.25f, 0.09f, 0.04f));
-            Material cheese = CreateMaterial(new Color(1f, 0.78f, 0.08f));
-            burger.gameObject.AddComponent<BurgerVisual>().OwnMaterials(bun, patty, cheese);
-
-            CreateLayer(burger, "BottomBun", PrimitiveType.Cylinder, new Vector3(0f, 0.06f, 0f), new Vector3(0.55f, 0.08f, 0.55f), bun);
-            CreateLayer(burger, "Patty", PrimitiveType.Cylinder, new Vector3(0f, 0.15f, 0f), new Vector3(0.52f, 0.055f, 0.52f), patty);
-            CreateLayer(burger, "Cheese", PrimitiveType.Cube, new Vector3(0f, 0.22f, 0f), new Vector3(0.72f, 0.035f, 0.72f), cheese);
-            CreateLayer(burger, "TopBun", PrimitiveType.Sphere, new Vector3(0f, 0.31f, 0f), new Vector3(0.58f, 0.22f, 0.58f), bun);
-            return burger;
-        }
-
-        static void CreateLayer(Transform parent, string name, PrimitiveType primitive, Vector3 position, Vector3 scale, Material material)
-        {
-            GameObject layer = GameObject.CreatePrimitive(primitive);
-            layer.name = name;
-            layer.transform.SetParent(parent, false);
-            layer.transform.localPosition = position;
-            layer.transform.localScale = scale;
-            Renderer renderer = layer.GetComponent<Renderer>();
-            if (renderer != null)
-                renderer.sharedMaterial = material;
-            Collider collider = layer.GetComponent<Collider>();
-            if (collider != null)
-            {
-                collider.enabled = false;
-                if (Application.isPlaying)
-                    UnityEngine.Object.Destroy(collider);
-                else
-                    UnityEngine.Object.DestroyImmediate(collider);
-            }
-        }
-
-        static Material CreateMaterial(Color color) => BurgerShop.Core.RuntimeMaterials.Create(color);
-    }
-
     static class BoxVisualFactory
     {
         public static Transform Create(Transform parent, int index)

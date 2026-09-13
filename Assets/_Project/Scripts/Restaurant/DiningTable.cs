@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BurgerShop.Customer;
+using BurgerShop.Core;
 using BurgerShop.Player;
 using UnityEngine;
 
@@ -16,6 +17,7 @@ namespace BurgerShop.Restaurant
     {
         public const int TrashPerGuest = 2;
 
+        readonly List<Material> appearanceMaterials = new List<Material>();
         Vector3[] seats;
         CustomerAgent[] occupants;
         int[] trashOnSeat;
@@ -303,10 +305,12 @@ namespace BurgerShop.Restaurant
             root.transform.position = position;
             DiningTable table = root.AddComponent<DiningTable>();
             table.Kind = kind;
-            Material red = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.86f, 0.22f, 0.18f));
-            Material wood = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.42f, 0.28f, 0.18f));
-            Material seat = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.18f, 0.42f, 0.72f));
-            Material steel = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.35f, 0.38f, 0.42f));
+            Material red = table.AppearanceMaterial(RestaurantStyle.Red);
+            Material wood = table.AppearanceMaterial(RestaurantStyle.Ink);
+            Material seat = table.AppearanceMaterial(RestaurantStyle.Blue);
+            Material steel = table.AppearanceMaterial(RestaurantStyle.Ink);
+            Material cream = table.AppearanceMaterial(RestaurantStyle.Cream);
+            Material metal = table.AppearanceMaterial(RestaurantStyle.Steel);
             Vector3[] sit;
             Vector3 wait;
             if (kind == DiningTableKind.FourSeat)
@@ -370,6 +374,19 @@ namespace BurgerShop.Restaurant
                 wait = position + new Vector3(-1.15f, 0f, 0f);
             }
 
+            // All trim stays inside the existing furniture footprint and adds no obstacles.
+            Vector3 topSize = root.transform.Find("Top").localScale;
+            Detail(root.transform, "TableRim", new Vector3(0,.652f,0),
+                new Vector3(topSize.x,.055f,topSize.z), cream);
+            if (kind == DiningTableKind.Pair)
+                Detail(root.transform, "PedestalFoot", new Vector3(0,.04f,0), new Vector3(.63f,.08f,.63f), wood);
+            if (kind == DiningTableKind.FourSeat)
+                foreach (float z in new[]{-.65f,.65f})
+                    Detail(root.transform, "PedestalFoot", new Vector3(0,.04f,z), new Vector3(.70f,.08f,.40f), wood);
+            Detail(root.transform, "NapkinHolder", new Vector3(-.06f,.86f,0), new Vector3(.16f,.16f,.20f), metal);
+            Detail(root.transform, "Napkins", new Vector3(-.06f,.950f,0), new Vector3(.12f,.025f,.15f), cream);
+            Detail(root.transform, "Ketchup", new Vector3(.14f,.88f,0), new Vector3(.075f,.20f,.075f), table.AppearanceMaterial(RestaurantStyle.Red));
+            Detail(root.transform, "KetchupCap", new Vector3(.14f,.99f,0), new Vector3(.035f,.035f,.035f), cream);
             table.Configure(sit, wait, TableSetCatalog.StarterEatSeconds);
             table.ApplySet(TableSetId.Starter);
             return table;
@@ -394,7 +411,7 @@ namespace BurgerShop.Restaurant
         {
             if (part == null) return;
             Renderer renderer = part.GetComponent<Renderer>();
-            if (renderer != null) renderer.sharedMaterial = BurgerShop.Core.RuntimeMaterials.Create(color);
+            if (renderer != null) renderer.sharedMaterial.color = color;
         }
 
         static void Chair(Transform parent, string name, Vector3 local, Material cushion, Material frame,
@@ -412,22 +429,50 @@ namespace BurgerShop.Restaurant
             float backY = tallBack ? 0.90f : 0.72f;
             Part(chair, "Back", PrimitiveType.Cube, new Vector3(0f, backY, -0.26f),
                 new Vector3(0.62f, backHeight, tallBack ? 0.12f : 0.1f), frame);
-            if (tallBack)
-                Part(chair, "BackCushion", PrimitiveType.Cube, new Vector3(0f, backY, -0.18f),
+            Part(chair, "BackCushion", PrimitiveType.Cube, new Vector3(0f, backY, -0.18f),
                     new Vector3(0.50f, backHeight * 0.72f, 0.08f), cushion);
+            Detail(chair, "SeatFrame", new Vector3(0,.302f,0), new Vector3(.58f,.045f,.55f), frame);
+            Detail(chair, "BackPostL", new Vector3(-.22f,.20f,-.20f), new Vector3(.075f,.40f,.075f), frame);
+            Detail(chair, "BackPostR", new Vector3(.22f,.20f,-.20f), new Vector3(.075f,.40f,.075f), frame);
             Part(chair, "PostL", PrimitiveType.Cube, new Vector3(-0.22f, 0.18f, 0.18f), new Vector3(0.08f, 0.36f, 0.08f), frame);
             Part(chair, "PostR", PrimitiveType.Cube, new Vector3(0.22f, 0.18f, 0.18f), new Vector3(0.08f, 0.36f, 0.08f), frame);
         }
 
+        Material AppearanceMaterial(Color color)
+        {
+            var material = RuntimeMaterials.Create(color);
+            appearanceMaterials.Add(material);
+            return material;
+        }
+
+        void OnDestroy()
+        {
+            foreach (var material in appearanceMaterials)
+                if (material != null) BurgerVisual.Release(material);
+        }
+
+        static void Detail(Transform parent, string name, Vector3 position, Vector3 size, Material material)
+            => RestaurantStyle.Block(parent, name, position, size, material);
+
         static void Part(Transform parent, string name, PrimitiveType type, Vector3 localPosition, Vector3 localScale, Material material)
         {
-            GameObject part = GameObject.CreatePrimitive(type);
-            part.name = name;
-            part.transform.SetParent(parent, false);
-            part.transform.localPosition = localPosition;
+            bool back = name == "Back" || name == "BackCushion";
+            Vector3 meshSize = back ? new Vector3(localScale.x, localScale.z, localScale.y) : localScale;
+            GameObject part = RestaurantStyle.Block(parent, name, localPosition, meshSize, material);
+            Mesh mesh = part.GetComponent<MeshFilter>().sharedMesh;
+            Vector3[] vertices = mesh.vertices;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                Vector3 v = back ? Quaternion.Euler(90, 0, 0) * vertices[i] : vertices[i];
+                vertices[i] = new Vector3(v.x / localScale.x, v.y / localScale.y, v.z / localScale.z);
+            }
+            mesh.vertices = vertices; mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            // Existing placement, seat tests and saves use these local dimensions.
             part.transform.localScale = localScale;
-            part.GetComponent<Renderer>().sharedMaterial = material;
-            SolidOccupancy.Apply(part.GetComponent<Collider>(), true);
+            var collider = part.AddComponent<BoxCollider>();
+            collider.center = Vector3.zero;
+            collider.size = Vector3.one;
+            SolidOccupancy.Apply(collider, true);
         }
     }
 }

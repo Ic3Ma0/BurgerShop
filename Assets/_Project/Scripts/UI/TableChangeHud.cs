@@ -45,6 +45,7 @@ namespace BurgerShop.UI
         void Refresh()
         {
             if (popup == null) return;
+            if (FacilityDetailsHud.Current != null) { popup.SetVisible(false); return; }
             TableUpgradeZone zone = board != null ? board.PendingZoneInRange : null;
             if (zone != focused)
             {

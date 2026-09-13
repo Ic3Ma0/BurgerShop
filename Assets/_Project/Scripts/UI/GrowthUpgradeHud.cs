@@ -56,6 +56,7 @@ namespace BurgerShop.UI
                 buyLabel.text=goals.BlockReason;
                 return;
             }
+            if(FacilityDetailsHud.Current!=null){selected=null;panel.gameObject.SetActive(false);return;}
             selected=null;float best=.9f;
             foreach(var offer in growth.Offers)
             {

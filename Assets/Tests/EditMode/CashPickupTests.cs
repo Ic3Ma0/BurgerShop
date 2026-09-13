@@ -123,7 +123,7 @@ namespace BurgerShop.Tests.EditMode
             Vector3 offset = cash.NearestPilePosition - serving.ServingPosition;
             offset.y = 0f;
             Assert.That(offset.magnitude, Is.GreaterThan(1.1f));
-            Assert.That(cash.NearestPilePosition.y, Is.GreaterThan(0.8f));
+            Assert.That(cash.NearestPilePosition.y, Is.EqualTo(.04f).Within(.001f));
         }
 
         [Test]
@@ -269,6 +269,15 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(sfx.CoinPlayCount, Is.EqualTo(1));
         }
 
+        [Test] public void CashGrowsVerticallyAndCollectsExactly()
+        {
+            for(int i=0;i<20;i++)cash.DropAtCounter();
+            Assert.That(cash.NearestPilePosition.y,Is.GreaterThan(2));
+            Assert.That(cash.GroundValue,Is.EqualTo(200));
+            inventory.transform.position=cash.NearestPilePosition;
+            long before=wallet.Coins;cash.Advance(3);
+            Assert.That(cash.GroundValue,Is.Zero);Assert.That(wallet.Coins-before,Is.EqualTo(200));
+        }
         [Test]
         public void BillsAreLargeBrightAndLabeledTen()
         {
@@ -282,10 +291,11 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(bill.localScale.z, Is.GreaterThanOrEqualTo(0.11f * 2f));
             Assert.That(bill.localScale.y, Is.GreaterThan(0.012f));
             Color color = bill.GetComponent<Renderer>().sharedMaterial.GetColor("_BaseColor");
-            Assert.That(color.g, Is.GreaterThan(0.85f));
+            Assert.That(Vector4.Distance(color,BurgerShop.Core.BanknoteLook.Green),Is.LessThan(.001f));
             Assert.That(color.g, Is.GreaterThan(color.r + 0.2f));
             Color stripe = cash.transform.Find("Cash_0/Visual/Bill_0").GetComponent<Renderer>().sharedMaterial.GetColor("_BaseColor");
-            Assert.That(stripe.g, Is.GreaterThan(0.85f));
+            Assert.That(Vector4.Distance(stripe,BurgerShop.Core.BanknoteLook.Green),Is.LessThan(.001f));
+            Assert.That(cash.transform.Find("Cash_0/Visual/BillFace").GetComponent<Renderer>().sharedMaterial.mainTexture,Is.SameAs(BurgerShop.Core.BanknoteLook.Texture));
             TextMesh label = cash.transform.Find("Cash_0/Visual/Amount").GetComponent<TextMesh>();
             Assert.That(label.text, Is.EqualTo("10"));
             Assert.That(label.characterSize, Is.LessThan(0.2f));

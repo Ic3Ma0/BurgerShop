@@ -58,7 +58,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(tray, Is.Not.Null);
             Assert.That(burger, Is.Not.Null);
             float bodyTop = body.GetComponent<Renderer>().bounds.max.y;
-            float trayTop = tray.TransformPoint(Vector3.up * 0.5f).y;
+            float trayTop = tray.GetComponent<Renderer>().bounds.max.y;
             Assert.That(burger.position.y, Is.GreaterThan(bodyTop));
             Assert.That(burger.position.y, Is.GreaterThan(trayTop - 0.05f));
             Assert.That(Vector3.Distance(Flatten(burger.position), Flatten(tray.position)), Is.LessThan(0.35f));

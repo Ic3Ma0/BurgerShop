@@ -114,18 +114,18 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void ShopHasBoostRoomWithOpenDoorAndEnglishLabels()
+        public void FormerTrainingRoomBecomesCarBayAndKeepsUpgradeAccess()
         {
-            Assert.That(room.transform.Find("BoostWall-Z"), Is.Not.Null);
-            Assert.That(room.transform.Find("BoostWall+X"), Is.Not.Null);
-            Assert.That(room.transform.Find("BoostWall-X"), Is.Not.Null);
-            Assert.That(room.transform.Find("TrainingPad"), Is.Not.Null);
-            Assert.That(room.transform.Find("TrainingBar"), Is.Not.Null);
+            Assert.That(room.transform.Find("BoostWall-Z"), Is.Null);
+            Assert.That(room.transform.Find("BoostWall+X"), Is.Null);
+            Assert.That(room.transform.Find("BoostWall-X"), Is.Null);
+            Assert.That(room.transform.Find("TrainingPad"), Is.Null);
+            Assert.That(room.transform.Find("TrainingBar"), Is.Null);
             Assert.That(GameObject.Find("BoostUpgradeSpot"), Is.Null);
             Assert.That(Vector3.Distance(room.BoostPoint.position, ShopLayout.BoostPoint), Is.LessThan(0.001f));
             Assert.That(room.BoostLabel.text, Does.Contain("Player upgrades"));
-            Assert.That(GameObject.Find("BoostHallSign").GetComponent<TextMesh>().text, Is.EqualTo("Boost"));
-            Assert.That(GameObject.Find("TrainingSign").GetComponent<TextMesh>().text, Is.EqualTo("Training"));
+            Assert.That(room.transform.Find("CarServiceFloor"),Is.Not.Null);
+            Assert.That(GameObject.Find("TrainingSign"),Is.Null);
             Assert.That(room.BoostLabel.text, Does.Not.Contain("pizza").IgnoreCase);
             Assert.That(room.BoostLabel.text, Does.Not.Contain("Kingshot"));
             Assert.That(room.BoostLabel.text, Does.Not.Contain("Doughnut"));
@@ -137,9 +137,9 @@ namespace BurgerShop.Tests.EditMode
             Physics.SyncTransforms();
             Assert.That(Physics.CheckBox(ShopLayout.BoostDoor + Vector3.up * 0.6f, new Vector3(0.9f, 0.4f, 0.2f)), Is.False);
             Assert.That(ShopLayout.BoostRoomCenter.z, Is.LessThan(-ShopLayout.WallHalf));
-            Assert.That(ShopLayout.BoostStation.z, Is.LessThan(-ShopLayout.WallHalf));
-            Assert.That(ShopLayout.ContainsBoostRoom(ShopLayout.BoostPoint), Is.True);
-            Assert.That(ShopLayout.ContainsBoostUpgradeRange(ShopLayout.BoostDoor + Vector3.up), Is.True);
+            Assert.That(ShopLayout.BoostStation.z, Is.GreaterThan(-ShopLayout.WallHalf));
+            Assert.That(ShopLayout.ContainsBoostRoom(ShopLayout.BoostPoint), Is.False);
+            Assert.That(ShopLayout.ContainsBoostUpgradeRange(ShopLayout.BoostPoint + Vector3.up), Is.True);
             Assert.That(ShopLayout.ContainsBoostRoom(ShopLayout.HiringSpot), Is.False);
             Assert.That(ShopLayout.ContainsBoostRoom(ShopLayout.TableUnlock), Is.False);
             Assert.That(ShopLayout.ContainsBoostRoom(ShopLayout.ExtraTable), Is.False);
@@ -158,7 +158,7 @@ namespace BurgerShop.Tests.EditMode
         {
             Leave();
             Assert.That(hud.IsVisible, Is.False);
-            player.transform.position = ShopLayout.BoostDoor + Vector3.up;
+            player.transform.position = ShopLayout.BoostPoint + Vector3.up;
             hud.RefreshNow();
             Assert.That(ShopLayout.ContainsBoostUpgradeRange(player.transform.position), Is.True);
             Assert.That(hud.IsVisible, Is.True);

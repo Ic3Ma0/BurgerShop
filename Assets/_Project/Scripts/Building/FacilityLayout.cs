@@ -22,9 +22,10 @@ namespace BurgerShop.Building
         LayoutNavigation navigation;
         Vector3[][] plannedConveyors;
         int navigationRevision=-1;
+        public void RefreshNavigation(){navigation=null;navigationRevision=-1;Revision++;}
         public Vector3[] Route(Vector3 from,Vector3 to)
         {
-            if(navigation==null||navigationRevision!=Revision){Physics.SyncTransforms();var floors=Floors();floors.Add(Rect.MinMaxRect(-13.8f,-23.5f,-10.2f,-14));navigation=new LayoutNavigation(floors,NavigationObstacles());navigationRevision=Revision;}
+            if(navigation==null||navigationRevision!=Revision){Physics.SyncTransforms();var floors=Floors();if(RestroomExpansion.Current?.Built==true)floors.Add(RestroomExpansion.Floor);floors.Add(Rect.MinMaxRect(-36,-25,-10.2f,-21));floors.Add(Rect.MinMaxRect(-13.8f,-23.5f,-10.2f,-14));navigation=new LayoutNavigation(floors,NavigationObstacles());navigationRevision=Revision;}
             return navigation.Route(from,to);
         }
         List<PlacementFootprint> NavigationObstacles()
@@ -174,7 +175,8 @@ namespace BurgerShop.Building
             {floors.Add(Rect.MinMaxRect(14,-8,23.4f,-4.3f));floors.Add(Rect.MinMaxRect(23.4f,-8,37.8f,11.3f));}
             if(CourierLine.Current!=null&&CourierLine.Current.AreaOpen){floors.Add(Rect.MinMaxRect(-14.8f,14,14.8f,39.8f));floors.Add(Rect.MinMaxRect(-30,39,30,44));}
             if(BagLine.Current!=null&&BagLine.Current.Expanded)floors.Add(Rect.MinMaxRect(-26.8f,-8.8f,-14,8.8f));
-            if(goals!=null&&goals.Allows(6))floors.Add(Rect.MinMaxRect(-16.9f,-19.4f,4.9f,-14));
+            if(goals!=null&&goals.Allows(6)){floors.Add(Rect.MinMaxRect(6.9f,-27.5f,15.1f,-14));floors.Add(Rect.MinMaxRect(-37,-32,30,-27.5f));}
+            floors.Add(Rect.MinMaxRect(6.9f,-27.5f,15.1f,-14));
             return floors;
         }
         public bool CanPlace(FacilityInstance subject,Vector3 position,float yaw,bool checkAccess=false)
@@ -202,12 +204,13 @@ namespace BurgerShop.Building
                 if(PlacementGeometry.Overlaps(shape,fixedShape,.1f))return Fail("Overlaps a fixed wall");
                 obstacles.Add(fixedShape);
             }
-            if(subject.Id!="grill-main"&&subject.Id!="parcel-machine"&&subject.Id!="courier-tray")
+            if(subject.Id!="parcel-machine"&&subject.Id!="courier-tray")
                 foreach(var line in GetComponentsInChildren<CourierLine>())foreach(var path in line.ConveyorPaths)
                     foreach(var belt in new VehicleRoadLayout(path,1.4f).Footprints(Vector3.zero,0))
                     {if(PlacementGeometry.Overlaps(shape,belt))return Fail("Keep the conveyor clear");obstacles.Add(belt);}
             if(!RoadFits(subject,position,yaw,floor,obstacles))return Fail("The entire vehicle lane needs free owned space");
             var rotation=Quaternion.Euler(0,yaw,0);
+            if(shape.Contains(new Vector2(0,-13),1.4f))return Fail("Keep the restroom entrance clear");
             foreach(var local in subject.Ports)
             {
                 var p=position+rotation*local;
@@ -235,7 +238,7 @@ namespace BurgerShop.Building
                 // Chairs occupy their sitting point; their outside approach is checked through the table's wait point.
                 if(subject.Kind<=FacilityKind.SquareTable&&destinations.Count>1)destinations.RemoveRange(1,destinations.Count-1);
                 var access=new LayoutNavigation(floor,obstacles);
-                foreach(var entry in new[]{ShopLayout.Entrance,new Vector3(14,0,0),new Vector3(11,0,-14)})
+                foreach(var entry in new[]{ShopLayout.Entrance,new Vector3(14,0,0),new Vector3(11,0,-14),new Vector3(0,0,-13)})
                     if(!access.CanReach(player.transform.position,entry)&&before.CanReach(player.transform.position,entry))return Fail("Keep room entrances reachable");
                 foreach(var f in instances.Values)if(f!=null&&f!=subject&&f.Available)
                 {
@@ -253,10 +256,10 @@ namespace BurgerShop.Building
         {
             planned=null;var courier=GetComponent<CourierLine>();
             if(courier==null||!courier.AutomationEnabled||subject.Purchased||
-                (subject.Id!="grill-main"&&subject.Id!="parcel-machine"&&subject.Id!="courier-tray"))return true;
+                (subject.Id!="parcel-machine"&&subject.Id!="courier-tray"))return true;
             planned=courier.PlannedConveyors(subject.transform,position,yaw);
             var blocked=new List<PlacementFootprint>();
-            foreach(var f in instances.Values)if(f.Available&&f.Id!="grill-main"&&f.Id!="parcel-machine"&&f.Id!="courier-tray")blocked.Add(f.Footprint(f.transform.position,f.transform.eulerAngles.y));
+            foreach(var f in instances.Values)if(f.Available&&f.Id!="parcel-machine"&&f.Id!="courier-tray")blocked.Add(f.Footprint(f.transform.position,f.transform.eulerAngles.y));
             foreach(var c in GetComponentsInChildren<BoxCollider>())
             {
                 if(!c.enabled||c.isTrigger||!c.name.Contains("Wall")||c.bounds.max.y<=1f)continue;
@@ -418,6 +421,8 @@ namespace BurgerShop.Building
             Discover();if(records==null)return;
             foreach(var row in records)
             {
+                if(!row.purchased&&row.id=="boxing"&&Mathf.Abs(row.x+9)<.01f&&Mathf.Abs(row.z+9)<.01f){row.x=ShopLayout.BoxingTable.x;row.z=ShopLayout.BoxingTable.z;}
+                if(!row.purchased&&row.id=="car-counter"&&Mathf.Abs(row.x+9)<.01f&&Mathf.Abs(row.z+14.35f)<.01f){row.x=ShopLayout.PackageCounter.x;row.z=ShopLayout.PackageCounter.z;}
                 // The authored courier station moved to the public street in spec 045.
                 // Preserve deliberately customized poses; migrate only the old default.
                 if(row.id=="courier-tray"&&!row.purchased&&Mathf.Abs(row.x-2)<.01f&&Mathf.Abs(row.z-23)<.01f&&Mathf.Abs(row.yaw)<.01f)row.z=CourierLine.Counter.z;

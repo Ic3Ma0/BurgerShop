@@ -65,6 +65,19 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(line.OutputCount,Is.Zero);Assert.That(line.ProcessingCount,Is.EqualTo(1));Assert.That(line.WaitingCount,Is.Zero);
             line.SetPaused(false);player.transform.position=Vector3.zero;Step(2);Assert.That(line.OutputCount,Is.EqualTo(1));
         }
+        [Test] public void DedicatedProcessorSuppliesLineWithoutTakingDiningStock()
+        {
+            Object.DestroyImmediate(line);Object.DestroyImmediate(grill);
+            var dining=new GameObject("DiningGrill");dining.transform.SetParent(root.transform);grill=dining.AddComponent<ProductionStation>();grill.Configure(null,null,null,1,16);
+            line=root.AddComponent<CourierLine>();line.Configure(wallet,parts,player,cash,grill,true);
+            grill.Advance(16);int diningStock=grill.Stock;
+            Assert.That(line.ConveyorSource,Is.Not.SameAs(grill));
+            Assert.That(line.ConveyorSource.transform.position,Is.EqualTo(CourierLine.ProcessorPosition));
+            foreach(var path in line.ConveyorPaths)foreach(var point in path)Assert.That(point.z,Is.GreaterThan(15));
+            grill.transform.position=new Vector3(10,0,2);Assert.That(line.ConveyorEndpointsChanged,Is.False);
+            for(int i=0;i<4000;i++){line.ConveyorSource.Advance(.05f);line.Advance(.05f);}
+            Assert.That(line.CompletedOrders,Is.GreaterThan(0));Assert.That(grill.Stock,Is.EqualTo(diningStock));
+        }
         void ConnectAutomation()
         {
             Object.DestroyImmediate(line);

@@ -23,6 +23,15 @@ namespace BurgerShop.Persistence
         float elapsed;
         bool ready;
         bool saveRequested;
+        public System.Func<long> UtcNowTicks=()=>System.DateTime.UtcNow.Ticks;
+        long lastSeen;
+        bool appPaused,appUnfocused,away;
+        bool settlementPending;
+        public long OfflineGrant {get;private set;}
+        public long OfflineTicks {get;private set;}
+        public int OfflineStaffCount {get;private set;}
+        public bool OfflineVisible {get;private set;}
+
 
         public SaveLoadResult LoadResult { get; private set; }
         public string Status { get; private set; } = "NEW GAME - AUTOSAVE ON";
@@ -124,22 +133,29 @@ namespace BurgerShop.Persistence
             if (goals != null)
                 goals.ApplyUnlocks();
             GetComponent<Building.FacilityLayout>()?.Restore(data?.version >= 15 ? data.layout : null);
+            GetComponent<RestroomExpansion>()?.Restore(data?.version>=17&&data.restroomBuilt,data?.version>=17?data.restroomInvestment:0,data?.version>=17?data.restroomDirtyMask:0);
             Status = LoadResult == SaveLoadResult.Loaded ? "PROGRESS RESTORED"
                 : LoadResult == SaveLoadResult.RecoveredBackup ? "BACKUP RESTORED"
                 : LoadResult == SaveLoadResult.NewerVersion ? "NEWER SAVE - SAVING DISABLED"
                 : LoadResult == SaveLoadResult.Unreadable ? "SAVE UNREADABLE - FILES KEPT"
                 : LoadResult == SaveLoadResult.Unavailable ? "SAVE UNAVAILABLE"
                 : "NEW GAME - AUTOSAVE ON";
+            lastSeen=data!=null&&data.version>=16?data.lastSeenUtcTicks:0;
+            OfflineGrant=data!=null&&data.version>=16?data.offlineReceiptGrant:0;
+            OfflineTicks=data!=null&&data.version>=16?data.offlineReceiptTicks:0;
+            OfflineStaffCount=data!=null&&data.version>=16?data.offlineReceiptStaffCount:0;
+            OfflineVisible=data!=null&&data.version>=16&&data.offlineReceiptVisible;
             ready = true;
             // Repair a damaged primary from the validated backup on the next save.
             if (LoadResult == SaveLoadResult.RecoveredBackup) lastChecksum = null;
+            SettleOffline();
         }
 
         void LateUpdate() => Advance(Time.unscaledDeltaTime);
 
         public void Advance(float seconds)
         {
-            if (!ready || seconds <= 0f) return;
+            if (!ready || away || seconds <= 0f) return;
             elapsed += seconds;
             if (!saveRequested && elapsed < 2f) return;
             elapsed = 0f;
@@ -150,8 +166,28 @@ namespace BurgerShop.Persistence
         {
             if (GetComponent<Building.FacilityLayout>()?.Committing==true) return false;
             if (!ready || wallet == null || upgrade == null || hiring == null || !store.CanWrite) return false;
-            var data = new RestaurantSaveData
+            if(settlementPending&&!SettleOffline())return false;
+            var data=Capture();
+            if(!away)data.lastSeenUtcTicks=UtcNowTicks();
+            string checksum = data.Checksum();
+            if (checksum == lastChecksum) return true;
+            if (!store.Save(data)) { Status = "SAVE FAILED - RETRYING"; return false; }
+            lastSeen=data.lastSeenUtcTicks;
+            lastChecksum = checksum;
+            saveRequested = false;
+            Status = "PROGRESS SAVED";
+            return true;
+        }
+
+        RestaurantSaveData Capture()
+        {
+            return new RestaurantSaveData
             {
+                restroomBuilt=GetComponent<RestroomExpansion>()?.Built??false,
+                restroomInvestment=GetComponent<RestroomExpansion>()?.Invested??0,
+                restroomDirtyMask=GetComponent<RestroomExpansion>()?.DirtyMask??0,
+                lastSeenUtcTicks=lastSeen,offlineReceiptGrant=OfflineGrant,offlineReceiptTicks=OfflineTicks,
+                offlineReceiptStaffCount=OfflineStaffCount,offlineReceiptVisible=OfflineVisible,
                 layout = GetComponent<Building.FacilityLayout>()?.Capture(),
                 version = RestaurantSaveData.CurrentVersion, coins = wallet.Coins, completedSales = wallet.CompletedSales,
                 parts = partsWallet != null ? partsWallet.Balance : 0,
@@ -215,15 +251,39 @@ namespace BurgerShop.Persistence
                 colaCounterInvestment = expansion?.ColaBarInvested ?? 0,
                 colaLevel = expansion != null ? expansion.ColaLevel : colaUpgrade != null ? colaUpgrade.Level : 1
             };
-            string checksum = data.Checksum();
-            if (checksum == lastChecksum) return true;
-            if (!store.Save(data)) { Status = "SAVE FAILED - RETRYING"; return false; }
-            lastChecksum = checksum;
-            saveRequested = false;
-            Status = "PROGRESS SAVED";
-            return true;
         }
-
+        public bool SettleOffline()
+        {
+            if(!ready||!store.CanWrite)return false;
+            long now=UtcNowTicks();long ticks=OfflineEarnings.ElapsedTicks(lastSeen,now);
+            long grant=lastSeen==0?0:OfflineEarnings.Grant(OfflineEarnings.CheapestUpgrade(this),hiring.HiredCount,
+                staffUpgrades?.SpeedTier??0,staffUpgrades?.CarryTier??0,ticks/(decimal)System.TimeSpan.TicksPerMinute);
+            // Balance and consumed timestamp share the same atomic file replacement.
+            // The panel is a persisted receipt for money already credited, not another claim.
+            var data=Capture();data.lastSeenUtcTicks=now;
+            grant=System.Math.Min(grant,long.MaxValue-data.coins);
+            data.coins+=grant;
+            if(!OfflineVisible&&lastSeen>0&&ticks>0)
+            {data.offlineReceiptVisible=true;data.offlineReceiptGrant=grant;data.offlineReceiptTicks=ticks;data.offlineReceiptStaffCount=hiring.HiredCount;}
+            else if(OfflineVisible&&grant>0)
+            {data.offlineReceiptGrant=grant;data.offlineReceiptTicks=ticks;data.offlineReceiptStaffCount=hiring.HiredCount;}
+            if(!store.Save(data)){settlementPending=true;Status="SAVE FAILED - OFFLINE PAYMENT NOT APPLIED";return false;}
+            settlementPending=false;
+            lastSeen=now;OfflineGrant=data.offlineReceiptGrant;OfflineTicks=data.offlineReceiptTicks;
+            OfflineStaffCount=data.offlineReceiptStaffCount;OfflineVisible=data.offlineReceiptVisible;
+            lastChecksum=data.Checksum();wallet.RestoreProgress(data.coins,data.completedSales);return true;
+        }
+        public bool DismissOfflineReceipt()
+        {
+            bool previous=OfflineVisible;OfflineVisible=false;
+            if(Flush())return true;OfflineVisible=previous;return false;
+        }
+        void SetAway(bool value)
+        {
+            if(value==away)return;
+            if(value){Flush();away=true;}
+            else{away=false;SettleOffline();}
+        }
         void RequestSave() => saveRequested = true;
         void OnDestroy()
         {
@@ -232,8 +292,8 @@ namespace BurgerShop.Persistence
             if(partsWallet!=null)partsWallet.Changed-=RequestSave;
             if (tableUpgrades != null) tableUpgrades.Changed -= RequestSave;
         }
-        void OnApplicationPause(bool paused) { if (paused) Flush(); }
-        void OnApplicationFocus(bool focused) { if (!focused) Flush(); }
+        void OnApplicationPause(bool paused) {appPaused=paused;SetAway(appPaused||appUnfocused); }
+        void OnApplicationFocus(bool focused) {appUnfocused=!focused;SetAway(appPaused||appUnfocused); }
         void OnApplicationQuit() => Flush();
     }
 }

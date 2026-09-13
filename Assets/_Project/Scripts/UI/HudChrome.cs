@@ -27,7 +27,7 @@ namespace BurgerShop.UI
         public static readonly Color CapsuleIdle = Cream;
         public static readonly Color CapsuleDone = Green;
         public static readonly Color TitleIdle = Ink;
-        public static readonly Color CoinGreen = Gold;
+        public static readonly Color CoinGreen = BurgerShop.Core.BanknoteLook.Green;
 
         public static Font Font()
         {

@@ -30,8 +30,11 @@ namespace BurgerShop.Restaurant
         public FacilityUnlockZone TablePad {get;private set;}
         public FacilityUnlockZone CounterPad {get;private set;}
         public int MachineLevel=1,TableLevel=1,CounterLevel=1;
-        public float ProductionSeconds=>3f-.5f*(MachineLevel-1);
-        public float ProcessingSeconds=>.6f-.1f*(TableLevel-1);
+        public static float ProductionForLevel(int level)=>3f-.5f*(level-1);
+        public static float ProcessingForLevel(int level)=>.6f-.1f*(level-1);
+        public static float CooldownForLevel(int level)=>.15f-.05f*(level-1);
+        public float ProductionSeconds=>ProductionForLevel(MachineLevel);
+        public float ProcessingSeconds=>ProcessingForLevel(TableLevel);
         public int EmptyStock=>empty.Count;
         public int InputBurgers=>raw.Count;
         public int InputBags=>bags.Count;
@@ -209,7 +212,7 @@ namespace BurgerShop.Restaurant
             if(flightCustomer==null)return;flightAge+=dt;float t=Mathf.Clamp01(flightAge/.45f);
             flightItem.position=Vector3.Lerp(counterModel.TransformPoint(flightOrigin),flightCustomer.transform.position+Vector3.up,t)+Vector3.up*Mathf.Sin(t*Mathf.PI)*.5f;
             if(t<1)return;
-            var c=flightCustomer;c.ReceiveItem(flightItem);serviceCooldown=.15f-.05f*(CounterLevel-1);
+            var c=flightCustomer;c.ReceiveItem(flightItem);serviceCooldown=CooldownForLevel(CounterLevel);
             if(c.Order.TrySettle())
             {
                 Queue.TryDequeueReadyCustomer(out _);int money=c.OrderSize*20;

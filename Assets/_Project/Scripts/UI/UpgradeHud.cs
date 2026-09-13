@@ -46,7 +46,7 @@ namespace BurgerShop.UI
             if (zone == null || label == null) return;
             if (panel != null)
             {
-                panel.alpha = zone.IsInRange ? 1f : 0f;
+                panel.alpha = !zone.DirectInteraction && zone.IsInRange ? 1f : 0f;
                 panel.blocksRaycasts = false;
                 panel.interactable = false;
             }

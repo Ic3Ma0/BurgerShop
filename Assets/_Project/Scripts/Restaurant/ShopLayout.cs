@@ -81,25 +81,25 @@ namespace BurgerShop.Restaurant
         public static readonly Vector3 TrashBin = new Vector3(-13f, 0f, 0f);
 
         // Boxing / drive-thru: south wall. BOX → PACK → WINDOW on x = −9. Lane west; Boost door east.
-        public static readonly Vector3 BoxingTable = new Vector3(-9f, 0f, -9f);
+        public static readonly Vector3 BoxingTable = new Vector3(11f, 0f, -19f);
         public static readonly Vector3 BoxingUnlock = Pad(BoxingTable);
-        public static readonly Vector3 BoxingCircle = new Vector3(-8f, 0.02f, -7.2f);
-        public static readonly Vector3 PackageCounter = new Vector3(-9f, 0f, -14.35f);
+        public static readonly Vector3 BoxingCircle = new Vector3(11f, 0.02f, -17f);
+        public static readonly Vector3 PackageCounter = new Vector3(11f, 0f, -26.3f);
         public static readonly Vector3 PackageCounterTop = new Vector3(PackageCounter.x, 1.05f, PackageCounter.z);
-        public static readonly Vector3 PackageDrop = new Vector3(-11.1f, 0.02f, -13.05f);
-        public static readonly Vector3 DriveThruWindow = new Vector3(-9f, 0f, -14.35f);
-        public static readonly Vector3 DriveThruCircle = new Vector3(-9f, 0.02f, -13.05f);
-        public static readonly Vector3 DriveThruUnlock = new Vector3(-6f, 0.02f, -12f);
-        public static readonly Vector3 DriveThruCash = new Vector3(-7.2f, 0.04f, -14.5f);
-        public static readonly Vector3 DriveThruRoad = new Vector3(-6f, 0f, -17.6f);
+        public static readonly Vector3 PackageDrop = new Vector3(9f, 0.02f, -25f);
+        public static readonly Vector3 DriveThruWindow = new Vector3(11f, 0f, -26.3f);
+        public static readonly Vector3 DriveThruCircle = new Vector3(11f, 0.02f, -25f);
+        public static readonly Vector3 DriveThruUnlock = new Vector3(13f, 0.02f, -24f);
+        public static readonly Vector3 DriveThruCash = new Vector3(13f, 0.04f, -26f);
+        public static readonly Vector3 DriveThruRoad = new Vector3(14f, 0f, -29f);
         public static readonly Vector3[] DriveThruQueue =
         {
-            new Vector3(-9f, 0.35f, -17.55f),
-            new Vector3(-5f, 0.35f, -17.55f),
-            new Vector3(-1f, 0.35f, -17.55f)
+            new Vector3(11f, 0.35f, -29f),
+            new Vector3(15f, 0.35f, -29f),
+            new Vector3(19f, 0.35f, -29f)
         };
-        public static readonly Vector3 DriveThruSpawn = new Vector3(3f, 0.35f, -17.55f);
-        public static readonly Vector3 DriveThruExit = new Vector3(-15.2f, 0.35f, -17.55f);
+        public static readonly Vector3 DriveThruSpawn = new Vector3(27f, 0.35f, -29f);
+        public static readonly Vector3 DriveThruExit = new Vector3(-35f, 0.35f, -29f);
 
         // HR: east room. Door on the main z = 0 aisle. Desk deep in the room.
         public const float HrDoorHalf = 1.3f;
@@ -130,11 +130,11 @@ namespace BurgerShop.Restaurant
         public const float BoostDoorHalf = 1.3f;
         public const float BoostDoorX = 11f;
         public const float BoostRoomWidth = 8.2f;
-        public const float BoostRoomDepth = 8.2f;
+        public const float BoostRoomDepth = 13f;
         public static readonly Vector3 BoostDoor = new Vector3(BoostDoorX, 0f, -WallHalf);
         public static readonly Vector3 BoostRoomCenter = new Vector3(BoostDoorX, 0f, -WallHalf - BoostRoomDepth * 0.5f);
-        public static readonly Vector3 BoostStation = new Vector3(BoostDoorX, 0f, -20.5f);
-        public static readonly Vector3 BoostPoint = new Vector3(BoostDoorX, 0.02f, -19.35f);
+        public static readonly Vector3 BoostStation = new Vector3(13f, 0f, -11f);
+        public static readonly Vector3 BoostPoint = new Vector3(13f, 0.02f, -11f);
 
         // Circulation. HiringSpot is a hall point only (hire happens at the HR desk).
         public static readonly Vector3 Aisle = new Vector3(2f, 0f, 0f);
@@ -152,6 +152,7 @@ namespace BurgerShop.Restaurant
         {
             Entrance,
             BurgerShop.Core.RestaurantEntrance.Door,
+            BurgerShop.Core.RestaurantEntrance.Corner,
             BurgerShop.Core.RestaurantEntrance.Outside
         };
 
@@ -289,7 +290,7 @@ namespace BurgerShop.Restaurant
             Mathf.Abs(point.z + WallHalf) <= 0.55f && Mathf.Abs(point.x - BoostDoorX) <= BoostDoorHalf;
 
         public static bool ContainsBoostUpgradeRange(Vector3 point) =>
-            ContainsBoostRoom(point) || ContainsBoostDoorway(point);
+            Horizontal(point,BoostPoint)<=1.5f;
 
         public static void OpenWing(Transform parent, Material floorMaterial, Material wallMaterial)
         {

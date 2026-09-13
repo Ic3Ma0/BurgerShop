@@ -33,6 +33,10 @@ namespace BurgerShop.Restaurant
         bool paused,unfocused;
         int spawnedRiders;
         ProductionStation source;
+        bool dedicatedSource;
+        public ProductionStation ConveyorSource=>source;
+        public static readonly Vector3 ProcessorPosition=new Vector3(3,0,20);
+        const float ProcessorSeconds=3f;
         CourierConveyor intakeBelt,parcelBelt,machineBelt;
         readonly List<TrashMotion> partsFlights=new List<TrashMotion>();
         float feedClock;
@@ -45,9 +49,9 @@ namespace BurgerShop.Restaurant
         public int WaitingCount=>queue.Count;
         public BicycleCourier Front=>queue.Count>0?queue[0]:null;
         public int GroundParts {get{int sum=0;foreach(int n in partsAmounts)sum+=n;return sum;}}
-        public void Configure(RestaurantWallet earnings,PartsWallet currency,BurgerInventory actor,CashFloor floor,ProductionStation burgerSource=null)
+        public void Configure(RestaurantWallet earnings,PartsWallet currency,BurgerInventory actor,CashFloor floor,ProductionStation burgerSource=null,bool independentProduction=false)
         {
-            Current=this;wallet=earnings;parts=currency;player=actor;cash=floor;source=burgerSource;Build();
+            Current=this;wallet=earnings;parts=currency;player=actor;cash=floor;source=burgerSource;dedicatedSource=independentProduction;Build();
             if(source!=null && (GetComponent<SessionGoalTracker>()?.Allows(9)??true))BuildAutomation();
             ApplyAccess(GetComponent<SessionGoalTracker>()?.Allows(8)??true, GetComponent<SessionGoalTracker>()?.Allows(9)??true);
         }
@@ -112,20 +116,25 @@ namespace BurgerShop.Restaurant
         }
         void BuildAutomation()
         {
-            // Back outlet bypasses the player's existing front pickup and upgrade pad.
-            Vector3 start=ShopLayout.Grill+new Vector3(0,1.1f,1);
+            if(dedicatedSource)
+            {
+                var processor=new GameObject("CourierBurgerProcessor").transform;processor.SetParent(area,false);processor.position=ProcessorPosition;
+                CourierVisuals.Part(processor,"ProcessorLandmarkBase",new Vector3(0,.5f,0),new Vector3(2.8f,1,2.4f),dark,true);
+                CourierVisuals.Part(processor,"OvenShell",new Vector3(0,1.35f,-.3f),new Vector3(2.6f,1.2f,1.7f),gold,true);
+                CourierVisuals.Part(processor,"OvenMouth",new Vector3(0,1.3f,.57f),new Vector3(1.9f,.65f,.08f),dark);
+                CourierVisuals.Part(processor,"SteelTop",new Vector3(0,2,-.3f),new Vector3(2.8f,.16f,1.9f),white);
+                foreach(float x in new[]{-.9f,.9f})CourierVisuals.Part(processor,"Vent",new Vector3(x,2.35f,-.7f),new Vector3(.3f,.7f,.3f),dark);
+                var outputAnchor=new GameObject("ProcessorOutput").transform;outputAnchor.SetParent(processor,false);outputAnchor.localPosition=new Vector3(0,1.1f,.8f);
+                source=processor.gameObject.AddComponent<ProductionStation>();source.Configure(outputAnchor,null,null,ProcessorSeconds,Capacity);
+            }
+            Vector3 start=source.transform.TransformPoint(new Vector3(0,1.1f,1));
             intakeBelt=new CourierConveyor(area,"BurgerIntakeChain",CourierConveyor.Rounded(start,
-                new Vector3(3,1.1f,10),new Vector3(3,1.1f,18),new Vector3(-7,1.1f,18),
+                new Vector3(start.x,1.1f,24),new Vector3(-3,1.1f,24),new Vector3(-3,1.1f,18),
                 Machine+new Vector3(0,1.1f,-1.05f)),dark,white);
             parcelBelt=new CourierConveyor(area,"RedParcelChain",CourierConveyor.Rounded(
                 Machine+new Vector3(0,1.1f,1.05f),new Vector3(-7,1.1f,23),
                 Counter+new Vector3(-1.35f,1.1f,0)),dark,white);
             machineBelt=new CourierConveyor(area,"InternalPackagingChain",new[]{Machine+new Vector3(0,1.1f,-1.05f),Machine+new Vector3(0,1.1f,1.05f)},dark,white);
-            // Cut an actual conveyor aperture in the north wall at x=3.
-            foreach(Transform part in area)
-                if(part.name=="OldNorthWall"&&part.position.x>0)part.gameObject.SetActive(false);
-            CourierVisuals.Part(area,"NorthWallBeyondChain",new Vector3(9.4f,.75f,15),new Vector3(11.2f,1.5f,.4f),dark,true);
-            CourierVisuals.Part(area,"NorthWallBelowChain",new Vector3(2.8f,.3f,15),new Vector3(2f,.6f,.4f),dark,true);
             foreach(string name in new[]{"ParcelInput","ParcelOutput","ParcelStock"})
                 (machine.Find(name) ?? bin.Find(name))?.gameObject.SetActive(false);
             // Replace the blue block with a tunnel whose mouth is aligned to the moving burgers.
@@ -188,7 +197,7 @@ namespace BurgerShop.Restaurant
                 item.SetParent(bin,true);stock.Add(item);Stack(stock,bin.TransformPoint(new Vector3(-.6f,.91f,0)),.28f);return true;
             });
             feedClock=Mathf.Max(0,feedClock-dt);
-            if(feedClock<=0&&source.Product==KitchenProduct.Burger&&source.Stock>1&&raw.Count+intakeBelt.Count<Capacity&&intakeBelt.CanLoad)
+            if(feedClock<=0&&source.Product==KitchenProduct.Burger&&source.Stock>(dedicatedSource?0:1)&&raw.Count+intakeBelt.Count<Capacity&&intakeBelt.CanLoad)
             {
                 if(source.TryTakeBurger(out var item))
                 {if(item==null)item=BurgerVisualFactory.Create(area,0);intakeBelt.LoadItem(item);feedClock=1f;}

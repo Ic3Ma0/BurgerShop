@@ -19,7 +19,9 @@ namespace BurgerShop.Restaurant
         [SerializeField, Min(0.1f)] float radius = 1f;
         [SerializeField, Min(0.1f)] float holdSeconds = 1.5f;
         float heldTime;
+        bool purchasing;
 
+        public bool DirectInteraction { get; private set; }
         public event System.Action<int, bool> LevelApplied;
         public ProductionStation Station => station;
         public int Level { get; private set; } = 1;
@@ -66,6 +68,34 @@ namespace BurgerShop.Restaurant
             ApplyStationStats();
             RefreshVisuals();
             feedback?.ShowLevel(Level);
+            if (UI.FacilityDetailsHud.Current != null) UseDirectInteraction();
+        }
+
+        public void UseDirectInteraction()
+        {
+            DirectInteraction = true;
+            heldTime = 0f;
+            if (upgradePoint != null) upgradePoint.gameObject.SetActive(false);
+            if (markerLabel != null) markerLabel.gameObject.SetActive(false);
+        }
+
+        public bool TryUpgrade(int expectedLevel)
+        {
+            if (purchasing || !IsAvailable || IsMaxLevel || Level != expectedLevel) return false;
+            purchasing = true;
+            try
+            {
+                return wallet.TrySpend(NextCost, () =>
+                {
+                    Level++;
+                    ApplyStationStats();
+                    RefreshVisuals();
+                    feedback?.PlayUpgrade(Level);
+                    LevelApplied?.Invoke(Level, true);
+                    GetComponentInParent<GrowthUpgrades>()?.RecordGrill(this);
+                });
+            }
+            finally { purchasing = false; }
         }
 
         void Update() => Advance(Time.deltaTime);
@@ -85,7 +115,7 @@ namespace BurgerShop.Restaurant
         public void Advance(float deltaTime)
         {
             feedback?.Advance(deltaTime);
-            if (deltaTime <= 0f) return;
+            if (DirectInteraction || deltaTime <= 0f) return;
             if (!IsInRange)
             {
                 heldTime = 0f;
@@ -100,20 +130,9 @@ namespace BurgerShop.Restaurant
             // A long frame should not turn merely crossing the zone into a purchase.
             heldTime += Mathf.Min(deltaTime, 0.1f);
             if (heldTime + 0.0001f < holdSeconds) return;
-            int cost = NextCost;
-            PurchasedThisVisit = true;
             heldTime = 0f;
-            if (!wallet.TrySpend(cost))
-            {
-                PurchasedThisVisit = false;
-                return;
-            }
-            Level++;
-            ApplyStationStats();
-            RefreshVisuals();
-            feedback?.PlayUpgrade(Level);
-            LevelApplied?.Invoke(Level, true);
-            GetComponentInParent<GrowthUpgrades>()?.RecordGrill(this);
+            PurchasedThisVisit = true;
+            if (!TryUpgrade(Level)) PurchasedThisVisit = false;
         }
 
         float SecondsFor(int level)
@@ -135,6 +154,7 @@ namespace BurgerShop.Restaurant
 
         void LateUpdate()
         {
+            if (DirectInteraction) { UseDirectInteraction(); return; }
             if (markerLabel == null) return;
             // The nearby panel takes over while standing here, keeping text off the player.
             markerLabel.gameObject.SetActive(!IsInRange);

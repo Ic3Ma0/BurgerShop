@@ -8,9 +8,16 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 15;
+        public const int CurrentVersion = 17;
 
         public int version;
+        public bool restroomBuilt;
+        public int restroomInvestment,restroomDirtyMask;
+        public long lastSeenUtcTicks;
+        public long offlineReceiptGrant,offlineReceiptTicks;
+        public int offlineReceiptStaffCount;
+        public bool offlineReceiptVisible;
+
         public Building.FacilityPlacementRecord[] layout;
         public int milestoneMask;
         public bool legacyAccess;
@@ -137,6 +144,9 @@ namespace BurgerShop.Persistence
         {
             get
             {
+                if(version>=17&&(restroomInvestment<0||restroomInvestment>Restaurant.RestroomExpansion.Cost||restroomDirtyMask<0||restroomDirtyMask>3||(!restroomBuilt&&restroomDirtyMask!=0)))return false;
+                if(version>=16&&(lastSeenUtcTicks<0||lastSeenUtcTicks>DateTime.MaxValue.Ticks||offlineReceiptGrant<0||offlineReceiptTicks<0||offlineReceiptTicks>DateTime.MaxValue.Ticks||offlineReceiptStaffCount<0||offlineReceiptStaffCount>3))return false;
+
                 if(version>=15 && !ValidLayout())return false;
                 if(version>=14 && (milestoneMask<0 || (milestoneMask & ~Restaurant.ShopRanks.MilestoneMask)!=0
                     || incomeRemainder<0 || incomeRemainder>=Restaurant.ShopRanks.IncomeDenominator))return false;
@@ -351,6 +361,8 @@ namespace BurgerShop.Persistence
                         row.x.ToString("R",CultureInfo.InvariantCulture)+":"+row.z.ToString("R",CultureInfo.InvariantCulture)+":"+
                         row.yaw.ToString("R",CultureInfo.InvariantCulture)+":"+row.level.ToString(CultureInfo.InvariantCulture)+":"+row.tableSet.ToString(CultureInfo.InvariantCulture)+":"+row.investment.ToString(CultureInfo.InvariantCulture);
             }
+            if(version>=16)value+="|offline:"+lastSeenUtcTicks.ToString(CultureInfo.InvariantCulture)+":"+offlineReceiptGrant.ToString(CultureInfo.InvariantCulture)+":"+offlineReceiptTicks.ToString(CultureInfo.InvariantCulture)+":"+offlineReceiptStaffCount.ToString(CultureInfo.InvariantCulture)+":"+(offlineReceiptVisible?"1":"0");
+            if(version>=17)value+="|restroom:"+(restroomBuilt?"1":"0")+":"+restroomInvestment.ToString(CultureInfo.InvariantCulture)+":"+restroomDirtyMask.ToString(CultureInfo.InvariantCulture);
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }

@@ -13,9 +13,11 @@ namespace BurgerShop.Restaurant
         public const float BobAmplitude = 0f;
         public const float BobRadians = 2.6f;
         public const float SpinDegreesPerSecond = 0f;
-        public static readonly Color BillColor = new Color(.38f,.88f,.10f);
-        public static readonly Color StripeColor = new Color(.70f,1f,.30f);
+        public static readonly Color BillColor = BurgerShop.Core.BanknoteLook.Green;
+        public static readonly Color StripeColor = BurgerShop.Core.BanknoteLook.Ink;
 
+        public const float BaseStackHeight=.12f;
+        public float StackHeight=>BaseStackHeight*Mathf.Clamp(Mathf.CeilToInt(Value/(float)Amount),1,20);
         public int Value { get; private set; }
         public bool IsCollecting { get; private set; }
         public TrashMotion Motion { get; private set; }
@@ -63,7 +65,7 @@ namespace BurgerShop.Restaurant
             if (Visual == null) return;
             age += Mathf.Max(0f, deltaTime);
             float bob = Mathf.Sin(age * BobRadians + phase) * BobAmplitude;
-            Visual.localPosition = new Vector3(0f, 0.04f + bob, 0f);
+            Visual.localPosition = new Vector3(0f, bob, 0f);
             Visual.localRotation = Quaternion.Euler(FaceTilt, age * SpinDegreesPerSecond, 0f);
             FaceAmountTowardCamera();
         }
@@ -88,7 +90,8 @@ namespace BurgerShop.Restaurant
             Transform visual = new GameObject("Visual").transform;
             visual.SetParent(root.transform, false);
             Material bill = BurgerShop.Core.RuntimeMaterials.Create(BillColor, true);
-            Material stripe = BurgerShop.Core.RuntimeMaterials.Create(StripeColor, true);
+            Material stripe = BurgerShop.Core.RuntimeMaterials.Create(Color.white, true);
+            stripe.mainTexture=BurgerShop.Core.BanknoteLook.Texture;
             root.AddComponent<BurgerVisual>().OwnMaterials(bill,stripe);
             for(int layer=0;layer<3;layer++)for(int i=0;i<6;i++)
             {
@@ -96,16 +99,8 @@ namespace BurgerShop.Restaurant
                 Vector3 pos=new Vector3((col-.5f)*.46f,.016f+layer*.04f,(row-1f)*.32f);
                 Part(visual,layer==0?"Bill_"+i:"StackBill_"+layer+"_"+i,pos,new Vector3(BillWidth,BillThickness,BillDepth),bill);
                 if(layer!=2)continue;
-                foreach(int side in new[]{-1,1})
-                {
-                    Part(visual,"BillBorder",pos+new Vector3(side*.19f,.018f,0),new Vector3(.015f,.006f,.23f),stripe);
-                    Part(visual,"BillBorder",pos+new Vector3(0,.018f,side*.11f),new Vector3(.39f,.006f,.015f),stripe);
-                }
-                // A geometric S and stem avoid floating text labels being culled by the HUD.
-                for(int bar=0;bar<3;bar++)Part(visual,"MoneyS",pos+new Vector3(0,.020f,(bar-1)*.064f),new Vector3(.12f,.008f,.018f),stripe);
-                Part(visual,"MoneyS",pos+new Vector3(-.05f,.020f,-.032f),new Vector3(.018f,.008f,.064f),stripe);
-                Part(visual,"MoneyS",pos+new Vector3(.05f,.020f,.032f),new Vector3(.018f,.008f,.064f),stripe);
-                Part(visual,"MoneyStem",pos+new Vector3(0,.022f,0),new Vector3(.012f,.008f,.18f),stripe);
+                Part(visual,"BillFace",pos+Vector3.up*.019f,new Vector3(BillWidth,.006f,BillDepth),stripe);
+
             }
             TextMesh label = new GameObject("Amount").AddComponent<TextMesh>();
             label.transform.SetParent(visual, false);
@@ -116,6 +111,7 @@ namespace BurgerShop.Restaurant
             label.fontSize = 52;
             label.color = new Color(1f, 0.98f, 0.72f);
             label.text = Amount.ToString();
+            label.GetComponent<Renderer>().enabled=false; // Amount is shown by wallet/pickup receipt, not on every layer.
             return root.transform;
         }
 

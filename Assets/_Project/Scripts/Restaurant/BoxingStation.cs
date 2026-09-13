@@ -8,7 +8,8 @@ namespace BurgerShop.Restaurant
     {
         public const float BoxInterval = 0.35f;
         public int WorkLevel { get; set; } = 1;
-        public float ProcessingSeconds => .35f - .05f*(Mathf.Clamp(WorkLevel,1,3)-1);
+        public static float SecondsForLevel(int level) => BoxInterval - .05f*(Mathf.Clamp(level,1,3)-1);
+        public float ProcessingSeconds => SecondsForLevel(WorkLevel);
         public const float WorkRadius = 0.9f;
         public const int InputCapacity = 8;
         public const int OutputCapacity = 8;

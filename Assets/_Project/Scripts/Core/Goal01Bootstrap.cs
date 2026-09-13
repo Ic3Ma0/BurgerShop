@@ -75,14 +75,17 @@ namespace BurgerShop.Core
             growth.Configure(wallet,goals,inventory,expansion);
             root.gameObject.AddComponent<BagLine>().Configure(wallet,goals,growth,hiring,inventory,cash);
             GrowthUpgradeHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),growth,goals,wallet);
-            root.gameObject.AddComponent<CourierLine>().Configure(wallet,parts,inventory,cash,station);
+            root.gameObject.AddComponent<CourierLine>().Configure(wallet,parts,inventory,cash,station,true);
             PartsHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),parts);
             var layout = root.gameObject.AddComponent<Building.FacilityLayout>();
             layout.Configure(inventory,wallet,parts,cash,dining,hiring,goals,expansion);
             Building.FacilityShopHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),layout);
+            root.gameObject.AddComponent<RestroomExpansion>().Configure(wallet,inventory,goals);
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
             persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades, goals, tables: tableUpgrades);
+            FacilityDetailsHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),layout,Object.FindFirstObjectByType<Building.FacilityShopHud>(),growth);
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
+            OfflineSettleHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),persistence);
             player.gameObject.AddComponent<TemporaryPowerups>().Configure(inventory,motor,wallet,Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"));
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             root.gameObject.AddComponent<AndroidDiagnostics>().Configure(wallet, inventory, hiring, upgrade);
@@ -233,15 +236,16 @@ namespace BurgerShop.Core
             controller.radius = 0.4f;
             controller.center = new Vector3(0f, 0f, 0f);
 
-            GameObject nose = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            nose.name = "Facing";
-            nose.transform.SetParent(player.transform, false);
-            nose.transform.localPosition = new Vector3(0f, 0.35f, 0.42f);
-            nose.transform.localScale = new Vector3(0.28f, 0.22f, 0.35f);
-            ApplyMaterial(nose, CreateLit(new Color(0.18f, 0.18f, 0.2f)));
-            Collider noseCollider = nose.GetComponent<Collider>();
-            if (noseCollider != null)
-                Object.Destroy(noseCollider);
+            player.GetComponent<Renderer>().enabled=false;
+            var white=CreateLit(new Color(.95f,.94f,.88f));var skin=CreateLit(new Color(.72f,.45f,.29f));var dark=CreateLit(new Color(.18f,.13f,.11f));
+            BurgerShop.Restaurant.BagVisualFactory.Part(player.transform,"ChefJacket",PrimitiveType.Capsule,new Vector3(0,-.02f,0),new Vector3(.65f,.325f,.42f),white);
+            BurgerShop.Restaurant.BagVisualFactory.Part(player.transform,"Head",PrimitiveType.Sphere,new Vector3(0,.53f,0),Vector3.one*.52f,skin);
+            BurgerShop.Restaurant.BagVisualFactory.Part(player.transform,"ChefHat",PrimitiveType.Cylinder,new Vector3(0,.85f,0),new Vector3(.64f,.17f,.64f),white);
+            BurgerShop.Restaurant.CourierVisuals.Part(player.transform,"Facing",new Vector3(0,.52f,.26f),Vector3.one*.12f,skin);
+            BurgerShop.Restaurant.CourierVisuals.Part(player.transform,"Apron",new Vector3(0,-.23f,.235f),new Vector3(.48f,.6f,.045f),white);
+            for(int i=0;i<3;i++)BurgerShop.Restaurant.CourierVisuals.Part(player.transform,"JacketButton",new Vector3(.12f,.16f-i*.13f,.225f),Vector3.one*.045f,dark);
+            for(int i=-1;i<=1;i++)BurgerShop.Restaurant.BagVisualFactory.Part(player.transform,"HatPuff",PrimitiveType.Sphere,new Vector3(i*.18f,.99f,0),new Vector3(.36f,.3f,.48f),white);
+            HumanoidVisual.Add(player.transform,-1f,white,skin,dark);
 
             player.AddComponent<PlayerMotor>();
             return player.transform;

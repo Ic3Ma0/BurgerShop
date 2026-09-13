@@ -15,7 +15,7 @@ namespace BurgerShop.Building
         public int level=1,tableSet,investment;
         public bool IsValid => !string.IsNullOrEmpty(id) && id.Length<=100 && Enum.IsDefined(typeof(FacilityKind),kind)
             && PlacementGeometry.Finite(x)&&PlacementGeometry.Finite(z)&&PlacementGeometry.Finite(yaw)
-            && x>=-27 && x<=38 && z>=-24 && z<=40 && yaw>=0&&yaw<360 && level>=1&&level<=4
+            && x>=-27 && x<=38 && z>=-28 && z<=40 && yaw>=0&&yaw<360 && level>=1&&level<=4
             && tableSet>=0&&tableSet<=3 && investment>=0&&investment<=TableSetCatalog.UpgradeCost
             && (tableSet==0 || investment==TableSetCatalog.UpgradeCost)
             && (kind<=(int)FacilityKind.SquareTable || (tableSet==0&&investment==0&&level<=3));

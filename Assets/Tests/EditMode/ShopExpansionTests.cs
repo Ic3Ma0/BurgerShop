@@ -81,7 +81,9 @@ namespace BurgerShop.Tests.EditMode
 
         void FillQueue()
         {
-            for (int i = 0; i < 1200; i++) queue.Advance(1f / 60f);
+            // Spec 046: customers now walk from the exterior sidewalk through the door.
+            for (int i = 0; i < 3600 && queue.ReadyCustomer == null; i++) queue.Advance(1f / 60f);
+            Assert.That(queue.ReadyCustomer,Is.Not.Null,"Customer must reach the counter from the street");
         }
 
         [Test]
@@ -170,8 +172,13 @@ namespace BurgerShop.Tests.EditMode
                     awayFromDoors[i].ToString());
                 Assert.That(Horizontal(awayFromDoors[i], ShopLayout.HrDoor), Is.GreaterThan(5f),
                     awayFromDoors[i].ToString());
-                Assert.That(Horizontal(awayFromDoors[i], ShopLayout.BoostDoor), Is.GreaterThan(3.5f),
-                    awayFromDoors[i].ToString());
+                if(awayFromDoors[i]==ShopLayout.BoxingCircle)
+                    // Spec 046 moved the working circle into the former boost room.
+                    // Its .85 radius still leaves a full unit clear before the doorway.
+                    Assert.That(awayFromDoors[i].z+.85f,Is.LessThanOrEqualTo(ShopLayout.BoostDoor.z-1f));
+                else
+                    Assert.That(Horizontal(awayFromDoors[i], ShopLayout.BoostDoor), Is.GreaterThan(3.5f),
+                        awayFromDoors[i].ToString());
             }
 
             Vector3[] notOnStarterTables =
@@ -197,8 +204,9 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(Horizontal(ShopLayout.GrillUnlock, ShopLayout.ExtraGrill), Is.LessThan(0.05f));
             Assert.That(Horizontal(ShopLayout.CounterUnlock, ShopLayout.ExtraCounter), Is.LessThan(0.05f));
             Assert.That(Horizontal(ShopLayout.BoxingUnlock, ShopLayout.BoxingTable), Is.LessThan(0.05f));
-            Assert.That(Horizontal(ShopLayout.DriveThruUnlock, ShopLayout.DriveThruCircle),
-                Is.GreaterThan(ShopLayout.AisleMin));
+            // These are non-solid interaction circles in the compact car bay, not an aisle between furniture.
+            Assert.That(Horizontal(ShopLayout.DriveThruUnlock, ShopLayout.DriveThruCircle)-2*.85f,
+                Is.GreaterThan(.4f),"Interaction circles must remain separated");
         }
 
         [Test]
@@ -324,7 +332,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(expansion.ExtraGrill.ActiveLookScale, Is.EqualTo(ExpandableGrill.LookScales[0]));
             int lv1Parts = expansion.ExtraGrill.ActivePartCount;
             Assert.That(lv1Parts, Is.GreaterThanOrEqualTo(4));
-            Assert.That(expansion.ExtraGrill.ActiveLook.Find("Chimney"), Is.Null);
+            Assert.That(expansion.ExtraGrill.ActiveLook.Find("Splashback"), Is.Null);
             Assert.That(expansion.ExtraGrill.ActiveLook.Find("GrillDeck_2"), Is.Null);
 
             GrillUpgradeZone upgrade = expansion.ExtraGrillUpgrade;
@@ -339,7 +347,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(expansion.ExtraGrill.ActiveLookName, Is.EqualTo("Look_Lv2"));
             Assert.That(expansion.ExtraGrill.ActiveLookScale, Is.EqualTo(ExpandableGrill.LookScales[1]));
             Assert.That(expansion.ExtraGrill.ActivePartCount, Is.Not.EqualTo(lv1Parts));
-            Assert.That(expansion.ExtraGrill.ActiveLook.Find("Chimney"), Is.Not.Null);
+            Assert.That(expansion.ExtraGrill.ActiveLook.Find("Splashback"), Is.Not.Null);
             Assert.That(expansion.ExtraGrill.ActiveLook.Find("GrillDeck_2"), Is.Not.Null);
             Assert.That(upgrade.NextCost, Is.EqualTo(160));
 
@@ -353,9 +361,9 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(expansion.ExtraGrill.Station.Capacity, Is.EqualTo(8));
             Assert.That(expansion.ExtraGrill.ActiveLookName, Is.EqualTo("Look_Lv3"));
             Assert.That(expansion.ExtraGrill.ActiveLookScale, Is.EqualTo(ExpandableGrill.LookScales[2]));
-            Assert.That(expansion.ExtraGrill.ActiveLook.Find("ChimneyL"), Is.Not.Null);
-            Assert.That(expansion.ExtraGrill.ActiveLook.Find("ChimneyR"), Is.Not.Null);
-            Assert.That(expansion.ExtraGrill.ActiveLook.Find("Beacon"), Is.Not.Null);
+            Assert.That(expansion.ExtraGrill.ActiveLook.Find("GrillLid_2"), Is.Not.Null);
+            Assert.That(expansion.ExtraGrill.ActiveLook.Find("GrillLid_3"), Is.Not.Null);
+            Assert.That(expansion.ExtraGrill.ActiveLook.Find("VentHood"), Is.Not.Null);
             Assert.That(expansion.ExtraGrill.ActiveLook.Find("GrillDeck_3"), Is.Not.Null);
             Assert.That(upgrade.IsMaxLevel, Is.True);
             long coins = wallet.Coins;

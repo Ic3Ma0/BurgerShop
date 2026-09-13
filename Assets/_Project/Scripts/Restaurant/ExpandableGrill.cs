@@ -10,8 +10,8 @@ namespace BurgerShop.Restaurant
         public static readonly Vector3[] LookScales =
         {
             Vector3.one,
-            new Vector3(1.22f, 1.22f, 1.22f),
-            new Vector3(1.45f, 1.45f, 1.45f)
+            new Vector3(1.04f, 1.04f, 1.04f),
+            new Vector3(1.08f, 1.08f, 1.08f)
         };
 
         Transform[] looks;
@@ -85,7 +85,7 @@ namespace BurgerShop.Restaurant
         {
             Transform tray = ActiveLook != null ? ActiveLook.Find("OutputTray") : null;
             if (output == null || tray == null) return;
-            output.position = tray.TransformPoint(Vector3.up * 0.55f);
+            output.position = tray.position + Vector3.up * (tray.GetComponent<Renderer>().bounds.extents.y + .01f);
         }
 
         public static ExpandableGrill CreateStarter(Transform parent, BurgerInventory player, RestaurantWallet wallet)
@@ -119,19 +119,7 @@ namespace BurgerShop.Restaurant
             root.position = position;
 
             bool cola = product == KitchenProduct.Cola;
-            Transform[] kits = cola
-                ? new[]
-                {
-                    BuildLook(root, 1, new Color(0.16f, 0.42f, 0.72f), new Color(0.72f, 0.10f, 0.14f), 1, 0, 1),
-                    BuildLook(root, 2, new Color(0.08f, 0.55f, 0.68f), new Color(0.82f, 0.16f, 0.18f), 2, 1, 2),
-                    BuildLook(root, 3, new Color(0.06f, 0.22f, 0.48f), new Color(0.90f, 0.12f, 0.16f), 3, 2, 4)
-                }
-                : new[]
-                {
-                    BuildLook(root, 1, new Color(0.22f, 0.26f, 0.30f), new Color(0.08f, 0.09f, 0.10f), 1, 0, 1),
-                    BuildLook(root, 2, new Color(0.72f, 0.38f, 0.14f), new Color(0.95f, 0.42f, 0.10f), 2, 1, 2),
-                    BuildLook(root, 3, new Color(0.78f, 0.14f, 0.16f), new Color(0.82f, 0.84f, 0.88f), 3, 2, 4)
-                };
+            Transform[] kits = { BuildLook(root,1,cola),BuildLook(root,2,cola),BuildLook(root,3,cola) };
 
             Transform output = new GameObject(cola ? "ColaOutput" : "BurgerOutput").transform;
             output.SetParent(root, false);
@@ -174,55 +162,83 @@ namespace BurgerShop.Restaurant
             return visual;
         }
 
-        static Transform BuildLook(Transform parent, int level, Color body, Color heat, int decks, int chimneys,
-            int lamps)
+        static Transform BuildLook(Transform parent,int level,bool cola)
         {
-            Transform look = new GameObject("Look_Lv" + level).transform;
-            look.SetParent(parent, false);
-            look.localScale = LookScales[level - 1];
-            look.gameObject.SetActive(level == 1);
-            Material steel = BurgerShop.Core.RuntimeMaterials.Create(body);
-            Material grill = BurgerShop.Core.RuntimeMaterials.Create(heat);
-            Material tray = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.63f, 0.68f, 0.70f));
-            Material lamp = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.40f, 0.82f, 1f));
-            Material chrome = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.82f, 0.84f, 0.88f));
-            BodyMetrics(level, out float width, out float height, out float depth, out float bodyTop);
-            Part(look, "Body", PrimitiveType.Cube, new Vector3(0f, 0.55f * height, 0f),
-                new Vector3(width, height, depth), steel);
-            for (int i = 0; i < decks; i++)
-                Part(look, i == 0 ? "GrillTop" : "GrillDeck_" + (i + 1), PrimitiveType.Cube,
-                    new Vector3(-0.35f, bodyTop + 0.08f + i * 0.22f, 0f),
-                    new Vector3(width * 0.55f, 0.10f + i * 0.02f, depth * 0.72f), grill);
-            Part(look, "OutputTray", PrimitiveType.Cube, new Vector3(width * 0.48f, bodyTop + 0.10f, 0f),
-                new Vector3(0.95f, 0.12f, 1.4f), tray);
-            for (int i = 0; i < chimneys; i++)
+            var look=new GameObject("Look_Lv"+level).transform;look.SetParent(parent,false);
+            look.localScale=LookScales[level-1];look.gameObject.SetActive(level==1);
+            var cream=BurgerShop.Core.RuntimeMaterials.Create(BurgerShop.Core.RestaurantStyle.Cream);
+            var red=BurgerShop.Core.RuntimeMaterials.Create(BurgerShop.Core.RestaurantStyle.Red);
+            var metal=BurgerShop.Core.RuntimeMaterials.Create(BurgerShop.Core.RestaurantStyle.Steel);
+            var dark=BurgerShop.Core.RuntimeMaterials.Create(BurgerShop.Core.RestaurantStyle.Ink);
+            var blue=BurgerShop.Core.RuntimeMaterials.Create(BurgerShop.Core.RestaurantStyle.Blue);
+            var light=BurgerShop.Core.RuntimeMaterials.Create(new Color(.46f,.84f,.83f),true);
+            var green=BurgerShop.Core.RuntimeMaterials.Create(new Color(.3f,.76f,.33f));
+            look.gameObject.AddComponent<BurgerVisual>().OwnMaterials(cream,red,metal,dark,blue,light,green);
+            BodyMetrics(level,out float width,out float height,out float depth,out float top);
+            void Block(string name,Vector3 pos,Vector3 size,Material mat,bool solid=false)=>BurgerShop.Core.RestaurantStyle.Block(look,name,pos,size,mat,solid);
+            Block("Body",new Vector3(0,height*.5f+.10f,0),new Vector3(width,height,depth),cola?cream:metal,true);
+            Block("BasePlinth",new Vector3(0,.1f,0),new Vector3(width-.1f,.16f,depth-.1f),dark);
+            Block("CounterLip",new Vector3(0,top,0),new Vector3(width+.10f,.12f,depth+.08f),metal);
+            Block("FrontFascia",new Vector3(0,top-.26f,-depth*.5f-.025f),new Vector3(width-.1f,.32f,.08f),cola?blue:red);
+            for(int i=0;i<level+1;i++)
             {
-                float x = chimneys == 1 ? -0.15f : (i == 0 ? -0.55f : 0.25f);
-                Part(look, chimneys == 1 ? "Chimney" : (i == 0 ? "ChimneyL" : "ChimneyR"), PrimitiveType.Cylinder,
-                    new Vector3(x, bodyTop + 0.85f + level * 0.08f, 0.35f),
-                    new Vector3(0.28f, 0.55f + level * 0.12f, 0.28f), chrome);
+                float x=-width*.36f+i*width*.72f/level;
+                Block("CabinetHandle",new Vector3(x,.50f,-depth*.5f-.06f),new Vector3(.32f,.055f,.08f),dark);
             }
-            for (int i = 0; i < lamps; i++)
-                Part(look, "Lamp_" + (i + 1), PrimitiveType.Sphere,
-                    new Vector3(-0.9f + i * 0.42f, bodyTop + 0.42f + level * 0.04f, depth * 0.38f),
-                    Vector3.one * (0.16f + level * 0.03f), lamp);
-            if (level == 3)
-                Part(look, "Beacon", PrimitiveType.Cylinder, new Vector3(0.15f, bodyTop + 1.35f, 0f),
-                    new Vector3(0.22f, 0.28f, 0.22f), BurgerShop.Core.RuntimeMaterials.Create(new Color(1f, 0.85f, 0.2f)));
-            Part(look, "ProgressBack", PrimitiveType.Cube, new Vector3(0f, bodyTop + 0.55f, -depth * 0.52f),
-                new Vector3(1.5f, 0.14f, 0.08f), grill);
-            Part(look, "ProgressFill", PrimitiveType.Cube, new Vector3(-0.75f, bodyTop + 0.55f, -depth * 0.54f),
-                new Vector3(0f, 0.1f, 0.1f), BurgerShop.Core.RuntimeMaterials.Create(new Color(0.25f, 0.87f, 0.34f)));
+            Block("OutputTray",new Vector3(width*.39f,top+.1f,0),new Vector3(.90f,.10f,depth*.84f),metal,true);
+            var cycle=look.gameObject.AddComponent<EquipmentCycleVisual>();
+            if(cola)
+            {
+                Block("DispenserBack",new Vector3(-.40f,top+.70f,.24f),new Vector3(width*.58f,1.4f,.64f),blue);
+                Block("ColaHeader",new Vector3(-.40f,top+1.30f,-.02f),new Vector3(width*.63f,.44f,1.05f),red);
+                Block("SelectionPanel",new Vector3(-.40f,top+.96f,-.30f),new Vector3(width*.53f,.28f,.10f),dark);
+                for(int i=0;i<level;i++)
+                {
+                    float x=-.4f+(i-(level-1)*.5f)*.36f;
+                    Block("FlavorButton_"+i,new Vector3(x,top+.97f,-.36f),new Vector3(.24f,.18f,.035f),i%2==0?light:cream);
+                    Block("Nozzle_"+i,new Vector3(x,top+.66f,-.32f),new Vector3(.11f,.28f,.19f),metal);
+                    Block("DispenserLever_"+i,new Vector3(x,top+.40f,-.30f),new Vector3(.05f,.30f,.06f),dark);
+                }
+                Block("DripTray",new Vector3(-.4f,top+.08f,-.2f),new Vector3(width*.55f,.10f,.80f),dark);
+                for(int i=0;i<6;i++)Block("DripGrate",new Vector3(-width*.36f+i*.20f,top+.14f,-.2f),new Vector3(.04f,.025f,.65f),metal);
+                var cup=ColaVisualFactory.Create(look,0);cup.name="FillingCup";cup.localPosition=new Vector3(-.4f,top+.16f,-.25f);cup.localScale=Vector3.one*.7f;
+                cycle.Stream=BurgerShop.Core.RestaurantStyle.Block(look,"ColaStream",new Vector3(-.4f,top+.44f,-.36f),new Vector3(.045f,.35f,.045f),dark);
+            }
+            else
+            {
+                var lids=new System.Collections.Generic.List<Transform>();
+                float surface=width*.62f;
+                for(int i=0;i<level;i++)
+                {
+                    float x=-width*.47f+surface*(i+.5f)/level;
+                    float plate=surface/level-.06f;
+                    Block(i==0?"GrillTop":"GrillDeck_"+(i+1),new Vector3(x,top+.08f,0),new Vector3(plate,.10f,depth*.74f),dark);
+                    var hinge=new GameObject("GrillLid_"+(i+1)).transform;hinge.SetParent(look,false);hinge.localPosition=new Vector3(x,top+.18f,depth*.31f);hinge.localRotation=Quaternion.Euler(42,0,0);lids.Add(hinge);
+                    BurgerShop.Core.RestaurantStyle.Block(hinge,"PressPlate",new Vector3(0,0,-depth*.31f),new Vector3(plate,.13f,depth*.66f),metal);
+                    BurgerShop.Core.RestaurantStyle.Block(hinge,"PressHandle",new Vector3(0,.10f,-depth*.61f),new Vector3(plate*.65f,.10f,.14f),dark);
+                    BagVisualFactory.Part(look,"CookingPatty",PrimitiveType.Cylinder,new Vector3(x,top+.16f,-.05f),new Vector3(plate*.64f,.045f,.43f),red);
+                    Block("Lamp_"+(i+1),new Vector3(x,top-.24f,-depth*.5f-.073f),new Vector3(.12f,.07f,.018f),light);
+                }
+                cycle.Lids=lids.ToArray();
+                if(level>=2)Block("Splashback",new Vector3(-.35f,top+.38f,depth*.46f),new Vector3(width*.70f,.70f,.07f),metal);
+                if(level==3)
+                {
+                    Block("VentHood",new Vector3(-.35f,top+1.05f,depth*.30f),new Vector3(width*.76f,.22f,.7f),metal);
+                    Block("HoodSupport",new Vector3(-.35f,top+.60f,depth*.47f),new Vector3(.16f,.8f,.10f),dark);
+                }
+            }
+            Part(look,"ProgressBack",PrimitiveType.Cube,new Vector3(0,top-.10f,-depth*.5f-.072f),new Vector3(1.5f,.10f,.035f),dark);
+            Part(look,"ProgressFill",PrimitiveType.Cube,new Vector3(-.75f,top-.10f,-depth*.5f-.095f),new Vector3(0,.06f,.03f),green);
             return look;
         }
 
         public static void BodyMetrics(int level, out float width, out float height, out float depth, out float bodyTop)
         {
             int tier = Mathf.Clamp(level, 1, 3);
-            width = 2.4f + (tier - 1) * 0.7f;
-            height = 1.0f + (tier - 1) * 0.28f;
-            depth = 1.6f + (tier - 1) * 0.35f;
-            bodyTop = 1.05f * height;
+            width = 2.4f + (tier - 1) * 0.2f;
+            height = .90f + (tier - 1) * .05f;
+            depth = 1.6f + (tier - 1) * .10f;
+            bodyTop = height + .10f;
         }
 
         void PlaceStatus()

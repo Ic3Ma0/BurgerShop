@@ -243,28 +243,14 @@ namespace BurgerShop.Restaurant
             Material steel = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.35f, 0.38f, 0.42f));
 
             Vector3 window = ShopLayout.DriveThruWindow;
-            Transform wall=null;
-            foreach(var candidate in transform.root.GetComponentsInChildren<Transform>(true))
-                if(candidate.name=="Wall-Z_W"){wall=candidate;break;}
-            if(wall!=null && cutWall)
-            {
-                wall.gameObject.SetActive(false);
-                float left=wall.position.x-wall.localScale.x*.5f,right=wall.position.x+wall.localScale.x*.5f;
-                float min=window.x-1.7f,max=window.x+1.7f;
-                var material=wall.GetComponent<Renderer>().sharedMaterial;
-                CourierVisuals.Part(transform.parent,"WindowWallLeft",new Vector3((left+min)*.5f,.75f,wall.position.z),new Vector3(min-left,1.5f,.4f),material,true);
-                CourierVisuals.Part(transform.parent,"WindowWallRight",new Vector3((right+max)*.5f,.75f,wall.position.z),new Vector3(right-max,1.5f,.4f),material,true);
-                CourierVisuals.Part(transform.parent,"LowServingSill",new Vector3(window.x,.30f,wall.position.z),new Vector3(3.4f,.6f,.4f),material,true);
-            }
-
             ShopFixtures.CreateStationLabel(transform, "WindowLabel", window + new Vector3(0f, 1.25f, 0f), "WINDOW");
             circle = ShopFixtures.CreateActionCircle(transform, "DriveThruCircle", ShopLayout.DriveThruCircle,
                 CircleColor);
 
             Vector3 road = ShopLayout.DriveThruRoad;
-            Part("Road", PrimitiveType.Cube, road + Vector3.up * 0.04f, new Vector3(18.4f, 0.08f, 3.4f), asphalt, true);
+            if(!cutWall)Part("Road", PrimitiveType.Cube, road + Vector3.up * 0.04f, new Vector3(18.4f, 0.08f, 3.4f), asphalt, true);
             float dashWest = road.x - 8.6f;
-            for (int i = 0; i < 9; i++)
+            for (int i = 0; !cutWall && i < 9; i++)
                 Part("LaneDash_" + i, PrimitiveType.Cube,
                     new Vector3(dashWest + i * 2.1f, 0.09f, road.z), new Vector3(1.1f, 0.02f, 0.12f), line, false);
 
@@ -486,24 +472,42 @@ namespace BurgerShop.Restaurant
                 Material paint = BurgerShop.Core.RuntimeMaterials.Create(color);
                 Material dark = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.12f, 0.12f, 0.14f));
                 Material glass = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.55f, 0.72f, 0.82f));
-                AddPart("Body", PrimitiveType.Cube, new Vector3(0f, 0.22f, 0f), new Vector3(1.15f, 0.32f, 2.05f), paint);
-                AddPart("Cabin", PrimitiveType.Cube, new Vector3(0f, 0.48f, -0.18f), new Vector3(0.95f, 0.28f, 0.95f), glass);
-                for (int i = 0; i < 4; i++)
+                var chrome=BurgerShop.Core.RuntimeMaterials.Create(new Color(.88f,.90f,.84f));
+                var lamp=BurgerShop.Core.RuntimeMaterials.Create(new Color(1f,.94f,.65f));
+                var red=BurgerShop.Core.RuntimeMaterials.Create(new Color(.85f,.10f,.08f));
+                AddPart("Chassis",PrimitiveType.Cube,new Vector3(0,0,0),new Vector3(1.32f,.18f,2.45f),dark);
+                AddPart("Body",PrimitiveType.Cube,new Vector3(0,.26f,0),new Vector3(1.45f,.48f,2.6f),paint);
+                AddPart("Cabin",PrimitiveType.Cube,new Vector3(0,.65f,-.12f),new Vector3(1.22f,.48f,1.35f),glass);
+                AddPart("Roof",PrimitiveType.Cube,new Vector3(0,.91f,-.12f),new Vector3(1.28f,.09f,1.4f),paint);
+                foreach(float x in new[]{-.62f,.62f})
                 {
-                    float x = i % 2 == 0 ? -0.42f : 0.42f;
-                    float z = i < 2 ? 0.62f : -0.62f;
-                    AddPart("Wheel_" + i, PrimitiveType.Cylinder, new Vector3(x, 0.12f, z),
-                        new Vector3(0.22f, 0.08f, 0.22f), dark);
-                    transform.Find("Wheel_" + i).localRotation = Quaternion.Euler(0f, 0f, 90f);
+                    AddPart("WindowPillar",PrimitiveType.Cube,new Vector3(x,.68f,-.12f),new Vector3(.06f,.43f,.12f),paint);
+                    AddPart("Mirror",PrimitiveType.Cube,new Vector3(x*1.25f,.58f,.40f),new Vector3(.2f,.13f,.19f),paint);
+                    AddPart("DoorHandle",PrimitiveType.Cube,new Vector3(x*1.18f,.43f,-.3f),new Vector3(.04f,.05f,.2f),chrome);
+                }
+                foreach(float z in new[]{-1.32f,1.32f})
+                {
+                    AddPart("Bumper",PrimitiveType.Cube,new Vector3(0,.1f,z),new Vector3(1.36f,.13f,.09f),chrome);
+                    foreach(float x in new[]{-.48f,.48f})AddPart(z>0?"Headlight":"TailLight",PrimitiveType.Cube,new Vector3(x,.3f,z),new Vector3(.29f,.18f,.06f),z>0?lamp:red);
+                }
+                AddPart("Grille",PrimitiveType.Cube,new Vector3(0,.26f,1.34f),new Vector3(.48f,.14f,.04f),dark);
+                for(int i=0;i<4;i++)
+                {
+                    float x=i%2==0?-.73f:.73f;float z=i<2?.83f:-.83f;
+                    AddPart("Wheel_"+i,PrimitiveType.Cylinder,new Vector3(x,-.03f,z),new Vector3(.52f,.13f,.52f),dark);
+                    transform.Find("Wheel_"+i).localRotation=Quaternion.Euler(0,0,90);
+                    AddPart("Hub_"+i,PrimitiveType.Cylinder,new Vector3(x*1.15f,-.03f,z),new Vector3(.27f,.015f,.27f),chrome);
+                    transform.Find("Hub_"+i).localRotation=Quaternion.Euler(0,0,90);
                 }
             }
 
+            const float VisualGroundOffset=-.29f; // Queue root is at .35; street top is -.23.
             void AddPart(string name, PrimitiveType type, Vector3 local, Vector3 scale, Material material)
             {
                 GameObject part = GameObject.CreatePrimitive(type);
                 part.name = name;
                 part.transform.SetParent(transform, false);
-                part.transform.localPosition = local;
+                part.transform.localPosition = local + Vector3.up * (transform.parent.Find("Road")==null?VisualGroundOffset:0f);
                 part.transform.localScale = scale;
                 part.GetComponent<Renderer>().sharedMaterial = material;
                 Collider collider = part.GetComponent<Collider>();

@@ -10,9 +10,11 @@ namespace BurgerShop.Restaurant
         public const int DiningDrop = 10;
         public const float PickupRadius = 0.85f;
         public const float PickupInterval = 0.04f;
-        public static readonly Vector3 CounterOffsetFromServing = new Vector3(-1.5f, 1.12f, 0.4f);
+        public static readonly Vector3 CounterOffsetFromServing = new Vector3(-1.5f, 0.04f, 0.4f);
         public static readonly Vector3 TableOffsetFromCenter = new Vector3(1.15f, 0.04f, 0.35f);
 
+        public const float MaxStackHeight=4f;
+        readonly Dictionary<CashPickup,Vector3> origins=new Dictionary<CashPickup,Vector3>();
         readonly List<CashPickup> piles = new List<CashPickup>();
         RestaurantWallet wallet;
         Transform collector;
@@ -73,9 +75,9 @@ namespace BurgerShop.Restaurant
             if (amount <= 0) return null;
             amount = GetComponent<UI.SessionGoalTracker>()?.AddIncomeBonus(amount) ?? amount;
             int index = CountNear(origin);
-            Vector3 slot = origin + GridOffset(index);
+            Vector3 slot = origin;
             CashPickup pile = CashPickup.Create(transform, slot, amount, index);
-            piles.Add(pile);
+            piles.Add(pile);origins[pile]=origin;Restack();
             return pile;
         }
 
@@ -104,13 +106,14 @@ namespace BurgerShop.Restaurant
             CashPickup captured = pile;
             Vector3 pickupOrigin=pile.transform.position;
             captured.LaunchTo(collector, () => FinishCollect(captured,pickupOrigin));
+            Restack();
             motion = captured.Motion;
             return motion != null;
         }
 
         void FinishCollect(CashPickup pile,Vector3 pickupOrigin)
         {
-            piles.Remove(pile);
+            piles.Remove(pile);origins.Remove(pile);
             int value = pile != null ? pile.Value : 0;
             Vector3 position=pickupOrigin;
             if (pile != null) BurgerVisual.Release(pile.gameObject);
@@ -139,13 +142,29 @@ namespace BurgerShop.Restaurant
                 Vector3 offset = collector.position - pile.transform.position;
                 offset.y = 0f;
                 float sqr = offset.sqrMagnitude;
-                if (sqr >= best) continue;
+                if (sqr > best || sqr==best&&nearest!=null&&pile.transform.position.y<nearest.transform.position.y) continue;
                 best = sqr;
                 nearest = pile;
             }
             return nearest;
         }
 
+        void Restack()
+        {
+            // Each pickup retains its exact monetary value; only its display height changes.
+            var totals=new Dictionary<Vector3,float>();var heights=new Dictionary<Vector3,float>();
+            foreach(var pile in piles)if(pile!=null&&!pile.IsCollecting&&origins.TryGetValue(pile,out var origin))
+                totals[origin]=(totals.TryGetValue(origin,out var sum)?sum:0)+pile.StackHeight;
+            foreach(var pile in piles)
+            {
+                if(pile==null||pile.IsCollecting||!origins.TryGetValue(pile,out var origin))continue;
+                float compression=Mathf.Min(1,MaxStackHeight/totals[origin]);
+                float height=heights.TryGetValue(origin,out var current)?current:0;
+                pile.transform.position=origin+Vector3.up*height;
+                pile.Visual.localScale=new Vector3(1,pile.StackHeight/CashPickup.BaseStackHeight*compression,1);
+                heights[origin]=height+pile.StackHeight*compression;
+            }
+        }
         int CountNear(Vector3 origin)
         {
             int count = 0;
@@ -163,7 +182,7 @@ namespace BurgerShop.Restaurant
         {
             int col = index % 2;
             int row = index / 2;
-            return new Vector3(-col * 0.50f, 0.01f * (index % 3), row * 0.36f);
+            return new Vector3(-col * 0.50f, 0f, row * 0.36f);
         }
 
         int FlyingCount()
