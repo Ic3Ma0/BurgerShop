@@ -1,0 +1,6 @@
+---
+description: BurgerShop 当前开发阶段的验证政策入口
+alwaysApply: true
+---
+
+验证规模和当前平台安排以 `AGENTS.md` 的 “Verification and current development priority” 为准。按改动做必要本地 Unity 验证，通过后及时交付；只有相关风险、失败或新改动才扩大验证。

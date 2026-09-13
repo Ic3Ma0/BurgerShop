@@ -121,6 +121,13 @@ namespace BurgerShop.Restaurant
             BindCash(cashFloor);
         }
 
+        public bool DetachCounter(CounterStock counter)
+        {
+            int index=stocks.IndexOf(counter);if(index<0)return true;
+            if(index==0||ownedCounter==index)return false;
+            stocks.RemoveAt(index);if(index<drops.Count)drops.RemoveAt(index);if(index<servePoints.Count)servePoints.RemoveAt(index);
+            if(ownedCounter>index)ownedCounter--;return true;
+        }
         public void RegisterCounter(CounterStock extraStock, CounterDropZone extraDrop, Transform extraCircle)
         {
             if (extraStock != null && !stocks.Contains(extraStock)) stocks.Add(extraStock);
@@ -217,7 +224,7 @@ namespace BurgerShop.Restaurant
             ownedCounter = index;
             flightServer = carrier;
             flightAge = 0f;
-            flightOrigin = flyingBurger != null ? flyingBurger.position : pile.transform.position;
+            flightOrigin = servePoints[index].InverseTransformPoint(flyingBurger != null ? flyingBurger.position : pile.transform.position);
             if (flyingBurger != null) flyingBurger.SetParent(customer.transform, true);
             return true;
         }
@@ -230,7 +237,7 @@ namespace BurgerShop.Restaurant
             if (flyingBurger != null)
             {
                 Vector3 destination = ownedCustomer.transform.TransformPoint(new Vector3(0, 0.85f, 0.6f));
-                flyingBurger.position = Vector3.Lerp(flightOrigin, destination, t * t * (3f - 2f * t))
+                flyingBurger.position = Vector3.Lerp(servePoints[ownedCounter].TransformPoint(flightOrigin), destination, t * t * (3f - 2f * t))
                     + Vector3.up * (0.55f * Mathf.Sin(t * Mathf.PI));
             }
             if (t < 1f) return;
@@ -242,9 +249,10 @@ namespace BurgerShop.Restaurant
             {
                 int amount = customer.OrderSize * price;
                 queue.TryDequeueReadyCustomer(out _);
-                customer.BeginDeparture(flyingBurger, exitRoute, amount, dining, true);
+                customer.BeginDeparture(flyingBurger, exitRoute, amount, dining!=null&& (GetComponentInParent<UI.SessionGoalTracker>()?.Allows(2)??true)?dining:null, true);
                 wallet.RecordCompletedSale();
                 CompletedOrders++;
+                GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(queue.Product==KitchenProduct.Cola?ShopGoalKind.ColaOrder:ShopGoalKind.ServeCustomers);
                 UI.FeedbackDirector.Current?.World(customer.transform.position,"",.45f,flightServer != null ? flightServer.transform : null);
                 Transform used = ownedCounter < servePoints.Count ? servePoints[ownedCounter] : servingPoint;
                 if (used != null) cash?.DropAt(CashFloor.CounterDropPosition(used.position), amount);

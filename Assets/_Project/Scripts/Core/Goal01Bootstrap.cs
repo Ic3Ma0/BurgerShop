@@ -28,6 +28,7 @@ namespace BurgerShop.Core
             Material playerMat = CreateLit(new Color(0.89f, 0.48f, 0.16f));
             Material markerMat = CreateLit(new Color(0.22f, 0.55f, 0.38f));
 
+            StreetEnvironment.Build(root);
             ShopLayout.CreateFloor(root, floorMat);
             ShopLayout.CreateWalls(root, wallMat);
             HrOffice office = HrOffice.Create(root, wallMat, hrFloor);
@@ -76,6 +77,9 @@ namespace BurgerShop.Core
             GrowthUpgradeHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),growth,goals,wallet);
             root.gameObject.AddComponent<CourierLine>().Configure(wallet,parts,inventory,cash,station);
             PartsHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),parts);
+            var layout = root.gameObject.AddComponent<Building.FacilityLayout>();
+            layout.Configure(inventory,wallet,parts,cash,dining,hiring,goals,expansion);
+            Building.FacilityShopHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),layout);
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
             persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades, goals, tables: tableUpgrades);
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);

@@ -234,6 +234,7 @@ namespace BurgerShop.Customer
                         table.TryAssignSeat(this, out seatPosition, out seatIndex);
                 }
                 Vector3 wait = table != null ? table.WaitPosition : (hall != null ? hall.WaitPosition : transform.position);
+                if (seatIndex >= 0 && table != null) seatPosition = table.SeatPosition(seatIndex);
                 Vector3 target = seatIndex >= 0 ? seatPosition : wait;
                 if (!StepToward(target, ref remaining)) return;
                 if (seatIndex < 0)
@@ -250,6 +251,8 @@ namespace BurgerShop.Customer
 
             if (phase == Phase.Eating)
             {
+                if (table != null && seatIndex >= 0)
+                { transform.position = table.SeatPosition(seatIndex); FaceTable(); PlaceBurgerOnTable(); }
                 eatTime += deltaTime;
                 float need = (table != null ? table.EatSeconds : 5f) * (Kind == CustomerKind.BigEater ? 1.5f : 1f);
                 if (eatTime < need) return;
@@ -274,6 +277,11 @@ namespace BurgerShop.Customer
 
             while (remaining > 0f && exitWaypoint < exitRoute.Length)
             {
+                if(Building.FacilityLayout.Current?.HasCustomLayout==true)
+                {
+                    if(!StepToward(exitRoute[exitWaypoint],ref remaining))break;
+                    exitWaypoint++;continue;
+                }
                 Vector3 offset = exitRoute[exitWaypoint] - transform.position;
                 float distance = offset.magnitude;
                 if (distance > 0.0001f)
@@ -297,12 +305,15 @@ namespace BurgerShop.Customer
         Vector3[] wingWalk;
         Vector3 wingTarget;
         int wingStep;
+        int layoutRevision=-1;
         bool StepToward(Vector3 target, ref float travel)
         {
-            if (wingWalk == null || wingTarget != target)
+            if (wingWalk == null || wingTarget != target || layoutRevision != (Building.FacilityLayout.Current?.Revision??-1))
             {
                 wingTarget = target;
-                wingWalk = ShopLayout.WingRoute(transform.position, target);
+                layoutRevision=Building.FacilityLayout.Current?.Revision??-1;
+                wingWalk = Building.FacilityLayout.Current?.HasCustomLayout==true?Building.FacilityLayout.Current.Route(transform.position,target):ShopLayout.WingRoute(transform.position,target);
+                if(wingWalk==null)return false;
                 wingStep = 0;
             }
             while (wingStep < wingWalk.Length)

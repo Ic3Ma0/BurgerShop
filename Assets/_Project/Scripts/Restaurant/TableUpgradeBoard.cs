@@ -15,7 +15,7 @@ namespace BurgerShop.Restaurant
         ShopExpansion expansion;
         RestaurantWallet wallet;
         BurgerInventory player;
-        readonly TableUpgradeZone[] zones = new TableUpgradeZone[SquareIndex + 1];
+        TableUpgradeZone[] zones = new TableUpgradeZone[SquareIndex + 1];
 
         public event Action Changed;
 
@@ -112,6 +112,11 @@ namespace BurgerShop.Restaurant
             if (expansion.SquareTable != null) EnsureZone(SquareIndex, expansion.SquareTable);
         }
 
+        public void RegisterCustom(DiningTable table)
+        {
+            foreach(var zone in zones)if(zone!=null&&zone.Table==table)return;
+            int index=zones.Length;Array.Resize(ref zones,index+1);EnsureZone(index,table);
+        }
         void EnsureZone(int index, DiningTable table)
         {
             if (table == null || index < 0 || index >= zones.Length) return;
@@ -123,6 +128,8 @@ namespace BurgerShop.Restaurant
             Vector3 padPos = ShopLayout.TableUpgradePad(table.Center);
             Transform pad = BuildPad("Chair" + index + "UnlockPad", padPos);
             TextMesh label = NewLabel("Chair" + index + "UnlockPadLabel", padPos + Vector3.up * 1.35f);
+            pad.SetParent(table.transform,true);
+            label.transform.SetParent(table.transform,true);
             TableUpgradeZone zone = pad.gameObject.AddComponent<TableUpgradeZone>();
             zone.Configure(table, index, wallet, player, pad, label, () => Changed?.Invoke());
             zones[index] = zone;

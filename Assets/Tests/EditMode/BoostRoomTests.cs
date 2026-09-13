@@ -98,6 +98,22 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
+        public void LegacyFiveCanContinueWithoutLosingProgress()
+        {
+            wallet.RestoreProgress(500, 0);
+            boost.RestoreTiers(5, 5);
+            Enter();
+            Assert.That(boost.IsMaxLevel, Is.False);
+            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("5/20"));
+            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("5/20"));
+            Assert.That(boost.TryBuySpeed(), Is.True);
+            Assert.That(boost.TryBuyCarry(), Is.True);
+            Assert.That(boost.SpeedTier, Is.EqualTo(6));
+            Assert.That(boost.CarryTier, Is.EqualTo(6));
+            Assert.That(wallet.Coins, Is.EqualTo(280));
+        }
+
+        [Test]
         public void ShopHasBoostRoomWithOpenDoorAndEnglishLabels()
         {
             Assert.That(room.transform.Find("BoostWall-Z"), Is.Not.Null);
@@ -157,9 +173,9 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void ClickSpeedAndCarrySpendIndependentlyAndLeaveCloses()
         {
-            int[] prices = { 50, 150, 300, 450, 600 };
-            float[] speeds = { 5.37625f, 6.0775f, 6.77875f, 7.48f, 8.18125f };
-            wallet.RestoreProgress(3100, 0);
+            int[] prices = { 50,60,70,80,100,110,130,160,190,220,260,310,360,430,510,600,710,830,980,1160 };
+            int budget = 2 * Sum(prices, prices.Length);
+            wallet.RestoreProgress(budget, 0);
             Assert.That(player.Capacity, Is.EqualTo(4));
             Assert.That(motor.MoveSpeed, Is.EqualTo(4.675f).Within(0.001f));
             Assert.That(staffBag.Capacity, Is.EqualTo(2));
@@ -167,40 +183,48 @@ namespace BurgerShop.Tests.EditMode
             Enter();
             for (int i = 0; i < 90; i++) boost.Advance(1f / 60f);
             Assert.That(boost.SpeedTier, Is.Zero, "Standing no longer buys a combined tier.");
-            Assert.That(wallet.Coins, Is.EqualTo(3100));
+            Assert.That(wallet.Coins, Is.EqualTo(budget));
 
             hud.ClickSpeed();
             hud.RefreshNow();
-            Assert.That(wallet.Coins, Is.EqualTo(3050));
+            Assert.That(wallet.Coins, Is.EqualTo(budget - 50));
             Assert.That(boost.SpeedTier, Is.EqualTo(1));
             Assert.That(boost.CarryTier, Is.Zero);
-            Assert.That(motor.MoveSpeed, Is.EqualTo(speeds[0]).Within(0.001f));
+            Assert.That(motor.MoveSpeed, Is.EqualTo(5.37625f).Within(0.001f));
             Assert.That(player.Capacity, Is.EqualTo(4));
             Assert.That(hud.IsVisible, Is.True);
-            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("150"));
+            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("60"));
 
             hud.ClickCarry();
             hud.RefreshNow();
-            Assert.That(wallet.Coins, Is.EqualTo(3000));
+            Assert.That(wallet.Coins, Is.EqualTo(budget - 100));
             Assert.That(boost.CarryTier, Is.EqualTo(1));
             Assert.That(player.Capacity, Is.EqualTo(5));
             Assert.That(staffBag.Capacity, Is.EqualTo(2));
-            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("150"));
+            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("60"));
 
-            for (int tier = 2; tier <= 5; tier++)
+            for (int tier = 2; tier <= 20; tier++)
             {
                 hud.ClickSpeed();
                 hud.ClickCarry();
                 hud.RefreshNow();
                 Assert.That(boost.SpeedTier, Is.EqualTo(tier));
                 Assert.That(boost.CarryTier, Is.EqualTo(tier));
-                Assert.That(motor.MoveSpeed, Is.EqualTo(speeds[tier - 1]).Within(0.001f));
-                Assert.That(player.Capacity, Is.EqualTo(4 + tier));
-                Assert.That(wallet.Coins, Is.EqualTo(3100 - 2 * Sum(prices, tier)));
+                Assert.That(motor.MoveSpeed, Is.EqualTo(4.675f * (1f + .15f * Mathf.Min(tier, 6) + .08f * Mathf.Max(0, tier - 6))).Within(0.001f));
+                Assert.That(player.Capacity, Is.EqualTo(4 + Mathf.Min(tier, 8) + Mathf.Max(0, tier - 8) / 2));
+                Assert.That(wallet.Coins, Is.EqualTo(budget - 2 * Sum(prices, tier)));
                 Assert.That(staffBag.Capacity, Is.EqualTo(2));
+                foreach (var button in new[] { hud.Popup.FirstButton, hud.Popup.SecondButton })
+                    for (int step = 1; step <= 20; step++)
+                    {
+                        var indicator = button.transform.Find("LevelStep" + step).GetComponent<Image>();
+                        Assert.That(indicator.color, Is.EqualTo(step <= tier ? HudChrome.Gold : HudChrome.TrackNavy));
+                        Assert.That(indicator.raycastTarget, Is.False);
+                    }
             }
 
             Assert.That(boost.IsMaxLevel, Is.True);
+            Assert.That(room.BoostLabel.text, Is.EqualTo("Boost MAX\n20 / 20"));
             Assert.That(hud.Popup.FirstLabel.text, Does.Contain("MAX"));
             Assert.That(hud.Popup.SecondLabel.text, Does.Contain("MAX"));
             hud.ClickSpeed();
@@ -305,7 +329,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(motor.MoveSpeed, Is.EqualTo(7.48f).Within(0.001f));
             Assert.That(wallet.Coins, Is.EqualTo(40));
             Assert.That(staffBag.Capacity, Is.EqualTo(2));
-            Assert.Throws<System.ArgumentOutOfRangeException>(() => boost.RestoreTiers(6, 0));
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => boost.RestoreTiers(21, 0));
 
             string directory = Path.Combine(Path.GetTempPath(), "BurgerShopPlayerUp-" + System.Guid.NewGuid().ToString("N"));
             try

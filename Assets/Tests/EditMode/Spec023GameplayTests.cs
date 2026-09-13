@@ -15,7 +15,7 @@ namespace BurgerShop.Tests.EditMode
     public sealed class Spec023GameplayTests : SaveIsolatedGameplayTest
     {
         [UnityTest]
-        public IEnumerator ScenePartialInvestmentPersistsAndBuildsOnceAfterResume()
+        public IEnumerator SceneLegacyInvestmentIsCreditedOnceByTheShop()
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
@@ -26,36 +26,29 @@ namespace BurgerShop.Tests.EditMode
             var wallet = Object.FindFirstObjectByType<RestaurantWallet>();
             var persistence = Object.FindFirstObjectByType<RestaurantPersistence>();
             motor.enabled = false;
-            Object.FindFirstObjectByType<SessionGoalTracker>().Restore(3, 0, 0);
-            expansion.ApplyRank(3);
-            wallet.RestoreProgress(120, 0);
-            player.transform.position = expansion.GrillPad.PadPosition + Vector3.up;
-            for (int frame = 0; frame < 120; frame++) yield return null;
-            Assert.That(wallet.Coins, Is.Zero);
-            Assert.That(expansion.GrillPad.Remaining, Is.EqualTo(80));
-            var label = expansion.transform.Find("GrillUnlockPadLabel");
-            Assert.That(label.gameObject.activeInHierarchy, Is.True);
-            Assert.That(label.GetComponent<TextMesh>().text, Is.EqualTo("GRILL\nRemaining 80"));
-            string evidence = Path.GetFullPath("Logs/spec023-025");
-            Directory.CreateDirectory(evidence);
-            GameplayEvidence.Capture("spec023-partial-editor.png");
-            yield return null; yield return null;
-            persistence.SendMessage("OnApplicationPause", true);
+            Object.FindFirstObjectByType<SessionGoalTracker>().Restore(4, 0, 0);
+            expansion.ApplyRank(4);
+            // This investment was made under the pre-shop flow. 043 replaces ground purchases,
+            // but must preserve every coin already invested by old saves.
+            expansion.GrillPad.RestoreInvestment(120);
+            wallet.RestoreProgress(0,0);
+            persistence.Flush();
             Assert.That(new LocalSaveStore(SaveDirectory).Load(out var saved), Is.EqualTo(SaveLoadResult.Loaded));
             Assert.That(saved.grillInvestment, Is.EqualTo(120));
-            Assert.That(saved.coins, Is.Zero);
-            expansion.GrillPad.SendMessage("OnApplicationPause", true);
-            wallet.CollectCoins(100);
-            expansion.GrillPad.Advance(10f);
-            Assert.That(wallet.Coins, Is.EqualTo(100));
-            expansion.GrillPad.SendMessage("OnApplicationPause", false);
-            for (int frame = 0; frame < 120; frame++) yield return null;
+            var layout=Object.FindFirstObjectByType<BurgerShop.Building.FacilityLayout>();
+            Assert.That(layout.Price(BurgerShop.Building.FacilityKind.BurgerMachine),Is.EqualTo(130));
+            layout.BeginPurchase(BurgerShop.Building.FacilityKind.BurgerMachine);
+            Assert.That(layout.Confirm(new Vector3(10,0,-5),0),Is.False);
+            Assert.That(wallet.Coins,Is.Zero);
+            wallet.CollectCoins(150);
+            Assert.That(layout.Confirm(new Vector3(10,0,-5),0),Is.True,layout.LastError);
             Assert.That(wallet.Coins, Is.EqualTo(20));
             Assert.That(expansion.HasExtraGrill, Is.True);
             Assert.That(new LocalSaveStore(SaveDirectory).Load(out saved), Is.EqualTo(SaveLoadResult.Loaded));
             Assert.That(saved.boughtExtraGrill, Is.True);
             Assert.That(saved.grillInvestment, Is.EqualTo(200));
             Assert.That(saved.coins, Is.EqualTo(20));
+            Assert.That(layout.Price(BurgerShop.Building.FacilityKind.BurgerMachine),Is.GreaterThan(200));
             GameplayEvidence.Capture("spec023-built-editor.png");
             yield return null; yield return null;
             LogAssert.NoUnexpectedReceived();

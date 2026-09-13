@@ -118,11 +118,12 @@ namespace BurgerShop.Persistence
             }
             partsWallet?.Restore(data?.ResolvedParts ?? 0);
             if(partsWallet!=null)partsWallet.Changed+=RequestSave;
-            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, data?.ResolvedUpgradeStars ?? 0);
+            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, data?.ResolvedUpgradeStars ?? 0, data?.ResolvedMilestones ?? 0, data?.ResolvedLegacyAccess ?? false, data?.ResolvedIncomeRemainder ?? 0);
             GetComponent<BagLine>()?.Restore(data);
             GetComponent<GrowthUpgrades>()?.Restore(data?.facilityLevels, data?.grillLevel ?? 1, data?.ResolvedExtraGrillLevel ?? 0, data?.ResolvedColaLevel ?? 1);
             if (goals != null)
-                expansion?.ApplyRank(goals.Rank);
+                goals.ApplyUnlocks();
+            GetComponent<Building.FacilityLayout>()?.Restore(data?.version >= 15 ? data.layout : null);
             Status = LoadResult == SaveLoadResult.Loaded ? "PROGRESS RESTORED"
                 : LoadResult == SaveLoadResult.RecoveredBackup ? "BACKUP RESTORED"
                 : LoadResult == SaveLoadResult.NewerVersion ? "NEWER SAVE - SAVING DISABLED"
@@ -147,9 +148,11 @@ namespace BurgerShop.Persistence
 
         public bool Flush()
         {
+            if (GetComponent<Building.FacilityLayout>()?.Committing==true) return false;
             if (!ready || wallet == null || upgrade == null || hiring == null || !store.CanWrite) return false;
             var data = new RestaurantSaveData
             {
+                layout = GetComponent<Building.FacilityLayout>()?.Capture(),
                 version = RestaurantSaveData.CurrentVersion, coins = wallet.Coins, completedSales = wallet.CompletedSales,
                 parts = partsWallet != null ? partsWallet.Balance : 0,
                 grillLevel = upgrade.Level, workerHired = hiring.IsHired,
@@ -173,6 +176,9 @@ namespace BurgerShop.Persistence
                 boxingInvestment = expansion?.BoxingPad?.Invested ?? 0,
                 driveThruInvestment = expansion?.DriveThruPad?.Invested ?? 0,
                 shopRank = goals != null ? goals.Rank : RestoredRank,
+                milestoneMask = goals?.MilestoneMask ?? 0,
+                legacyAccess = goals?.LegacyAccess ?? false,
+                incomeRemainder = goals?.IncomeRemainder ?? 0,
                 goalIndex = goals != null ? goals.GoalIndex : RestoredGoalIndex,
                 goalProgress = goals != null ? goals.GoalProgress : RestoredGoalProgress,
                 upgradeStars = goals != null ? goals.Stars : 0,

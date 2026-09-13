@@ -80,19 +80,20 @@ namespace BurgerShop.Restaurant
         public int FurnitureLevel => Mathf.Max(legacyFurnitureLevel,TableSetCatalog.Get(SetId).FurnitureLevel);
         public int MealTip => Mathf.Max(MealPay,10+(legacyFurnitureLevel-1)*5);
         public void SetFurnitureLevel(int value) { legacyFurnitureLevel=Mathf.Clamp(value,1,4); if(legacyFurnitureLevel>1&&SetId==TableSetId.Starter)FurnitureVisual.Apply(this); }
-        public Vector3 WaitPosition => waitPosition;
+        public Vector3 WaitPosition => transform.TransformPoint(waitPosition);
+        public Vector3 SeatPosition(int index) => transform.TransformPoint(seats[index]);
         public Vector3 Center => transform.position;
 
         public void Configure(Vector3[] sitPositions, Vector3 wait, float eatSeconds = 3f)
         {
-            seats = (Vector3[])sitPositions.Clone();
+            seats = System.Array.ConvertAll(sitPositions, transform.InverseTransformPoint);
             occupants = new CustomerAgent[seats.Length];
             trashOnSeat = new int[seats.Length];
             outstanding = new int[seats.Length];
             piles = new List<Transform>[seats.Length];
             for (int i = 0; i < piles.Length; i++)
                 piles[i] = new List<Transform>();
-            waitPosition = wait;
+            waitPosition = transform.InverseTransformPoint(wait);
             EatSeconds = Mathf.Max(0.1f, eatSeconds);
             pickupCooldown = 0f;
         }
@@ -137,7 +138,7 @@ namespace BurgerShop.Restaurant
 
         public bool TryAssignSeat(CustomerAgent guest, out Vector3 sitPosition, out int seatIndex)
         {
-            sitPosition = waitPosition;
+            sitPosition = WaitPosition;
             seatIndex = -1;
             if (guest == null || seats == null) return false;
             for (int i = 0; i < occupants.Length; i++)
@@ -145,7 +146,7 @@ namespace BurgerShop.Restaurant
                 if (!SeatIsOpen(i, guest)) continue;
                 if (occupants[i] != guest) guest.LockMealTip(MealTip);
                 occupants[i] = guest;
-                sitPosition = seats[i];
+                sitPosition = SeatPosition(i);
                 seatIndex = i;
                 return true;
             }
@@ -234,7 +235,10 @@ namespace BurgerShop.Restaurant
             if (trashOnSeat != null && seat >= 0 && seat < trashOnSeat.Length && trashOnSeat[seat] > 0)
                 trashOnSeat[seat]--;
             if (bag != null && bag.TryCollect(this, seat, visual))
+            {
+                GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(ShopGoalKind.CleanTable);
                 return;
+            }
             if (piles == null || seat < 0 || seat >= piles.Length || visual == null) return;
             piles[seat].Add(visual);
             if (trashOnSeat != null) trashOnSeat[seat]++;
@@ -279,7 +283,7 @@ namespace BurgerShop.Restaurant
         Transform SpawnTrash(int seatIndex, int pileIndex)
         {
             Transform visual = TrashVisual.Create(transform, seatIndex * 10 + pileIndex);
-            Vector3 seat = seats[seatIndex];
+            Vector3 seat = SeatPosition(seatIndex);
             Vector3 toward = Center - seat;
             toward.y = 0f;
             if (toward.sqrMagnitude < 0.0001f) toward = Vector3.right;

@@ -5,7 +5,7 @@ namespace BurgerShop.Restaurant
 {
     public static class StaffBoost
     {
-        public const int MaxTier = 5;
+        public const int MaxTier = PlayerBoost.MaxLevel;
         public const int BaseCarry = 2;
         public const int CarryPerTier = 1;
         public const float BaseWalkSpeed = 3.8f;
@@ -13,10 +13,10 @@ namespace BurgerShop.Restaurant
         public static readonly int[] Costs = PlayerBoost.Costs;
 
         public static int CarryCapacity(int tier) =>
-            BaseCarry + CarryPerTier * Mathf.Clamp(tier, 0, MaxTier);
+            BaseCarry + PlayerBoost.CarryBonus(tier);
 
         public static float WalkSpeed(int tier) =>
-            0.85f * BaseWalkSpeed * (1f + SpeedBonusPerTier * Mathf.Clamp(tier, 0, MaxTier));
+            0.85f * BaseWalkSpeed * PlayerBoost.SpeedMultiplier(tier);
 
         public static int CostForNextTier(int currentTier) =>
             currentTier < 0 || currentTier >= MaxTier ? 0 : Costs[currentTier];

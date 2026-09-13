@@ -100,6 +100,13 @@ namespace BurgerShop.Restaurant
         public DiningTable AddTable(Vector3 position, DiningTableKind kind = DiningTableKind.Pair)
         {
             DiningTable table = DiningTable.Create(transform, position, kind);
+            RegisterTable(table);
+            return table;
+        }
+
+        public void RegisterTable(DiningTable table)
+        {
+            if (table == null || (tables != null && System.Array.IndexOf(tables, table) >= 0)) return;
             int count = tables != null ? tables.Length : 0;
             var next = new DiningTable[count + 1];
             if (tables != null)
@@ -108,7 +115,6 @@ namespace BurgerShop.Restaurant
             tables = next;
             if (boundCollector != null) table.BindCollector(boundCollector);
             if (boundCash != null) table.BindCash(boundCash);
-            return table;
         }
 
         public bool TryAssignSeat(CustomerAgent guest, out DiningTable table, out Vector3 sitPosition, out int seatIndex)

@@ -30,12 +30,15 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(GameObject.Find("QueueSlot_3"), Is.Null);
             Assert.That(GameObject.Find("CustomerEntrance"), Is.Null);
             Assert.That(GameObject.Find("PickupSpot"), Is.Not.Null);
+            Assert.That(Object.FindObjectsByType<DiningTable>(FindObjectsSortMode.None).Length, Is.Zero);
+            Object.FindFirstObjectByType<BurgerShop.UI.SessionGoalTracker>().Restore(2,0,0);
             Assert.That(Object.FindObjectsByType<DiningTable>(FindObjectsSortMode.None).Length, Is.EqualTo(3));
             Text hud = GameObject.Find("CustomerStatus").GetComponent<Text>();
             Assert.That(hud.text, Does.Contain("0/3"));
             Assert.That(queue.TryDequeueReadyCustomer(out _), Is.False);
 
-            yield return WaitGameSeconds(16f);
+            // Spec 045 adds the exterior-to-door approach at the existing walking speed.
+            yield return WaitGameSeconds(16f+Vector3.Distance(BurgerShop.Core.RestaurantEntrance.Outside,ShopLayout.Entrance)/1.92f);
             AssertWaitingQueue(queue, 1);
             Assert.That(hud.text, Does.Contain("3/3").And.Contain("1 BURGER"));
             yield return WaitGameSeconds(8f);
@@ -50,7 +53,7 @@ namespace BurgerShop.Tests.EditMode
                 Assert.That(queue.ReadyCustomer, Is.Null);
                 yield return null;
                 Assert.That(hud.text, Does.Contain("2/3").And.Contain("Walking"));
-                yield return WaitGameSeconds(10f);
+                yield return WaitGameSeconds(10f+Vector3.Distance(BurgerShop.Core.RestaurantEntrance.Outside,ShopLayout.Entrance)/1.92f);
                 AssertWaitingQueue(queue, ticket + 1);
             }
             LogAssert.NoUnexpectedReceived();

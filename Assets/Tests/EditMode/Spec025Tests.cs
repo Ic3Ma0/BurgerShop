@@ -343,8 +343,8 @@ namespace BurgerShop.Tests.EditMode
                     + (lane.IsActorInRange(player.transform) ? 1 : 0);
                 Assert.That(active, Is.EqualTo(1));
             }
-            Assert.That(root.transform.Find("ShopExpansion/BoxingStation/RawCount").GetComponent<TextMesh>().text, Does.StartWith("RAW"));
-            Assert.That(root.transform.Find("ShopExpansion/BoxingStation/BoxCount").GetComponent<TextMesh>().text, Does.StartWith("BOX"));
+            Assert.That(root.transform.Find("ShopExpansion/BoxingStation/PackingWorkUnit/RawCount").GetComponent<TextMesh>().text, Does.StartWith("RAW"));
+            Assert.That(root.transform.Find("ShopExpansion/BoxingStation/PackingWorkUnit/BoxCount").GetComponent<TextMesh>().text, Does.StartWith("BOX"));
         }
     }
 }

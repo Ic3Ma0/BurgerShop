@@ -15,7 +15,9 @@ namespace BurgerShop.Restaurant
         {
             public string Id,Title;
             public Transform Target;
-            public Vector3 Position;
+            Vector3 position,localPosition;bool bound;
+            public Vector3 Position {get=>bound&&Target!=null?Target.TransformPoint(localPosition):position;set{position=value;bound=false;}}
+            public void BindPosition(){if(Target==null)return;localPosition=Target.InverseTransformPoint(position);bound=true;}
             public int[] Costs;
             public Func<int,string> Benefit;
             public Action<int> Apply;
@@ -31,7 +33,7 @@ namespace BurgerShop.Restaurant
             get { foreach(var offer in offers.Values)if(!offer.Id.StartsWith("table-")||GetComponent<TableUpgradeBoard>()==null)yield return offer; }
         }
         public int Level(string id)=>levels.TryGetValue(id,out int n)?n:1;
-        public static bool ValidId(string id)=>id=="cola-machine"||id=="grill-main"||id=="grill-extra"||id=="table-0"||id=="table-1"||id=="table-2"||id=="table-extra"||id=="counter-main"||id=="counter-extra"||id=="boxing"||id=="bag-machine"||id=="bag-table"||id=="bag-counter";
+        public static bool ValidId(string id)=>(id!=null&&id.StartsWith("custom:")&&Guid.TryParseExact(id.Substring(7),"N",out _))||id=="cola-machine"||id=="grill-main"||id=="grill-extra"||id=="table-0"||id=="table-1"||id=="table-2"||id=="table-extra"||id=="counter-main"||id=="counter-extra"||id=="boxing"||id=="bag-machine"||id=="bag-table"||id=="bag-counter";
         public void Configure(RestaurantWallet earnings,SessionGoalTracker tracker,BurgerInventory player,ShopExpansion shop)
         {
             wallet=earnings;goals=tracker;Player=player;expansion=shop;
@@ -41,7 +43,7 @@ namespace BurgerShop.Restaurant
         public void Register(Offer offer)
         {
             if(offers.ContainsKey(offer.Id))return;
-            offers.Add(offer.Id,offer);
+            offers.Add(offer.Id,offer);offer.BindPosition();
             if(!offer.Id.StartsWith("table-")||GetComponent<TableUpgradeBoard>()==null)ShopFixtures.CreateActionCircle(offer.Target,"Upgrade_"+offer.Id,offer.Position,HudChrome.Gold);
             offer.Apply(Level(offer.Id));
         }
@@ -68,7 +70,7 @@ namespace BurgerShop.Restaurant
             if(expansion!=null&&expansion.Boxing!=null)
             {
                 var b=expansion.Boxing;
-                Register(new Offer{Id="boxing",Title="Boxing table",Target=b.transform,Position=ShopLayout.BoxingTable+new Vector3(2.5f,.02f,0),Costs=new[]{120,240},Benefit=n=>$"Packing {(.35f-.05f*(n-1)):0.00}s",Apply=n=>{b.WorkLevel=n;ShowDetail(b.transform,n);}});
+                Register(new Offer{Id="boxing",Title="Boxing table",Target=b.WorkRoot,Position=ShopLayout.BoxingTable+new Vector3(2.5f,.02f,0),Costs=new[]{120,240},Benefit=n=>$"Packing {(.35f-.05f*(n-1)):0.00}s",Apply=n=>{b.WorkLevel=n;ShowDetail(b.transform,n);}});
             }
         }
         public bool TryBuy(string id,int expectedLevel)
@@ -85,7 +87,9 @@ namespace BurgerShop.Restaurant
         }
         public void RecordGrill(GrillUpgradeZone grill)
         {
-            string id=ShopLayout.Horizontal(grill.UpgradePosition,ShopLayout.ColaUpgrade)<1?"cola-machine":ShopLayout.Horizontal(grill.UpgradePosition,ShopLayout.ExtraGrillUpgrade)<1?"grill-extra":"grill-main";
+            var facility=grill.GetComponentInParent<Building.FacilityInstance>();
+            if(facility!=null&&facility.Purchased){goals?.AddUpgradeStars();GetComponent<Persistence.RestaurantPersistence>()?.Flush();return;}
+            string id=facility!=null?(facility.Id=="cola-machine"?"cola-machine":facility.Id=="grill-extra"?"grill-extra":"grill-main"):ShopLayout.Horizontal(grill.UpgradePosition,ShopLayout.ColaUpgrade)<1?"cola-machine":ShopLayout.Horizontal(grill.UpgradePosition,ShopLayout.ExtraGrillUpgrade)<1?"grill-extra":"grill-main";
             if(grill.Level<=Level(id))return;
             levels[id]=grill.Level;goals?.AddUpgradeStars();
             GetComponent<Persistence.RestaurantPersistence>()?.Flush();

@@ -8,9 +8,16 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 13;
+        public const int CurrentVersion = 15;
 
         public int version;
+        public Building.FacilityPlacementRecord[] layout;
+        public int milestoneMask;
+        public bool legacyAccess;
+        public int incomeRemainder;
+        public int ResolvedMilestones => version >= 14 ? milestoneMask : Restaurant.ShopRanks.CompletedThrough(ResolvedShopRank);
+        public bool ResolvedLegacyAccess => version < 14 || legacyAccess;
+        public int ResolvedIncomeRemainder => version >= 14 ? incomeRemainder : 0;
         public long coins;
         public long parts;
         public long ResolvedParts => version >= 11 ? parts : 0;
@@ -96,7 +103,7 @@ namespace BurgerShop.Persistence
                     ResolvedBoughtExtraCounter, version >= 7 ? counterInvestment : 0,
                     ResolvedBoughtDriveThru, version >= 7 ? driveThruInvestment : 0);
                 if (version >= 8 && shopRank >= Restaurant.ShopRanks.Min)
-                    return Math.Max(implied, Math.Min(Restaurant.ShopRanks.Max, shopRank));
+                    return Math.Max(implied, Math.Min(Restaurant.ShopRanks.LegacyMax, shopRank));
                 return implied;
             }
         }
@@ -130,6 +137,9 @@ namespace BurgerShop.Persistence
         {
             get
             {
+                if(version>=15 && !ValidLayout())return false;
+                if(version>=14 && (milestoneMask<0 || (milestoneMask & ~Restaurant.ShopRanks.MilestoneMask)!=0
+                    || incomeRemainder<0 || incomeRemainder>=Restaurant.ShopRanks.IncomeDenominator))return false;
                 if(version>=11 && parts<0)return false;
                 if (coins < 0 || completedSales < 0 || grillLevel < 1 || grillLevel > 3) return false;
                 if (workerDeliveries < 0 || workerDeliveries > completedSales || workerClears < 0) return false;
@@ -151,14 +161,14 @@ namespace BurgerShop.Persistence
                 if ((hiredWorkerCount > 0) != workerHired) return false;
                 if (hiredWorkerCount == 0 && (workerDeliveries != 0 || workerClears != 0)) return false;
                 if (version < 3) return true;
-                if (boostLevel < 0 || boostLevel > 5) return false;
+                if (boostLevel < 0 || boostLevel > Player.PlayerBoost.MaxLevel) return false;
                 if (extraGrillLevel < 0 || extraGrillLevel > 3) return false;
                 if (boughtExtraGrill != extraGrillLevel > 0) return false;
                 if (version < 4) return true;
-                if (staffSpeedTier < 0 || staffSpeedTier > 5 || staffCarryTier < 0 || staffCarryTier > 5)
+                if (staffSpeedTier < 0 || staffSpeedTier > Restaurant.StaffBoost.MaxTier || staffCarryTier < 0 || staffCarryTier > Restaurant.StaffBoost.MaxTier)
                     return false;
                 if (version < 5) return true;
-                if (playerSpeedTier < 0 || playerSpeedTier > 5 || playerCarryTier < 0 || playerCarryTier > 5)
+                if (playerSpeedTier < 0 || playerSpeedTier > Player.PlayerBoost.MaxLevel || playerCarryTier < 0 || playerCarryTier > Player.PlayerBoost.MaxLevel)
                     return false;
                 if (version < 7) return true;
                 if (tableInvestment < 0 || tableInvestment > Restaurant.ShopExpansion.TableCost
@@ -189,18 +199,25 @@ namespace BurgerShop.Persistence
                 if (version >= 10 && (colaLevel < 1 || colaLevel > 3)) return false;
                 if (version < 8) return true;
                 if(version >= 9 && (upgradeStars < 0 || !ValidFacilityLevels() || !ValidBagLine()))return false;
-                return shopRank >= Restaurant.ShopRanks.Min && shopRank <= Restaurant.ShopRanks.Max
+                return shopRank >= Restaurant.ShopRanks.Min && (version>=14 || shopRank <= Restaurant.ShopRanks.LegacyMax)
                     && goalIndex >= 0 && goalProgress >= 0;
             }
         }
 
+        bool ValidLayout()
+        {
+            if(layout==null)return true;
+            var ids=new System.Collections.Generic.HashSet<string>();
+            foreach(var row in layout)if(row==null||!row.IsValid||!ids.Add(row.id))return false;
+            return true;
+        }
         bool ValidBagLine()
         {
             if(bagMachineInvestment<0||bagMachineInvestment>250||bagTableInvestment<0||bagTableInvestment>200||bagCounterInvestment<0||bagCounterInvestment>300)return false;
             if(!westExpanded&&(bagMachineBuilt||bagTableBuilt||bagCounterBuilt||bagMachineInvestment>0||bagTableInvestment>0||bagCounterInvestment>0))return false;
             if(!bagMachineBuilt&&(bagTableBuilt||bagTableInvestment>0))return false;
             if(!bagTableBuilt&&(bagCounterBuilt||bagCounterInvestment>0))return false;
-            return !westExpanded||shopRank>=6;
+            return !westExpanded || (version>=14 ? legacyAccess || shopRank>=Restaurant.ShopRanks.ContentEnd : shopRank>=6);
         }
 
         bool ValidFacilityLevels()
@@ -325,6 +342,15 @@ namespace BurgerShop.Persistence
                     colaMachineInvestment.ToString(CultureInfo.InvariantCulture),
                     colaCounterInvestment.ToString(CultureInfo.InvariantCulture),
                     colaLevel.ToString(CultureInfo.InvariantCulture));
+            if(version>=14) value += "|"+milestoneMask.ToString(CultureInfo.InvariantCulture)+"|"+(legacyAccess?"1":"0")+"|"+incomeRemainder.ToString(CultureInfo.InvariantCulture);
+            if(version>=15)
+            {
+                value += "|layout:"+(layout?.Length??0).ToString(CultureInfo.InvariantCulture);
+                if(layout!=null)foreach(var row in layout)
+                    value += "|"+row.id+":"+row.kind.ToString(CultureInfo.InvariantCulture)+":"+(row.purchased?"1":"0")+":"+
+                        row.x.ToString("R",CultureInfo.InvariantCulture)+":"+row.z.ToString("R",CultureInfo.InvariantCulture)+":"+
+                        row.yaw.ToString("R",CultureInfo.InvariantCulture)+":"+row.level.ToString(CultureInfo.InvariantCulture)+":"+row.tableSet.ToString(CultureInfo.InvariantCulture)+":"+row.investment.ToString(CultureInfo.InvariantCulture);
+            }
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }

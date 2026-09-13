@@ -46,7 +46,7 @@ namespace BurgerShop.Tests.EditMode
 
         [Test] public void TablePurchaseAwardsOnceAndRankRequiresConfirmation()
         {
-            wallet.RestoreProgress(200,0);goals.Restore(1,0,0,2);
+            wallet.RestoreProgress(200,0);goals.Restore(1,0,0,2,1,true);growth.Discover();
             var table=dining.Tables[0];table.LeaveMealTrash(0);
             Assert.That(growth.TryBuy("table-0",1),Is.True);
             Assert.That(wallet.Coins,Is.EqualTo(50));Assert.That(table.FurnitureLevel,Is.EqualTo(2));Assert.That(table.MealTip,Is.EqualTo(15));Assert.That(table.TrashCount,Is.EqualTo(2));
@@ -55,12 +55,12 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(growth.TryBuy("table-0",1),Is.False);Assert.That(growth.TryBuy("table-0",2),Is.False);Assert.That(goals.Stars,Is.EqualTo(4));
             Assert.That(goals.TryUpgradeRank(1),Is.True);Assert.That(goals.Rank,Is.EqualTo(2));Assert.That(goals.Stars,Is.Zero);Assert.That(wallet.Coins,Is.EqualTo(50));
             Assert.That(goals.TryUpgradeRank(1),Is.False);Assert.That(expansion.BoxingPad.RankVisible,Is.True);
-            goals.Restore(1,0,0,7);goals.TryUpgradeRank(1);Assert.That(goals.Stars,Is.EqualTo(3));
+            goals.Restore(1,0,0,7,1,true);goals.TryUpgradeRank(1);Assert.That(goals.Stars,Is.EqualTo(3));
         }
 
         [Test] public void UpgradePathEarnsEnoughStarsWithoutAutomaticRanks()
         {
-            goals.Restore(1,0,0);
+            goals.Restore(1,0,0,0,511,true);growth.Discover();
             for(int i=0;i<3;i++)for(int n=1;n<4;n++)Assert.That(growth.TryBuy("table-"+i,n),Is.True);
             Assert.That(goals.Stars,Is.EqualTo(18));Assert.That(goals.Rank,Is.EqualTo(1));
             Assert.That(goals.TryUpgradeRank(1),Is.True);Assert.That(goals.TryUpgradeRank(2),Is.True);Assert.That(goals.TryUpgradeRank(3),Is.True);
@@ -82,10 +82,10 @@ namespace BurgerShop.Tests.EditMode
             {
                 var store=new LocalSaveStore(dir);Assert.That(store.Save(old),Is.True);
                 var persistence=root.AddComponent<RestaurantPersistence>();persistence.Configure(wallet,grill.Upgrade,hiring,null,expansion,null,goals,dir);
-                Assert.That(goals.Rank,Is.EqualTo(4));Assert.That(goals.Stars,Is.EqualTo(8));Assert.That(goals.GoalProgress,Is.EqualTo(2));
+                Assert.That(goals.Rank,Is.EqualTo(4));Assert.That(goals.Stars,Is.EqualTo(8));Assert.That(goals.GoalProgress,Is.EqualTo(1));
                 Assert.That(persistence.Flush(),Is.True);store.Load(out var saved);Assert.That(saved.version,Is.EqualTo(RestaurantSaveData.CurrentVersion));Assert.That(saved.ResolvedUpgradeStars,Is.EqualTo(8));
                 persistence.Configure(wallet,grill.Upgrade,hiring,null,expansion,null,goals,dir);Assert.That(goals.Stars,Is.EqualTo(8));
-                goals.Restore(1,0,0,3);Assert.That(persistence.Flush(),Is.True);store.Load(out saved);
+                goals.Restore(1,0,0,3,1,true);Assert.That(persistence.Flush(),Is.True);store.Load(out saved);
                 Assert.That(saved.ResolvedShopRank,Is.EqualTo(1)); // Existing ownership must not silently rank up a v9 save.
                 Assert.That(saved.boughtExtraGrill,Is.True);
             }
@@ -94,7 +94,7 @@ namespace BurgerShop.Tests.EditMode
 
         void OpenBagLine()
         {
-            goals.Restore(5,0,0);Assert.That(line.TryExpand(),Is.False);goals.Restore(6,0,0);Assert.That(line.TryExpand(),Is.True);
+            goals.Restore(9,0,0);Assert.That(line.TryExpand(),Is.False);goals.Restore(10,0,0);Assert.That(line.Expanded,Is.True);Assert.That(line.TryExpand(),Is.False);
             Assert.That(line.TablePad.RankVisible,Is.False);
             line.MachinePad.RestoreInvestment(250);Assert.That(line.TablePad.RankVisible,Is.True);
             line.TablePad.RestoreInvestment(200);line.CounterPad.RestoreInvestment(300);

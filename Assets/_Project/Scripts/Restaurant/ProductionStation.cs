@@ -134,6 +134,9 @@ namespace BurgerShop.Restaurant
         void AddItem()
         {
             Stock++;
+            var owner=GetComponentInParent<ExpandableGrill>();
+            if(owner!=null && (owner.GetComponentInParent<Building.FacilityInstance>() is var facility && facility!=null ? facility.Kind==Building.FacilityKind.BurgerMachine && facility.Id!="grill-main" : ShopLayout.Horizontal(owner.transform.position,ShopLayout.ExtraGrill)<.2f))
+                GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(ShopGoalKind.ExtraProduction);
             if (outputAnchor != null)
             {
                 if (product == KitchenProduct.Cola)

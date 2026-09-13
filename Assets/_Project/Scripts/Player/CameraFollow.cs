@@ -24,6 +24,7 @@ namespace BurgerShop.Player
 
             transform.position = DesiredPosition();
             transform.LookAt(target.position + Vector3.up * lookAtHeight);
+            transform.position = Core.StreetEnvironment.ClampCamera(GetComponent<Camera>(),transform.position);
         }
 
         void LateUpdate()
@@ -32,7 +33,7 @@ namespace BurgerShop.Player
                 return;
 
             float t = 1f - Mathf.Exp(-positionSmooth * Time.deltaTime);
-            transform.position = Vector3.Lerp(transform.position, DesiredPosition(), t);
+            transform.position = Core.StreetEnvironment.ClampCamera(GetComponent<Camera>(),Vector3.Lerp(transform.position, DesiredPosition(), t));
 
         }
 

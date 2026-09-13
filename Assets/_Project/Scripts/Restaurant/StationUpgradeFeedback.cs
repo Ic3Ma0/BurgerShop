@@ -79,6 +79,8 @@ namespace BurgerShop.Restaurant
             ShowLevel(VisualLevel);
         }
 
+        public void RebasePlacement(){if(station!=null)restPosition=station.localPosition;}
+
         public void ShowLevel(int level)
         {
             VisualLevel = Mathf.Clamp(level, 1, maxLevel);

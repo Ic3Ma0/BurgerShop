@@ -16,6 +16,8 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // This scenario tests facilities after their rank unlock.
+            Object.FindFirstObjectByType<BurgerShop.UI.SessionGoalTracker>().Restore(7,0,0);
             var shop=Object.FindFirstObjectByType<ShopExpansion>();
             var wallet=Object.FindFirstObjectByType<RestaurantWallet>();
             var player=Object.FindFirstObjectByType<PlayerMotor>(); player.enabled=false;

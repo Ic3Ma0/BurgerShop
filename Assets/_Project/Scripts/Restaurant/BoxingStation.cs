@@ -31,6 +31,8 @@ namespace BurgerShop.Restaurant
         readonly List<Transfer> incoming = new List<Transfer>();
         readonly List<Transfer> outgoing = new List<Transfer>();
         BurgerInventory player;
+        public Transform WorkRoot { get; private set; }
+        public Transform CounterRoot { get; private set; }
         Transform circle;
         Transform inputAnchor;
         Transform outputAnchor;
@@ -84,6 +86,7 @@ namespace BurgerShop.Restaurant
         }
         bool HasOperator()
         {
+            if (WorkRoot != null && !WorkRoot.gameObject.activeInHierarchy) return false;
             foreach (var op in operators) if (CanOperate(op.Inventory)) return true;
             return false;
         }
@@ -128,8 +131,8 @@ namespace BurgerShop.Restaurant
             {
                 if (!carrier.TryTakeBurger(out Transform item)) return false;
                 Vector3 origin = item.position;
-                item.SetParent(transform, true);
-                incoming.Add(new Transfer { Item = item, Origin = origin });
+                item.SetParent(WorkRoot, true);
+                incoming.Add(new Transfer { Item = item, Origin = WorkRoot.InverseTransformPoint(origin) });
                 TotalRawReceived++;
                 carrier.GetComponent<RestaurantWorker>()?.RawDeposited(1);
                 op.Cooldown = BoxInterval;
@@ -142,7 +145,7 @@ namespace BurgerShop.Restaurant
             Transform box = boxes[boxes.Count - 1]; boxes.RemoveAt(boxes.Count - 1);
             Vector3 from = box.position;
             box.SetParent(carrier.transform, true);
-            outgoing.Add(new Transfer { Item = box, To = carrier, Origin = from });
+            outgoing.Add(new Transfer { Item = box, To = carrier, Origin = WorkRoot.InverseTransformPoint(from) });
             TotalBoxPickups++;
             op.Cooldown = BoxInterval;
             RefreshLabels();
@@ -154,7 +157,7 @@ namespace BurgerShop.Restaurant
             {
                 Transfer flight = incoming[i]; flight.Age += seconds;
                 float t = Mathf.Clamp01(flight.Age / BoxInterval);
-                flight.Item.position = Vector3.Lerp(flight.Origin, inputAnchor.position + Vector3.up * (raw.Count * 0.14f), t)
+                flight.Item.position = Vector3.Lerp(WorkRoot.TransformPoint(flight.Origin), inputAnchor.position + Vector3.up * (raw.Count * 0.14f), t)
                     + Vector3.up * (0.4f * Mathf.Sin(t * Mathf.PI));
                 if (t < 1f) continue;
                 flight.Item.SetParent(inputAnchor, true);
@@ -169,7 +172,7 @@ namespace BurgerShop.Restaurant
                 if (flight.To == null) { outgoing.RemoveAt(i); continue; }
                 float t = Mathf.Clamp01(flight.Age / BoxInterval);
                 Vector3 target = flight.To.transform.TransformPoint(new Vector3(0, 0.3f, 0.8f));
-                flight.Item.position = Vector3.Lerp(flight.Origin, target, t) + Vector3.up * (0.4f * Mathf.Sin(t * Mathf.PI));
+                flight.Item.position = Vector3.Lerp(WorkRoot.TransformPoint(flight.Origin), target, t) + Vector3.up * (0.4f * Mathf.Sin(t * Mathf.PI));
                 if (t < 1f) continue;
                 flight.To.ReceiveReservedBox(flight.Item);
                 outgoing.RemoveAt(i);
@@ -182,7 +185,7 @@ namespace BurgerShop.Restaurant
             {
                 processingAge += seconds;
                 float t = ProcessingProgress;
-                processingRaw.position = Vector3.Lerp(processingStart, processingBox.position + Vector3.up * 0.12f, t);
+                processingRaw.position = Vector3.Lerp(WorkRoot.TransformPoint(processingStart), processingBox.position + Vector3.up * 0.12f, t);
                 processingRaw.localScale = Vector3.one * Mathf.Lerp(0.7f, 0.42f, t);
                 if (lid != null)
                 {
@@ -195,15 +198,16 @@ namespace BurgerShop.Restaurant
                 processingBox.localPosition = Vector3.up * (boxes.Count * 0.22f);
                 processingBox.localScale = Vector3.one * 0.75f;
                 boxes.Add(processingBox); processingBox = null;
+                GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(ShopGoalKind.BoxBurger);
                 processing = false; TotalProcessed++;
             }
             if (raw.Count == 0 || OutputFull) return;
             processingRaw = raw[raw.Count - 1]; raw.RemoveAt(raw.Count - 1);
-            processingStart = processingRaw.position;
-            processingRaw.SetParent(transform, true);
-            processingBox = BoxVisualFactory.Create(transform, 0);
+            processingStart = WorkRoot.InverseTransformPoint(processingRaw.position);
+            processingRaw.SetParent(WorkRoot, true);
+            processingBox = BoxVisualFactory.Create(WorkRoot, 0);
             processingBox.name = "BoxInProcess";
-            processingBox.position = ShopLayout.BoxingTable + Vector3.up * 1.15f;
+            processingBox.position = WorkRoot.TransformPoint(Vector3.up * 1.15f);
             lid = processingBox.Find("Lid");
             lid.localRotation = Quaternion.Euler(-100, 0, 0);
             lid.localPosition = new Vector3(0, 0.6f, 0.25f);
@@ -235,7 +239,7 @@ namespace BurgerShop.Restaurant
             return label;
         }
 
-        public static BoxingStation Create(Transform parent)
+        public static BoxingStation Create(Transform parent, bool withWorktable = true, bool withCounter = true)
         {
             GameObject root = new GameObject("BoxingStation");
             root.transform.SetParent(parent, false);
@@ -243,6 +247,24 @@ namespace BurgerShop.Restaurant
             station.Build();
             CounterTierVisual.Create(station.transform,"PackingAppearance",ShopLayout.PackageCounter,2.8f,1.4f,1.05f,BurgerShop.UI.FoodIcon.Box).Follow(station);
             CounterTierVisual.Create(station.transform,"WorktableAppearance",ShopLayout.BoxingTable,4.2f,1.4f,1.05f,BurgerShop.UI.FoodIcon.Box).Follow(station);
+            station.WorkRoot = new GameObject("PackingWorkUnit").transform;
+            station.WorkRoot.SetParent(station.transform, false);
+            station.WorkRoot.position = ShopLayout.BoxingTable;
+            station.CounterRoot = new GameObject("PackingCounterUnit").transform;
+            station.CounterRoot.SetParent(station.transform, false);
+            station.CounterRoot.position = ShopLayout.PackageCounter;
+            var children = new List<Transform>();
+            foreach (Transform child in station.transform) children.Add(child);
+            foreach (var child in children)
+            {
+                if (child == station.WorkRoot || child == station.CounterRoot) continue;
+                bool counter = child.name.StartsWith("Package") || child.name.StartsWith("CounterStock") || child.name == "PackingAppearance";
+                child.SetParent(counter ? station.CounterRoot : station.WorkRoot, true);
+            }
+            station.WorkRoot.gameObject.SetActive(withWorktable);
+            station.CounterRoot.gameObject.SetActive(withCounter);
+            station.Package.enabled = withCounter;
+            station.Drop.enabled = withCounter;
             return station;
         }
 

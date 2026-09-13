@@ -17,6 +17,8 @@ namespace BurgerShop.Restaurant
         Action onUnlocked;
         float untilContribution = EntryDelay;
         bool selected;
+        bool storeOnly;
+        public void SetStoreOnly(){storeOnly=true;enabled=false;if(pad!=null)pad.gameObject.SetActive(false);if(marker!=null)marker.gameObject.SetActive(false);}
         bool paused;
         bool unfocused;
         const float Radius = 1f;
@@ -86,7 +88,7 @@ namespace BurgerShop.Restaurant
 
         public void SetRankVisible(bool visible)
         {
-            RankVisible = visible || Invested > 0;
+            RankVisible = !storeOnly && (visible || Invested > 0);
             if (IsPurchased)
             {
                 if (pad != null) pad.gameObject.SetActive(false);

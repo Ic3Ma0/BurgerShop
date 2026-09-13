@@ -151,7 +151,8 @@ namespace BurgerShop.Restaurant
         public static readonly Vector3[] Exit =
         {
             Entrance,
-            ClampInside(new Vector3(-14f, 0f, -8f))
+            BurgerShop.Core.RestaurantEntrance.Door,
+            BurgerShop.Core.RestaurantEntrance.Outside
         };
 
         // Route cross-wing traffic through the south HR corridor, never through the office.
@@ -363,8 +364,9 @@ namespace BurgerShop.Restaurant
             float eastLength = WallHalf - doorMax;
             float westCenterX = (-WallHalf + doorMin) * 0.5f;
             float eastCenterX = (doorMax + WallHalf) * 0.5f;
-            CreateWall(parent, "Wall-Z_W", new Vector3(westCenterX, height * 0.5f, -WallHalf),
-                new Vector3(westLength, height, 0.4f), material);
+            CreateWall(parent,"EntranceWallLeft",new Vector3(-14.5f,height*.5f,-WallHalf),new Vector3(1,height,.4f),material);
+            CreateWall(parent,"Wall-Z_W",new Vector3((-10+doorMin)*.5f,height*.5f,-WallHalf),new Vector3(doorMin+10,height,.4f),material);
+            BurgerShop.Core.RestaurantEntrance.Build(parent);
             CreateWall(parent, "Wall-Z_E", new Vector3(eastCenterX, height * 0.5f, -WallHalf),
                 new Vector3(eastLength, height, 0.4f), material);
         }

@@ -66,135 +66,89 @@ namespace BurgerShop.Tests.EditMode
             for (int i = 0; i < Mathf.CeilToInt(seconds * 60f); i++) pad.Advance(1f / 60f);
         }
 
-        [Test]
-        public void NewShopShowsRankOneAndOnlyTheTablePad()
+        [Test] public void NewShopGatesDiningAndAllExpansionUntilMilestoneAndStars()
         {
             Assert.That(tracker.StarLabel, Is.EqualTo("Lv.1  0/4"));
-            Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
-            Assert.That(expansion.TablePad.RankVisible, Is.True);
-            Assert.That(expansion.BoxingPad.RankVisible, Is.False);
+            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
+            Assert.That(expansion.WingPad.RankVisible, Is.False);
             Assert.That(expansion.GrillPad.RankVisible, Is.False);
-            Assert.That(expansion.CounterPad.RankVisible, Is.False);
-            Assert.That(expansion.DriveThruPad.RankVisible, Is.False);
-            Assert.That(expansion.GrillPad.gameObject.activeSelf, Is.False);
+            Assert.That(dining.Tables[0].gameObject.activeSelf, Is.False);
+            tracker.Restore(1,0,0,4);
+            Assert.That(tracker.TryUpgradeRank(1), Is.False);
+            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
+            Assert.That(tracker.TryUpgradeRank(1), Is.True);
+            Assert.That(dining.Tables[0].gameObject.activeSelf, Is.True);
+            Assert.That(expansion.WingPad.RankVisible, Is.False);
         }
-
-        [Test]
-        public void LockedGrillPadDoesNotAcceptInvestment()
+        [Test] public void LockedGrillPadDoesNotAcceptInvestment()
         {
-            wallet.RestoreProgress(200, 0);
-            Hold(expansion.GrillPad, 3f);
+            wallet.RestoreProgress(200,0);Hold(expansion.GrillPad,3);
             Assert.That(expansion.GrillPad.Invested, Is.Zero);
             Assert.That(wallet.Coins, Is.EqualTo(200));
-            Assert.That(expansion.HasExtraGrill, Is.False);
         }
-
-        [Test]
-        public void InstallingTheTableNoLongerAutoRanksUp()
+        [Test] public void BuildingDoesNotAutomaticallyAdvanceRank()
         {
-            wallet.RestoreProgress(150, 0);
-            tracker.Restore(1, 2, 0);
-            Assert.That(tracker.Title, Does.StartWith("Install a table"));
-            Hold(expansion.TablePad, 3f);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.IsCelebrating, Is.True);
-            tracker.Advance(0.7f);
-            Assert.That(tracker.IsRankingUp, Is.False);
-            Assert.That(tracker.Rank, Is.EqualTo(1));
-            Assert.That(tracker.Stars, Is.Zero);
-            Assert.That(expansion.BoxingPad.RankVisible, Is.False);
-            Assert.That(wallet.Coins, Is.Zero);
-
+            tracker.Restore(4,0,0);wallet.RestoreProgress(200,0);
+            Hold(expansion.GrillPad,3);
+            Assert.That(expansion.HasExtraGrill, Is.True);
+            Assert.That(tracker.Rank, Is.EqualTo(4));
+            Assert.That(tracker.MilestoneComplete, Is.False);
+            expansion.ExtraGrillUpgrade.Station.Advance(3.1f);
+            Assert.That(tracker.MilestoneComplete, Is.True);
+            Assert.That(tracker.Stars, Is.EqualTo(2));
         }
-
-        [Test]
-        public void RestoreDoesNotReplayRankUp()
+        [Test] public void RestoreDoesNotReplayRankUp()
         {
-            tracker.Restore(2, 0, 0);
-            tracker.Advance(2f);
-            Assert.That(tracker.IsCelebrating, Is.False);
-            Assert.That(tracker.IsRankingUp, Is.False);
-            Assert.That(tracker.Rank, Is.EqualTo(2));
-            Assert.That(expansion.BoxingPad.RankVisible, Is.True);
+            tracker.Restore(2,0,0);tracker.Advance(2);
+            Assert.That(tracker.IsCelebrating,Is.False);
+            Assert.That(expansion.BoxingPad.RankVisible,Is.False);
+            Assert.That(dining.Tables[0].gameObject.activeSelf,Is.True);
         }
-
-        [Test]
-        public void OldV7FullShopResolvesToMaxWithoutSpending()
+        [Test] public void OldV7FullShopKeepsRankAndAccessWithoutMax()
         {
-            var data = new RestaurantSaveData
-            {
-                version = 7, coins = 12345, grillLevel = 3, boughtBoxingStation = true, boughtDriveThru = true,
-                boxingInvestment = 150, driveThruInvestment = 250, boughtExtraTable = true, boughtExtraGrill = true,
-                extraGrillLevel = 1, boughtExtraCounter = true
-            };
-            Assert.That(data.IsValid, Is.True);
-            Assert.That(data.ResolvedShopRank, Is.EqualTo(ShopRanks.Max));
-            Assert.That(data.ResolvedGoalIndex, Is.Zero);
-            tracker.Restore(data.ResolvedShopRank, data.ResolvedGoalIndex, data.ResolvedGoalProgress);
-            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.6 MAX"));
-            Assert.That(tracker.IsCelebrating, Is.False);
-            Assert.That(wallet.Coins, Is.Zero);
+            var data=new RestaurantSaveData {version=7,grillLevel=3,coins=12345,boughtBoxingStation=true,boughtDriveThru=true,
+                boughtExtraTable=true,boughtExtraGrill=true,extraGrillLevel=1,boughtExtraCounter=true};
+            Assert.That(data.IsValid,Is.True);
+            Assert.That(data.ResolvedShopRank,Is.EqualTo(6));
+            tracker.Restore(data.ResolvedShopRank,0,0,0,data.ResolvedMilestones,data.ResolvedLegacyAccess);
+            Assert.That(tracker.StarLabel,Does.Not.Contain("MAX"));
+            Assert.That(tracker.MilestoneComplete,Is.True);
+            Assert.That(tracker.Stars,Is.Zero);
+            Assert.That(expansion.WingPad.RankVisible,Is.True);
         }
-
-        [Test]
-        public void OldV7GrillInvestmentKeepsThePadAndRemaining()
+        [Test] public void OldV7GrillInvestmentKeepsThePadAndRemaining()
         {
-            var data = new RestaurantSaveData
-            {
-                version = 7, coins = 80, grillLevel = 1, grillInvestment = 120
-            };
-            Assert.That(data.ResolvedShopRank, Is.EqualTo(3));
-            expansion.RestoreInvestments(0, 120, 0, 0, 0);
-            tracker.Restore(data.ResolvedShopRank, 0, 0);
-            expansion.ApplyRank(tracker.Rank);
-            Assert.That(expansion.GrillPad.RankVisible, Is.True);
-            Assert.That(expansion.GrillPad.Remaining, Is.EqualTo(80));
+            expansion.RestoreInvestments(0,120,0,0,0);tracker.Restore(3,0,0);
+            Assert.That(expansion.GrillPad.RankVisible,Is.True);
+            Assert.That(expansion.GrillPad.Remaining,Is.EqualTo(80));
         }
-
-        [Test]
-        public void ServeGoalIgnoresSalesCompletedBeforeItBecameActive()
+        [Test] public void HistoricalSaleCountDoesNotInventMilestone()
         {
-            wallet.RestoreProgress(0, 10);
-            tracker.Restore(1, 0, 0);
-            var grill = root.GetComponent<ProductionStation>();
-            grill.Advance(12f);
-            Assert.That(player.TryCollectFrom(grill), Is.True);
-            tracker.Advance(0.01f);
-            tracker.Advance(2f);
-            Assert.That(tracker.Title, Is.EqualTo("Serve customers"));
-            Assert.That(tracker.Progress, Is.Zero);
-            Assert.That(wallet.RecordCompletedSale(), Is.True);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Progress, Is.EqualTo(1));
-            Assert.That(tracker.Required, Is.EqualTo(3));
+            wallet.RestoreProgress(0,10);tracker.Restore(1,0,0);tracker.Advance(1);
+            Assert.That(tracker.Progress,Is.Zero);
+            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
+            Assert.That(tracker.Progress,Is.EqualTo(1));
+            Assert.That(tracker.Stars,Is.EqualTo(2));
+            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
+            Assert.That(tracker.Stars,Is.EqualTo(2));
         }
-
-        [Test]
-        public void DirtyTableInterruptsButSalesStillCount()
+        [Test] public void DirtyTableNoLongerReplacesTheRankMilestone()
         {
-            var table = DiningTable.Create(root.transform, new Vector3(-5.6f, 0f, 0.2f));
-            var trash = player.gameObject.AddComponent<TrashInventory>();
-            table.BindCollector(trash);
-            tracker.Configure(player, root.GetComponent<ProductionStation>(), stock, queue, wallet, serving,
-                DiningArea.Wrap(table), trash, hiring, null, expansion);
-            tracker.Restore(1, 1, 0);
+            tracker.Restore(2,0,0);
+            var table=dining.Tables[0];var bag=player.gameObject.AddComponent<TrashInventory>();
             table.LeaveMealTrash(0);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Clear the table"));
-            Assert.That(wallet.RecordCompletedSale(), Is.True);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Clear the table"));
-            Assert.That(tracker.GoalProgress, Is.EqualTo(1));
+            Assert.That(tracker.Title,Is.EqualTo("Clear a used dining table"));
+            Assert.That(table.TryPickupTrash(bag),Is.True);
+            Assert.That(tracker.MilestoneComplete,Is.True);
+            Assert.That(tracker.Stars,Is.EqualTo(2));
         }
-
-        [Test]
-        public void ImpliedRankNeverTakesBoughtFacilitiesAway()
+        [Test] public void UnlockThresholdsAreExplicitAndLegacyImpliedRanksStayStable()
         {
-            Assert.That(ShopRanks.Implied(true, 0, true, 0, false, 0, false, 0, false, 0), Is.EqualTo(3));
-            Assert.That(ShopRanks.Implied(false, 0, false, 40, false, 0, false, 0, false, 0), Is.EqualTo(2));
-            Assert.That(ShopRanks.Implied(true, 0, true, 0, true, 0, true, 0, true, 0), Is.EqualTo(6));
-            Assert.That(ShopRanks.PadUnlocked(1, "GRILL"), Is.False);
-            Assert.That(ShopRanks.PadUnlocked(3, "GRILL"), Is.True);
+            Assert.That(ShopRanks.Implied(true,0,true,0,true,0,true,0,true,0),Is.EqualTo(6));
+            Assert.That(ShopRanks.PadUnlocked(3,"GRILL"),Is.False);
+            Assert.That(ShopRanks.PadUnlocked(4,"GRILL"),Is.True);
+            Assert.That(ShopRanks.PadUnlocked(5,"LANE"),Is.False);
+            Assert.That(ShopRanks.PadUnlocked(6,"LANE"),Is.True);
         }
     }
 }

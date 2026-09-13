@@ -26,6 +26,8 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
             yield return new EnterPlayMode();
+            // This scenario tests facilities after their rank unlock.
+            Object.FindFirstObjectByType<BurgerShop.UI.SessionGoalTracker>().Restore(3,0,0);
             // Keep legacy kitchen scenarios independent of the autonomous courier economy.
             Object.FindFirstObjectByType<CourierLine>()?.SetPaused(true);
             GameObject.Find("ColaCustomerArea")?.SetActive(false);

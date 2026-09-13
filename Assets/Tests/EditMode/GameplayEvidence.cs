@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace BurgerShop.Tests.EditMode
 {
@@ -10,6 +11,8 @@ namespace BurgerShop.Tests.EditMode
         public static void Capture(string filename)
         {
             var camera = Camera.main;
+            if (camera == null || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
+                return;
             var target = new RenderTexture(720, 1280, 24);
             var previousTarget = camera.targetTexture;
             var previousActive = RenderTexture.active;

@@ -43,17 +43,17 @@ namespace BurgerShop.UI
         }
         void LateUpdate()
         {
-            bool ready=!goals.IsMaxRank&&goals.Stars>=goals.StarCap;
-            if(initialized&&ready&&!readyShown)FeedbackDirector.Current?.World(growth.Player.transform.position,"Stars ready!",.9f);
+            bool ready=goals.CanUpgrade;
+            if(initialized&&ready&&!readyShown)FeedbackDirector.Current?.World(growth.Player.transform.position,"Shop upgrade ready!",.9f);
             initialized=true;readyShown=ready;
             if(rankOpen)
             {
                 panel.gameObject.SetActive(true);currentIcon.enabled=nextIcon.enabled=false;
-                string[] unlocks={"Boxing table","Extra grill","Extra counter","Drive-thru","West expansion"};
-                body.text=goals.IsMaxRank?$"Lv.6 MAX\nStored stars: {goals.Stars}":$"Shop Lv.{goals.Rank} → {goals.Rank+1}\nUnlock: {unlocks[goals.Rank-1]}\nStars: {goals.Stars}/{goals.StarCap}";
-                bool expand=goals.IsMaxRank&&BagLine.Current!=null&&!BagLine.Current.Expanded;
-                if(expand)body.text+="\nWest area · Bag production & PICKUP\nExpansion is free";
-                buy.interactable=expand||(ready&&previewRank==goals.Rank);buyLabel.text=expand?"Expand":goals.IsMaxRank?"MAX":ready?"Upgrade":"Need more stars";
+                body.text=goals.IsCycle
+                    ? $"Shop Lv.{goals.Rank} → {(long)goals.Rank+1}\nCash income +{2L*(goals.Rank-10)}% → +{2L*(goals.Rank-9)}%\nCost: {goals.CycleCost:N0} coins"
+                    : $"Shop Lv.{goals.Rank} → {goals.Rank+1}\n{(goals.MilestoneComplete ? "Done" : "Goal")}: {goals.Title}\nStars: {goals.Stars}/{goals.StarCap}\nUnlock: {ShopRanks.NextUnlock(goals.Rank)}";
+                buy.interactable=ready&&previewRank==goals.Rank;
+                buyLabel.text=goals.BlockReason;
                 return;
             }
             selected=null;float best=.9f;
@@ -77,7 +77,7 @@ namespace BurgerShop.UI
         void Purchase()
         {
             if(Time.unscaledTime<nextClick)return;nextClick=Time.unscaledTime+.25f;
-            if(rankOpen){if(goals.IsMaxRank){if(BagLine.Current!=null&&BagLine.Current.TryExpand())rankOpen=false;}else if(goals.TryUpgradeRank(previewRank))rankOpen=false;return;}
+            if(rankOpen){if(goals.TryUpgradeRank(previewRank))rankOpen=false;return;}
             if(selected!=null&&ShopLayout.Horizontal(growth.Player.transform.position,selected.Position)<=.9f)growth.TryBuy(selected.Id,previewLevel);
         }
     }

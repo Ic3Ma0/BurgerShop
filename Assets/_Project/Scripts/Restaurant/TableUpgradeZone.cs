@@ -101,6 +101,7 @@ namespace BurgerShop.Restaurant
         {
             if (!PendingChoice || !TableSetCatalog.IsChoice(id) || table == null) return false;
             table.ApplySet(id);
+            GetComponentInParent<UI.SessionGoalTracker>()?.AddUpgradeStars();
             PendingChoice = false;
             HidePad();
             RefreshMarker();
@@ -165,6 +166,13 @@ namespace BurgerShop.Restaurant
             if (marker == null) return;
             marker.text = HasChosenSet ? "" : PendingChoice ? "PICK SET" : $"TABLE\nRemaining {Remaining}";
             marker.gameObject.SetActive(!HasChosenSet);
+        }
+
+        public void SetRankVisible(bool visible)
+        {
+            bool show=visible && !HasChosenSet;
+            if(pad!=null)pad.gameObject.SetActive(show);
+            if(marker!=null)marker.gameObject.SetActive(show);
         }
 
         void HidePad()

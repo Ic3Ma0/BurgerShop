@@ -367,18 +367,19 @@ namespace BurgerShop.Tests.EditMode
             UnlockBoxing();
             var tracker = root.AddComponent<SessionGoalTracker>();
             tracker.Configure(player, grill, stock, queue, wallet, serving, dining, null, null, null, expansion);
-            tracker.Restore(ShopRanks.Max, 0, 0);
+            tracker.Restore(5, 0, 0);
             tracker.Advance(2f);
-            Assert.That(tracker.Title, Is.EqualTo("Box the burger"));
+            Assert.That(tracker.Title, Is.EqualTo("Pack a blue box"));
             player.transform.position = expansion.Boxing.CirclePosition + Vector3.up;
             expansion.Boxing.TryBoxFrom(player);
             tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Pack the burgers"));
+            Assert.That(tracker.Title, Is.EqualTo("Pack a blue box"));
             Assert.That(tracker.IsCelebrating, Is.False);
             expansion.Boxing.Advance(2f);
             tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Stock the package counter"));
-            Assert.That(tracker.IsCelebrating, Is.False);
+            Assert.That(tracker.Title, Is.EqualTo("Pack a blue box"));
+            Assert.That(tracker.MilestoneComplete, Is.True);
+            Assert.That(tracker.Stars, Is.EqualTo(2));
         }
     }
 }

@@ -1,13 +1,6 @@
 ---
-description: BurgerShop source of truth, spec gate, and local Unity verification
+description: BurgerShop 项目规则入口；具体约束由 AGENTS.md 维护
 alwaysApply: true
 ---
 
-# BurgerShop
-
-- Edit only this repo. `BurgerShop-Goal0*` folders are read-only history.
-- Do not add player-facing behavior without a spec in `docs/specs/` (or an explicit user-approved slice). Implementation details stay with the developer.
-- World setup lives in `Goal01Bootstrap`. Match existing zone / inventory / wallet / save patterns.
-- Verify gameplay with local Unity EditMode tests and SampleScene Play. Cloud success is not Editor or vivo acceptance.
-- Android: `scripts/build-android.sh` because the path has Chinese characters. Keep `link.xml` and Resources URP materials.
-- Do not delete `_Recovery/` or treat APK size/build success as a device pass.
+以仓库 `AGENTS.md` 的产品范围、源码入口、兼容约束和当前本地验收政策为准。按任务读取其列出的专项文档，不额外添加 Spec 审批、全量测试或真机交付闸门。

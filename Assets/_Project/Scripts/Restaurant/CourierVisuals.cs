@@ -122,8 +122,8 @@ namespace BurgerShop.Restaurant
             if(Leaving)
             {
                 var exit=CourierRoad.ExitPath;
-                target=exit[exitStep];
-                if(Arrived(target)){exitStep++;if(exitStep==exit.Length){Finished=true;return;}target=exit[exitStep];}
+                target=transform.parent.TransformPoint(exit[exitStep]);
+                if(Arrived(target)){exitStep++;if(exitStep==exit.Length){Finished=true;return;}target=transform.parent.TransformPoint(exit[exitStep]);}
             }
             Vector3 delta=target-transform.position;delta.y=0;
             if(delta.sqrMagnitude>.0025f)

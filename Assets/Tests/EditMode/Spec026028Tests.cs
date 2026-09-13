@@ -11,6 +11,31 @@ namespace BurgerShop.Tests.EditMode
     {
         static void Invoke(object instance,string method,params object[] args) => instance.GetType().GetMethod(method,System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(instance,args);
         [Test]
+        public void CrowdedOrdersKeepTheirAvoidanceSlotsAcrossIdenticalFrames()
+        {
+            var root=new GameObject("StableOrders",typeof(RectTransform),typeof(Canvas));
+            var cameraObject=new GameObject("OrderCamera",typeof(Camera));cameraObject.tag="MainCamera";
+            try
+            {
+                root.GetComponent<Canvas>().renderMode=RenderMode.ScreenSpaceOverlay;
+                var rect=(RectTransform)root.transform;rect.sizeDelta=new Vector2(1080,1920);
+                for(int i=0;i<24;i++)
+                {
+                    var source=new GameObject("OrderQuantity",typeof(TextMesh));source.transform.SetParent(root.transform);
+                    source.transform.position=new Vector3(0,0,20);source.GetComponent<TextMesh>().text="x1";
+                }
+                var hud=WorldLabelHud.Build(root.transform,root.transform);Canvas.ForceUpdateCanvases();
+                var entries=(System.Collections.IList)typeof(WorldLabelHud).GetField("entries",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(hud);
+                hud.RefreshNow();var first=new object[entries.Count];entries.CopyTo(first,0);
+                for(int frame=0;frame<30;frame++)
+                {
+                    hud.RefreshNow();
+                    for(int i=0;i<first.Length;i++)Assert.That(entries[i],Is.SameAs(first[i]),"Equal-priority orders must not swap vertical avoidance slots every frame");
+                }
+            }
+            finally{Object.DestroyImmediate(root);Object.DestroyImmediate(cameraObject);}
+        }
+        [Test]
         public void CashPilesNeverBecomeBurgerCardsOrObscureOrders()
         {
             var root=new GameObject("CashLabelTest",typeof(RectTransform));

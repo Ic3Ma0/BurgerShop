@@ -71,6 +71,7 @@ namespace BurgerShop.Restaurant
         public CashPickup DropAt(Vector3 origin, int amount)
         {
             if (amount <= 0) return null;
+            amount = GetComponent<UI.SessionGoalTracker>()?.AddIncomeBonus(amount) ?? amount;
             int index = CountNear(origin);
             Vector3 slot = origin + GridOffset(index);
             CashPickup pile = CashPickup.Create(transform, slot, amount, index);

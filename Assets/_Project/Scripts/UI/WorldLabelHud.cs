@@ -40,7 +40,7 @@ namespace BurgerShop.UI
         {
             foreach(var source in FindObjectsByType<TextMesh>(FindObjectsInactive.Include,FindObjectsSortMode.None))
             {
-                if(source.name=="CourierRoadMark" || source.name=="WingBuildGuide")continue;
+                if(source.name=="CourierRoadMark" || source.name=="WingBuildGuide" || source.name=="ShopRankCopy")continue;
                 var renderer=source.GetComponent<Renderer>();if(renderer!=null)renderer.enabled=false;
                 // Cash already has bill meshes, wallet amount and an aggregated pickup receipt.
                 // A card per transient pile both mislabels money and obscures live orders.
@@ -91,7 +91,9 @@ namespace BurgerShop.UI
                 e.Distance=ShopLayout.Horizontal(player.position,e.Source.transform.position);
                 e.Critical=e.Order || e.Source.text.Contains("Remaining");
             }
-            entries.Sort((a,b)=>Priority(b).CompareTo(Priority(a)));
+            // List.Sort is unstable for equal priorities. With many orders it used to
+            // reshuffle the same entries each frame, swapping their vertical avoidance slots.
+            entries.Sort((a,b)=>{int priority=Priority(b).CompareTo(Priority(a));return priority!=0?priority:a.Id.CompareTo(b.Id);});
             occupied.Clear();VisibleCount=0;
             foreach(var e in entries) Paint(e);
         }

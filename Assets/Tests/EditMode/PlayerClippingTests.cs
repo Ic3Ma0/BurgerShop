@@ -82,10 +82,10 @@ namespace BurgerShop.Tests.EditMode
             AssertBlocks(root.transform.Find("Wall-X").GetComponent<Collider>());
             AssertBlocks(counter.GetComponent<Collider>());
             AssertBlocks(grill.ActiveLook.Find("Body").GetComponent<Collider>());
-            AssertBlocks(boxing.transform.Find("BoxTable").GetComponent<Collider>());
-            AssertBlocks(boxing.transform.Find("PackageDesk").GetComponent<Collider>());
+            AssertBlocks(boxing.WorkRoot.Find("BoxTable").GetComponent<Collider>());
+            AssertBlocks(boxing.CounterRoot.Find("PackageDesk").GetComponent<Collider>());
             AssertBlocks(bin.transform.Find("Body").GetComponent<Collider>());
-            AssertBlocks(boxing.transform.Find("PackageDesk").GetComponent<Collider>());
+            AssertBlocks(boxing.CounterRoot.Find("PackageDesk").GetComponent<Collider>());
             Assert.That(SolidOccupancy.BlocksPlayer(grill.transform.Find("PickupSpot").GetComponent<Collider>()),
                 Is.False);
         }

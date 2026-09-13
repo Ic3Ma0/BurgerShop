@@ -1,13 +1,13 @@
 ---
-description: Player-visible work must ship with passing EditMode tests that catch spatial/UI mistakes
-alwaysApply: true
+description: 修改家具、空间布局、HUD 或交互时的定向 Unity 回归检查
+alwaysApply: false
 ---
 
-# EditMode 交付闸门
+# 空间与界面回归检查
 
-交付新的玩家可见功能（工位、家具、HUD、区域、顾客行为）前：写或改 `Assets/Tests/EditMode/` 测试，并在本机 Unity `6000.3.23f1` 跑完全部 EditMode，**全部通过才算完成**。真机测不了时在回复里写明；云端成功不能代替 Editor。
+仅对本次受影响的工位、家具、HUD、区域或顾客行为，选择本机 Unity `6000.3.23f1` 的相关 EditMode 测试；新增或修复可重复的行为时补充有价值的回归。共享布局或基础设施改动、失败或明确验收要求才扩大到全套。视觉/交互证据按需用 SampleScene Play。平台安排以 AGENTS.md 为准。
 
-不要只靠 Play 肉眼。能断言的就写进测试：朝向、座位、区域半径、HUD 文案。
+朝向、座位和区域边界等稳定行为适合自动断言；外观与手感通过实际画面检查。不要为文案小改编写只重复实现的测试。
 
 特别检查这些低级空间/UI 错误：
 - 朝向：椅子/角色 `forward` 必须面朝该面的对象（桌心、柜台），靠背在外侧
@@ -24,4 +24,4 @@ chair.localRotation = Quaternion.LookRotation(towardTable);
 Assert.That(Vector3.Dot(Flatten(chair.forward), Flatten(table.position - chair.position).normalized), Is.GreaterThan(0.9f));
 ```
 
-存档测试不得碰真实 `persistentDataPath`。本条只补测试闸门，不要复制整份 `AGENTS.md`。
+存档测试不得碰真实 `persistentDataPath`。本条只补相关回归示例，不要复制整份 `AGENTS.md`。

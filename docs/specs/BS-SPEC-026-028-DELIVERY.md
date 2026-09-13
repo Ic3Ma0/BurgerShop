@@ -104,3 +104,12 @@ FeedbackDirector 统一预算：最多 **3 条世界提示 / 4 个短音效声�
 SHA-256：`0c89240b2ba854f44c26da63327e9daec872eaef6e5efa3198483accc0da47a4`。
 
 安装、实现、技术验证不等于用户审美验收或 main 合并；本轮未新增广告、店铺等级或整套模型重制。
+
+## 验收范围更新：v1.2（用户确认，2026-09-12）
+
+自本次更新起，026–028 仅要求本地 Unity 开发与结果验收，不再要求 Android 构建或 vivo 验证。本文此前的手机实测、APK 和平台未验证项保留为历史记录，不再构成当前交付门槛。本地仍未完成的视觉、声音、操作及性能 AC 按 v1.2 完成；文档调整不代表这些项目自动通过。
+
+## 2026-09-13 远处订单标志上下闪动
+
+复现：24个同优先级订单在相同画面连续RefreshNow，原List.Sort比较器只比较优先级，逐帧重新排序会交换条目，导致避让位置来回变化。新增CrowdedOrdersKeepTheirAvoidanceSlotsAcrossIdenticalFrames在修复前失败（同一排序槽的条目改变）。修复为优先级相同时按稳定Source实例ID排序，队首优先规则保留。未改存档、经济或订单状态。
+修复后相关HUD EditMode 23/23通过；修复前后报告Logs/hud-order-stability/before.xml、after.xml。本地实现，未推送；用户实际视角下远近移动效果待体验确认，未进行Android验收。

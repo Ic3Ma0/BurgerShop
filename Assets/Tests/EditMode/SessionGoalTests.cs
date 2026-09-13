@@ -58,101 +58,40 @@ namespace BurgerShop.Tests.EditMode
         [TearDown]
         public void TearDown() => Object.DestroyImmediate(root);
 
-        [Test]
-        public void OpeningDoesNotCelebratePreplacedFurniture()
+        [Test] public void OpeningDoesNotCelebratePreplacedFurniture()
         {
-            Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
-            Assert.That(tracker.Progress, Is.Zero);
-            Assert.That(tracker.Required, Is.EqualTo(1));
-            Assert.That(tracker.IsCelebrating, Is.False);
-            Assert.That(tracker.Stars, Is.EqualTo(0));
-            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.1  0/4"));
-            tracker.Advance(2f);
-            Assert.That(tracker.IsCelebrating, Is.False);
-            Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
-            Assert.That(tracker.Progress, Is.Zero);
+            Assert.That(tracker.Title,Is.EqualTo("Complete a burger order"));
+            Assert.That(tracker.Progress,Is.Zero);Assert.That(tracker.Stars,Is.Zero);
+            Assert.That(tracker.IsCelebrating,Is.False);
         }
-
-        [Test]
-        public void PickupThenThreeSalesAdvanceGuidanceWithoutStars()
+        [Test] public void PickupIsNotAnOrderAndMilestoneAwardsExactlyOnce()
         {
-            tracker.Advance(2f);
-            grill.Advance(12f);
-            inventory.TryCollectFrom(grill);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
-            Assert.That(tracker.Progress, Is.EqualTo(1));
-            Assert.That(tracker.IsCelebrating, Is.True);
-            Assert.That(tracker.Stars, Is.EqualTo(0));
-            tracker.Advance(2f);
-            Assert.That(tracker.Title, Is.EqualTo("Serve customers"));
-            Assert.That(tracker.Progress, Is.Zero);
-            Assert.That(tracker.Required, Is.EqualTo(3));
-            for (int n = 0; n < 3; n++)
-            {
-                Assert.That(wallet.RecordCompletedSale(), Is.True);
-                tracker.Advance(0.01f);
-            }
-            Assert.That(tracker.IsCelebrating, Is.True);
-            Assert.That(tracker.Stars, Is.EqualTo(0));
-            tracker.Advance(2f);
-            Assert.That(tracker.Title, Is.EqualTo("Install a table"));
-            Assert.That(wallet.CompletedSales, Is.EqualTo(3));
+            grill.Advance(12);inventory.TryCollectFrom(grill);tracker.Advance(1);
+            Assert.That(tracker.Progress,Is.Zero);
+            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
+            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
+            Assert.That(tracker.Stars,Is.EqualTo(2));Assert.That(tracker.Progress,Is.EqualTo(1));
+            Assert.That(tracker.TryUpgradeRank(1),Is.False);
+            tracker.AddUpgradeStars();Assert.That(tracker.TryUpgradeRank(1),Is.True);
+            Assert.That(tracker.Stars,Is.Zero);
         }
-
-        [Test]
-        public void DirtyTableAsksToClearThenTakeTrashToTheBin()
+        [Test] public void CleaningRecordsTheRankTwoMilestone()
         {
-            tracker.Advance(2f);
-            table.LeaveMealTrash(0);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Clear the table"));
-            inventory.transform.position = table.Center;
-            table.Advance(1f);
-            table.Advance(1f);
-            Assert.That(table.TrashCount, Is.Zero);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Take trash to the bin"));
+            tracker.Restore(2,0,0);table.LeaveMealTrash(0);
+            Assert.That(table.TryPickupTrash(trash),Is.True);
+            Assert.That(tracker.MilestoneComplete,Is.True);
         }
-
-        [Test]
-        public void CapsuleAsksToOpenTheHrOfficeThenHireAWorker()
+        [Test] public void LockedFutureEventsCannotGrantStars()
         {
-            WorkerHiringZone staff = root.AddComponent<WorkerHiringZone>();
-            staff.Configure(grill, serving, wallet, inventory, root.transform, root.transform, Vector3.zero, serving.DropZone);
-            wallet.RestoreProgress(50, 0);
-            tracker.Configure(inventory, grill, stock, queue, wallet, serving, DiningArea.Wrap(table), trash, staff);
-            tracker.Restore(ShopRanks.Max, 0, 0);
-            tracker.Advance(2f);
-            Assert.That(tracker.Title, Is.EqualTo("Open the HR office"));
-            inventory.transform.position = ShopLayout.HrHirePoint + Vector3.up;
-            staff.Advance(0.01f);
-            Assert.That(staff.HasVisitedOffice, Is.True);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Does.Contain("Hire a worker"));
-            Assert.That(tracker.Title, Does.Contain("50"));
+            tracker.RecordMilestone(ShopGoalKind.CourierOrder);
+            tracker.RecordMilestone(ShopGoalKind.WorkerOrder);
+            Assert.That(tracker.MilestoneMask,Is.Zero);Assert.That(tracker.Stars,Is.Zero);
         }
-
-        [Test]
-        public void CapsuleAsksToOpenTheBoostRoomThenUpgradeCarry()
+        [Test] public void OrdinaryActivitiesDoNotReplaceCurrentMilestone()
         {
-            inventory.gameObject.AddComponent<CharacterController>();
-            PlayerMotor motor = inventory.gameObject.AddComponent<PlayerMotor>();
-            Transform point = new GameObject("BoostPoint").transform;
-            point.SetParent(root.transform);
-            point.position = ShopLayout.BoostPoint;
-            BoostUpgradeZone boost = root.AddComponent<BoostUpgradeZone>();
-            boost.Configure(wallet, inventory, motor, point);
-            wallet.RestoreProgress(50, 0);
-            tracker.Configure(inventory, grill, stock, queue, wallet, serving, DiningArea.Wrap(table), trash, null, boost);
-            tracker.Restore(ShopRanks.Max, 0, 0);
-            tracker.Advance(2f);
-            Assert.That(tracker.Title, Is.EqualTo("Open the boost room"));
-            inventory.transform.position = ShopLayout.BoostPoint + Vector3.up;
-            boost.Advance(0.01f);
-            Assert.That(boost.HasVisitedRoom, Is.True);
-            tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Upgrade carry"));
+            tracker.Restore(6,0,0);table.LeaveMealTrash(0);tracker.Advance(1);
+            Assert.That(tracker.Title,Is.EqualTo("Complete a drive-thru order"));
+            Assert.That(tracker.Progress,Is.Zero);
         }
     }
 }

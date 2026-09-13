@@ -43,8 +43,8 @@ namespace BurgerShop.Restaurant
         public int DeliveredUnits { get; private set; }
 
         public Vector3 WindowPosition => circle != null ? circle.position : ShopLayout.DriveThruCircle;
-        public Vector3 CashPosition => ShopLayout.DriveThruCash;
-        public Vector3 HandoffOrigin => ShopLayout.DriveThruWindow + new Vector3(0f, 0.78f, 0.2f);
+        public Vector3 CashPosition => transform.TransformPoint(ShopLayout.DriveThruCash);
+        public Vector3 HandoffOrigin => transform.TransformPoint(ShopLayout.DriveThruWindow + new Vector3(0f, 0.78f, 0.2f));
         public int CarCount => cars.Count;
         public bool IsHandoffActive
         {
@@ -77,13 +77,14 @@ namespace BurgerShop.Restaurant
             get
             {
                 LaneCar car = SlotZeroCar();
-                return car != null ? car.transform.position : ShopLayout.DriveThruQueue[0];
+                return car != null ? car.transform.position : transform.TransformPoint(ShopLayout.DriveThruQueue[0]);
             }
         }
         public bool ReadyToSell => isActiveAndEnabled && !paused && cooldown <= 0f && !IsHandoffActive
             && HasStoppedCarAtWindow && boxing != null && boxing.PackageCount > 0
             && wallet != null && wallet.CanCompleteSale();
 
+        public BoxingStation PackingStock => boxing;
         public void BindBoxing(BoxingStation station) => boxing = station;
 
         public void Configure(BoxingStation station, RestaurantWallet earnings, CashFloor floor,
@@ -184,6 +185,7 @@ namespace BurgerShop.Restaurant
                 {
                     wallet.RecordCompletedSale();
                     CompletedOrders++;
+                    GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(ShopGoalKind.CarOrder);
                     UI.FeedbackDirector.Current?.World(car.transform.position,"",.45f,car.LastServer != null ? car.LastServer.transform : null);
                     cash?.DropAt(CashPosition, ComboPrice * car.Order.Quantity);
                     car.LastServer?.GetComponent<RestaurantWorker>()?.RecordCompletedOrder(true);
@@ -222,17 +224,17 @@ namespace BurgerShop.Restaurant
         }
 
         public static DriveThruLane Create(Transform parent, BoxingStation station, RestaurantWallet earnings,
-            CashFloor floor, BurgerInventory carrier)
+            CashFloor floor, BurgerInventory carrier, bool cutWall = true)
         {
             GameObject root = new GameObject("DriveThruLane");
             root.transform.SetParent(parent, false);
             DriveThruLane lane = root.AddComponent<DriveThruLane>();
-            lane.Build();
+            lane.Build(cutWall);
             lane.Configure(station, earnings, floor, carrier);
             return lane;
         }
 
-        void Build()
+        void Build(bool cutWall)
         {
             Material asphalt = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.16f, 0.18f, 0.22f));
             Material line = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.92f, 0.93f, 0.96f), true);
@@ -244,15 +246,15 @@ namespace BurgerShop.Restaurant
             Transform wall=null;
             foreach(var candidate in transform.root.GetComponentsInChildren<Transform>(true))
                 if(candidate.name=="Wall-Z_W"){wall=candidate;break;}
-            if(wall!=null)
+            if(wall!=null && cutWall)
             {
                 wall.gameObject.SetActive(false);
                 float left=wall.position.x-wall.localScale.x*.5f,right=wall.position.x+wall.localScale.x*.5f;
                 float min=window.x-1.7f,max=window.x+1.7f;
                 var material=wall.GetComponent<Renderer>().sharedMaterial;
-                CourierVisuals.Part(transform,"WindowWallLeft",new Vector3((left+min)*.5f,.75f,wall.position.z),new Vector3(min-left,1.5f,.4f),material,true);
-                CourierVisuals.Part(transform,"WindowWallRight",new Vector3((right+max)*.5f,.75f,wall.position.z),new Vector3(right-max,1.5f,.4f),material,true);
-                CourierVisuals.Part(transform,"LowServingSill",new Vector3(window.x,.30f,wall.position.z),new Vector3(3.4f,.6f,.4f),material,true);
+                CourierVisuals.Part(transform.parent,"WindowWallLeft",new Vector3((left+min)*.5f,.75f,wall.position.z),new Vector3(min-left,1.5f,.4f),material,true);
+                CourierVisuals.Part(transform.parent,"WindowWallRight",new Vector3((right+max)*.5f,.75f,wall.position.z),new Vector3(right-max,1.5f,.4f),material,true);
+                CourierVisuals.Part(transform.parent,"LowServingSill",new Vector3(window.x,.30f,wall.position.z),new Vector3(3.4f,.6f,.4f),material,true);
             }
 
             ShopFixtures.CreateStationLabel(transform, "WindowLabel", window + new Vector3(0f, 1.25f, 0f), "WINDOW");
@@ -328,7 +330,7 @@ namespace BurgerShop.Restaurant
             {
                 GameObject root = new GameObject("LaneCar_" + slot);
                 root.transform.SetParent(parent, false);
-                root.transform.position = ShopLayout.DriveThruSpawn;
+                root.transform.position = parent.TransformPoint(ShopLayout.DriveThruSpawn);
                 LaneCar car = root.AddComponent<LaneCar>();
                 car.Order = new CustomerOrder(quantity, 2);
                 car.Build(color);
@@ -353,7 +355,7 @@ namespace BurgerShop.Restaurant
                 Order.TryReserve();
                 LastServer = server;
                 inbound = box;
-                boxOrigin = from;
+                boxOrigin = transform.parent.InverseTransformPoint(from);
                 if (box != null)
                 {
                     box.SetParent(transform, true);
@@ -392,7 +394,7 @@ namespace BurgerShop.Restaurant
                     }
                     return;
                 }
-                Vector3 target = route[waypoint];
+                Vector3 target = transform.parent.TransformPoint(route[waypoint]);
                 Vector3 offset = target - transform.position;
                 offset.y = 0f;
                 float step = speed * deltaTime;
@@ -417,7 +419,7 @@ namespace BurgerShop.Restaurant
                 Vector3 dest = transform.TransformPoint(CarWindowLocal);
                 if (inbound != null)
                 {
-                    inbound.position = Vector3.Lerp(boxOrigin, dest, eased)
+                    inbound.position = Vector3.Lerp(transform.parent.TransformPoint(boxOrigin), dest, eased)
                         + Vector3.up * (0.55f * Mathf.Sin(t * Mathf.PI));
                     inbound.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 0.55f, t);
                 }
@@ -446,7 +448,7 @@ namespace BurgerShop.Restaurant
             float HorizontalToWindow()
             {
                 Vector3 a = transform.position;
-                Vector3 b = ShopLayout.DriveThruQueue[0];
+                Vector3 b = transform.parent.TransformPoint(ShopLayout.DriveThruQueue[0]);
                 a.y = b.y = 0f;
                 return Vector3.Distance(a, b);
             }

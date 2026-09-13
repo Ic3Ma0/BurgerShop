@@ -42,7 +42,14 @@ namespace BurgerShop.Restaurant
         BurgerShop.Customer.CustomerOrder serviceOrder;
         bool preferWindow;
         bool preferBag=true;
-        BagLine Bag=>crew!=null?crew.BagLine:null;
+        BagLine selectedBagMachine,selectedBagWork,selectedBagCounter;
+        BoxingStation selectedBox;
+        DriveThruLane selectedDrive;
+        BurgerServingZone selectedCola;
+        BagLine Bag=>selectedBagWork!=null?selectedBagWork:crew!=null?crew.BagLine:null;
+        BagLine BagSource=>selectedBagMachine!=null?selectedBagMachine:Bag;
+        BagLine BagCheckout=>selectedBagCounter!=null?selectedBagCounter:Bag;
+        BoxingStation Packing=>DriveThru!=null?DriveThru.PackingStock:Boxing;
         internal void RecordBagOrder(){CompletedDeliveries++;preferBag=false;}
         public SupplyLine SupplyTarget { get; private set; }
         public int ReservedRaw { get; private set; }
@@ -82,6 +89,7 @@ namespace BurgerShop.Restaurant
         internal void RecordCompletedOrder(bool window = false)
         {
             CompletedDeliveries++;preferBag=true;
+            GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(ShopGoalKind.WorkerOrder);
             preferWindow = !window;
         }
         internal void RestoreDeliveries(int count) => CompletedDeliveries = count;
@@ -113,10 +121,10 @@ namespace BurgerShop.Restaurant
         bool CarryingBoxed => Inventory != null && Inventory.BoxedCount > 0;
         bool CarryingTrash => Trash != null && Trash.Count > 0;
         bool UsingCola => Job == WorkerJob.ServeCola || SupplyTarget == SupplyLine.Cola || CarryingCola;
-        BoxingStation Boxing => crew != null ? crew.Boxing : null;
-        DriveThruLane DriveThru => crew != null ? crew.DriveThru : null;
-        BurgerServingZone ColaLine => crew != null ? crew.ColaServing : null;
-        CounterDropZone ColaDropLine => crew != null ? crew.ColaDrop : null;
+        BoxingStation Boxing => selectedBox!=null?selectedBox:crew != null ? crew.Boxing : null;
+        DriveThruLane DriveThru => selectedDrive!=null?selectedDrive:crew != null ? crew.DriveThru : null;
+        BurgerServingZone ColaLine => selectedCola!=null?selectedCola:crew != null ? crew.ColaServing : null;
+        CounterDropZone ColaDropLine => ColaLine!=null?ColaLine.DropZone:null;
         BurgerServingZone ActiveServing => UsingCola && ColaLine != null ? ColaLine : serving;
         CounterDropZone ActiveDrop => UsingCola && ColaDropLine != null ? ColaDropLine : drop;
         bool BoxingReady => Boxing != null && Boxing.isActiveAndEnabled;
@@ -148,9 +156,19 @@ namespace BurgerShop.Restaurant
             if (Application.isPlaying) Advance(Time.deltaTime);
         }
 
+        int layoutRevision=-1;
         public void Advance(float deltaTime)
         {
             if (deltaTime <= 0f || !isActiveAndEnabled || !DependenciesReady) return;
+            if(Building.FacilityLayout.Current?.HasCustomLayout==true&&layoutRevision!=Building.FacilityLayout.Current.Revision)
+            {
+                layoutRevision=Building.FacilityLayout.Current.Revision;
+                var travel=State==WorkerState.Collecting?WorkerState.ToGrill:State==WorkerState.Serving?WorkerState.ToCounter:
+                    State==WorkerState.CollectingTrash?WorkerState.ToTrash:State==WorkerState.Dumping?WorkerState.ToBin:State==WorkerState.Boxing?WorkerState.ToBoxing:State==WorkerState.Packing?WorkerState.ToPackage:
+                    State==WorkerState.SellingWindow?WorkerState.ToWindow:State==WorkerState.BagMachine?WorkerState.ToBagMachine:
+                    State==WorkerState.BagTable?WorkerState.ToBagTable:State==WorkerState.BagCounter?WorkerState.ToBagCounter:State;
+                StartTrip(travel);
+            }
             Trash?.AdvanceDumps(deltaTime);
             if (State == WorkerState.ToGrill || State == WorkerState.ToCounter
                 || State == WorkerState.ToTrash || State == WorkerState.ToBin
@@ -242,17 +260,17 @@ namespace BurgerShop.Restaurant
 
         void TickPacking(float deltaTime)
         {
-            if (!BoxingReady || Boxing.Drop == null)
+            if (Packing == null || Packing.Drop == null)
             {
                 ChooseJob();
                 return;
             }
-            if (!Boxing.Drop.IsInRangeOf(transform))
+            if (!Packing.Drop.IsInRangeOf(transform))
             {
                 Begin(WorkerJob.Pack, WorkerState.ToPackage);
                 return;
             }
-            Boxing.Drop.TryDepositFrom(Inventory);
+            Packing.Drop.TryDepositFrom(Inventory);
             if (!CarryingBoxed)
             {
                 BoxPickupGoal = 0; ClearSupply(); ChooseJob();
@@ -265,7 +283,7 @@ namespace BurgerShop.Restaurant
             if (!DriveThru.IsActorInRange(transform)) { Begin(WorkerJob.DriveSell, WorkerState.ToWindow); return; }
             if (serviceOrder != null && serviceOrder.IsSettled) { serviceOrder = null; ChooseJob(); return; }
             if (DriveThru.TrySellFrom(Inventory)) serviceOrder = DriveThru.WaitingOrder;
-            if (DriveThru.IsHandoffActive || (DriveThru.HasStoppedCarAtWindow && Boxing != null && Boxing.PackageCount > 0)) return;
+            if (DriveThru.IsHandoffActive || (DriveThru.HasStoppedCarAtWindow && Boxing != null && Packing.PackageCount > 0)) return;
             serviceOrder = null; ChooseJob();
         }
 
@@ -294,7 +312,7 @@ namespace BurgerShop.Restaurant
             if (Inventory.IsFull || held >= target || (Inventory.Count > 0 && grill.Stock == 0))
             {
                 if (crew != null) ReservedRaw = Mathf.Min(ReservedRaw, held);
-                if (Bag!=null && Bag.CounterBuilt && SupplyTarget==SupplyLine.Bag && CarryingLoose)
+                if (Bag!=null && BagCheckout.CounterBuilt && SupplyTarget==SupplyLine.Bag && CarryingLoose)
                     Begin(WorkerJob.Bag,WorkerState.ToBagTable);
                 else if (BoxingReady && SupplyTarget == SupplyLine.Boxing && CarryingLoose)
                 {
@@ -406,19 +424,19 @@ namespace BurgerShop.Restaurant
 
         void TickBag()
         {
-            if(Bag==null||!Bag.CounterBuilt){ClearSupply();ChooseJob();return;}
+            if(Bag==null||!BagCheckout.CounterBuilt){ClearSupply();ChooseJob();return;}
             if(State==WorkerState.BagCounter)
             {
                 if(Inventory.BaggedCount>0)return;
-                if(Job==WorkerJob.BagSell&&Bag.ReadyToSell){Bag.TryServe(Inventory);return;}
+                if(Job==WorkerJob.BagSell&&BagCheckout.ReadyToSell){BagCheckout.TryServe(Inventory);return;}
                 // An in-flight handoff is owned by the line; its completion records the worker.
-                if(Job==WorkerJob.BagSell&&Bag.Queue.ReadyCustomer!=null&&Bag.StockCount>0)return;
+                if(Job==WorkerJob.BagSell&&BagCheckout.Queue.ReadyCustomer!=null&&BagCheckout.StockCount>0)return;
                 ClearSupply();ChooseJob();return;
             }
             if(State==WorkerState.BagMachine)
             {
                 int need=Mathf.Max(0,Bag.InputBurgers-Bag.InputBags);
-                if(Inventory.IsFull||Inventory.EmptyBagCount>=Mathf.Min(Inventory.Capacity,need)||(Inventory.EmptyBagCount>0&&Bag.EmptyStock==0))Begin(WorkerJob.Bag,WorkerState.ToBagTable);
+                if(Inventory.IsFull||Inventory.EmptyBagCount>=Mathf.Min(Inventory.Capacity,need)||(Inventory.EmptyBagCount>0&&BagSource.EmptyStock==0))Begin(WorkerJob.Bag,WorkerState.ToBagTable);
                 else if(need==0){ClearSupply();ChooseJob();}
                 return;
             }
@@ -430,7 +448,17 @@ namespace BurgerShop.Restaurant
 
         void ChooseJob()
         {
-            if(Bag!=null&&Bag.CounterBuilt)
+            if(Building.FacilityLayout.Current?.HasCustomLayout==true)
+            {
+                var layout=Building.FacilityLayout.Current;
+                serving=layout.ChooseServing(false,transform.position)??serving;drop=serving!=null?serving.DropZone:drop;
+                selectedCola=layout.ChooseServing(true,transform.position);
+                selectedBox=layout.ChooseBox(transform.position);selectedDrive=layout.ChooseDrive(transform.position);
+                selectedBagMachine=layout.ChooseBag(Building.FacilityKind.BagMachine,transform.position);
+                selectedBagWork=layout.ChooseBag(Building.FacilityKind.BagTable,transform.position);
+                selectedBagCounter=layout.ChooseBag(Building.FacilityKind.BagCounter,transform.position);
+            }
+            if(Bag!=null&&BagCheckout.CounterBuilt)
             {
                 if(Inventory!=null&&Inventory.BaggedCount>0){Begin(WorkerJob.Bag,WorkerState.ToBagCounter);return;}
                 if(Inventory!=null&&Inventory.EmptyBagCount>0){Begin(WorkerJob.Bag,WorkerState.ToBagTable);return;}
@@ -464,7 +492,7 @@ namespace BurgerShop.Restaurant
             bool dine = serving != null && serving.ReadyToSell && (crew == null || crew.MayGoServe(this));
             bool colaSell = ColaLine != null && ColaLine.ReadyToSell && (crew == null || crew.MayGoServeCola(this));
             bool window = DriveThruReady;
-            bool bagReady=Bag!=null&&Bag.ReadyToSell&&crew!=null&&crew.BagAvailableFor(this);
+            bool bagReady=Bag!=null&&BagCheckout.ReadyToSell&&crew!=null&&crew.BagAvailableFor(this);
             if(bagReady&&(preferBag||(!dine&&!colaSell&&!window))){cleaningTable=null;Begin(WorkerJob.BagSell,WorkerState.ToBagCounter);return;}
             if (window && (!(dine || colaSell) || preferWindow))
             { cleaningTable = null; Begin(WorkerJob.DriveSell, WorkerState.ToWindow); return; }
@@ -542,6 +570,7 @@ namespace BurgerShop.Restaurant
             else route = new[] { AtHeight(aisleCorner), AtHeight(destination) };
             if (ShopLayout.WingUnlocked && (destination.x > ShopLayout.WallHalf || transform.position.x > ShopLayout.WallHalf))
                 route = System.Array.ConvertAll(ShopLayout.WingRoute(transform.position, destination), AtHeight);
+            if(Building.FacilityLayout.Current?.HasCustomLayout==true)route=Building.FacilityLayout.Current.Route(transform.position,destination)??new[]{transform.position};
             waypoint = 0;
         }
 
@@ -549,9 +578,9 @@ namespace BurgerShop.Restaurant
         {
             if (Job == WorkerJob.Idle)
                 return IdleStand();
-            if(state==WorkerState.ToBagMachine)return BagLine.MachinePoint;
-            if(state==WorkerState.ToBagTable)return BagLine.WorkPoint;
-            if(state==WorkerState.ToBagCounter)return BagLine.CounterPoint;
+            if(state==WorkerState.ToBagMachine)return BagSource!=null?BagSource.MachinePosition:BagLine.MachinePoint;
+            if(state==WorkerState.ToBagTable)return Bag!=null?Bag.WorkPosition:BagLine.WorkPoint;
+            if(state==WorkerState.ToBagCounter)return BagCheckout!=null?BagCheckout.ServingPosition:BagLine.CounterPoint;
             if (state == WorkerState.ToGrill)
                 return CollectStand();
             if (state == WorkerState.ToCounter)
@@ -559,7 +588,7 @@ namespace BurgerShop.Restaurant
             if (state == WorkerState.ToBoxing)
                 return Boxing != null ? Boxing.CirclePosition : transform.position;
             if (state == WorkerState.ToPackage)
-                return Boxing != null ? Boxing.DropPosition : transform.position;
+                return Packing != null ? Packing.DropPosition : transform.position;
             if (state == WorkerState.ToWindow)
                 return DriveThru != null ? DriveThru.WindowPosition : transform.position;
             if (state == WorkerState.ToTrash)

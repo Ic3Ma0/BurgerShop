@@ -150,6 +150,7 @@ namespace BurgerShop.Tests.EditMode
             }
             var box = expansion.Boxing;
             string prefix = Path.GetFullPath($"Logs/spec023-025/spec025-play-crew-{count}");
+            Directory.CreateDirectory(Path.GetDirectoryName(prefix));
             File.WriteAllText(prefix + "-trace.csv", trace.ToString());
             File.WriteAllText(prefix + "-summary.json", JsonUtility.ToJson(new Summary {
                 staff = count, seconds = Time.time - start, dining = serving.CompletedOrders, drive = lane.CompletedOrders,

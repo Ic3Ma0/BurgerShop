@@ -10,6 +10,8 @@ namespace BurgerShop.UI
         public static readonly Color ReadyRight = HudChrome.Tomato;
         public static readonly Color Disabled = HudChrome.TrackNavy;
 
+        Image[] firstSteps, secondSteps;
+
         public CanvasGroup Group { get; private set; }
         public RectTransform Panel { get; private set; }
         public Text TitleLabel { get; private set; }
@@ -52,6 +54,8 @@ namespace BurgerShop.UI
             popup.CloseLabel.color = HudChrome.Ink;
             FoodIcons.Add(popup.FirstButton.transform, FoodIcon.Speed, new Vector2(0, 88), 48);
             FoodIcons.Add(popup.SecondButton.transform, FoodIcon.Carry, new Vector2(0, 88), 48);
+            popup.firstSteps = MakeSteps(popup.FirstButton.transform);
+            popup.secondSteps = MakeSteps(popup.SecondButton.transform);
             popup.SetVisible(false);
             return popup;
         }
@@ -97,10 +101,13 @@ namespace BurgerShop.UI
 
         public void PaintStat(bool first, string name, int tier, string current, string next, bool max, int cost, long coins)
         {
+            var steps = first ? firstSteps : secondSteps;
+            for (int i = 0; i < steps.Length; i++)
+                steps[i].color = i < tier ? HudChrome.Gold : HudChrome.TrackNavy;
             bool afford = !max && coins >= cost;
             string values = max ? current : current + " → " + next;
             string price = max ? "MAX" : afford ? cost.ToString("N0") + " coins" : "Need " + (cost-coins).ToString("N0") + " more";
-            SetOption(first, name + " · " + tier + "\n" + values + "\n" + price, afford, afford ? HudChrome.Tomato : Disabled);
+            SetOption(first, name + " · " + tier + "/" + steps.Length + "\n" + values + "\n" + price, afford, afford ? HudChrome.Tomato : Disabled);
         }
 
         public void Dismiss()
@@ -116,6 +123,21 @@ namespace BurgerShop.UI
         public void ClickSecond() { if (SecondButton != null && SecondButton.interactable) SecondButton.onClick.Invoke(); }
 
         public void ClickClose() => CloseButton?.onClick.Invoke();
+
+        static Image[] MakeSteps(Transform parent)
+        {
+            var steps = new Image[Player.PlayerBoost.MaxLevel];
+            float stride = 300f / steps.Length;
+            for (int i = 0; i < steps.Length; i++)
+            {
+                steps[i] = HudChrome.Panel(parent, "LevelStep" + (i + 1),
+                    new Vector2(.5f, 0), new Vector2(.5f, .5f),
+                    new Vector2(-150f + stride * (i + .5f), 16f),
+                    new Vector2(stride - 3f, 10f), HudChrome.TrackNavy);
+                steps[i].raycastTarget = false;
+            }
+            return steps;
+        }
 
         static Button MakeButton(Transform parent, string name, Vector2 pos)
         {

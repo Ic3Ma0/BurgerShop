@@ -74,7 +74,7 @@ namespace BurgerShop.Tests.EditMode
             Text progress = capsule.transform.Find("TaskProgress").GetComponent<Text>();
             Text coins = sales.GetComponent<Text>();
             Assert.That(starValue.text, Is.EqualTo("Lv.1  0/4"));
-            Assert.That(title.text, Is.EqualTo("Pick up a burger"));
+            Assert.That(title.text, Is.EqualTo("Complete a burger order"));
             Assert.That(progress.text, Is.EqualTo("0/1"));
             Assert.That(coins.text, Is.EqualTo("0"));
             Assert.That(coins.text, Does.Not.Contain("SERVED").And.Not.Contain("COINS"));
@@ -94,8 +94,8 @@ namespace BurgerShop.Tests.EditMode
             stars.RefreshNow();
             Text title = capsule.transform.Find("TaskTitle").GetComponent<Text>();
             Text progress = capsule.transform.Find("TaskProgress").GetComponent<Text>();
-            Assert.That(tracker.Title, Is.EqualTo("Pick up a burger"));
-            Assert.That(title.text, Is.EqualTo("Pick up a burger"));
+            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
+            Assert.That(title.text, Is.EqualTo("Complete a burger order"));
             Assert.That(progress.text, Is.EqualTo("0/1"));
             Assert.That(capsule.GetComponent<Image>().color, Is.EqualTo(HudChrome.CapsuleIdle));
             Assert.That(capsule.transform.Find("TaskBadge/TaskCheck").GetComponent<Image>().enabled, Is.False);

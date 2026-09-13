@@ -438,22 +438,23 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void CapsuleCanAskToInstallAWingThenATable()
+        public void RankMilestoneStaysStableWhileBuildingAWing()
         {
             hiring.RestoreWorkers(3, 0, 0);
             wallet.RestoreProgress(300, 0);
             var tracker = root.AddComponent<SessionGoalTracker>();
             tracker.Configure(player, root.GetComponent<ProductionStation>(), stock, queue, wallet, serving,
                 dining, null, hiring, null, expansion);
+            tracker.Restore(1,0,0,0,0,true);
             tracker.Advance(2f);
-            Assert.That(tracker.Title, Does.StartWith("Install a wing"));
+            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
             Hold(expansion.WingPad, 5f);
             tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Does.StartWith("Install a cola"));
+            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
             expansion.Restore(false, false, false, 0, false, false, false, false, true, true, true);
             wallet.RestoreProgress(150, 0);
             tracker.Advance(1f);
-            Assert.That(tracker.Title, Does.StartWith("Install a table"));
+            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
             Hold(expansion.TablePad, 3f);
             tracker.Advance(0.01f);
             Assert.That(expansion.NextWingPad, Is.Null);

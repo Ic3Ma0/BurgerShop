@@ -82,6 +82,7 @@ namespace BurgerShop.Restaurant
             int cost = speed ? SpeedCost : CarryCost;
             if (max || wallet.Coins < cost) return false;
             if (!wallet.TrySpend(cost)) return false;
+            GetComponent<UI.SessionGoalTracker>()?.AddUpgradeStars();
             if (speed) SpeedTier++;
             else CarryTier++;
             ApplyToPlayer();
@@ -106,7 +107,7 @@ namespace BurgerShop.Restaurant
         void RefreshVisuals()
         {
             if (markerLabel == null) return;
-            markerLabel.text = IsMaxLevel ? "Boost MAX\n5 / 5" : "Player upgrades";
+            markerLabel.text = IsMaxLevel ? $"Boost MAX\n{MaxLevel} / {MaxLevel}" : "Player upgrades";
         }
     }
 }

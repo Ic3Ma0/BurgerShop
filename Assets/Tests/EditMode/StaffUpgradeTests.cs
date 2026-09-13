@@ -134,6 +134,39 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
+        public void TwentyPurchasesApplyToStaffAndRejectTwentyFirst()
+        {
+            var worker = HireOne();
+            wallet.RestoreProgress(20000, 0);
+            EnterHr();
+            int[] costs = {50,60,70,80,100,110,130,160,190,220,260,310,360,430,510,600,710,830,980,1160};
+            long remaining = 20000;
+            for (int level = 1; level <= 20; level++)
+            {
+                Assert.That(board.TryBuySpeed(), Is.True);
+                Assert.That(board.TryBuyCarry(), Is.True);
+                remaining -= 2 * costs[level - 1];
+                Assert.That(wallet.Coins, Is.EqualTo(remaining));
+                Assert.That(board.SpeedTier, Is.EqualTo(level));
+                Assert.That(board.CarryTier, Is.EqualTo(level));
+                Assert.That(worker.WalkSpeed, Is.EqualTo(3.23f * (1 + .15f * Mathf.Min(level,6) + .08f * Mathf.Max(0,level-6))).Within(.001f));
+                Assert.That(worker.Inventory.Capacity, Is.EqualTo(2 + Mathf.Min(level,8) + Mathf.Max(0,level-8)/2));
+                hud.RefreshNow();
+                Assert.That(hud.Popup.FirstLabel.text, Does.Contain(level + "/20"));
+                Assert.That(hud.Popup.SecondLabel.text, Does.Contain(level + "/20"));
+                for (int i = 1; i <= 20; i++)
+                {
+                    var step = hud.Popup.SecondButton.transform.Find("LevelStep" + i).GetComponent<Image>();
+                    Assert.That(step.color, Is.EqualTo(i <= level ? HudChrome.Gold : HudChrome.TrackNavy));
+                    Assert.That(step.raycastTarget, Is.False);
+                }
+            }
+            Assert.That(board.TryBuySpeed(), Is.False);
+            Assert.That(board.TryBuyCarry(), Is.False);
+            Assert.That(wallet.Coins, Is.EqualTo(remaining));
+        }
+
+        [Test]
         public void ApproachingHrShowsTheStaffUpgradePopup()
         {
             LeaveHr();
@@ -190,7 +223,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(worker.WalkSpeed, Is.EqualTo(StaffBoost.WalkSpeed(1)).Within(0.001f));
             Assert.That(worker.WalkSpeed, Is.GreaterThan(StaffBoost.BaseWalkSpeed*.85f));
             Assert.That(hud.IsVisible, Is.True);
-            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("150"));
+            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("60"));
 
             worker.transform.position = new Vector3(0f, worker.transform.position.y, 0f);
             Vector3 fastStart = worker.transform.position;
@@ -212,7 +245,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(board.CarryTier, Is.EqualTo(1));
             Assert.That(worker.Inventory.Capacity, Is.EqualTo(3));
-            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("150"));
+            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("60"));
             Assert.That(player.Capacity, Is.EqualTo(4));
         }
 

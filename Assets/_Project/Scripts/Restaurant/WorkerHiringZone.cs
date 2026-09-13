@@ -39,12 +39,12 @@ namespace BurgerShop.Restaurant
         public void RegisterBagLine(BagLine line)=>BagLine=line;
         public bool BagAvailableFor(RestaurantWorker worker)
         {
-            if(BagLine==null||!BagLine.CounterBuilt)return false;
+            if(Building.FacilityLayout.Current?.HasCustomLayout==true?Building.FacilityLayout.Current.ChooseBag(Building.FacilityKind.BagCounter,transform.position)==null:BagLine==null||!BagLine.CounterBuilt)return false;
             foreach(var other in workers)if(other!=null&&other!=worker&&other.isActiveAndEnabled&&(other.SupplyTarget==SupplyLine.Bag||other.Job==WorkerJob.Bag||other.Job==WorkerJob.BagSell))return false;
             return true;
         }
         int HeldBagged(){int count=0;foreach(var w in workers)if(w!=null&&w.Inventory!=null)count+=w.Inventory.BaggedCount;return count;}
-        public int BagSupplyDeficit => BagLine==null||!BagLine.CounterBuilt?0:Mathf.Max(0,SupplyBuffer-BagLine.StockCount-BagLine.OutputCount-BagLine.ProcessingCount-BagLine.InputBurgers-HeldBagged()-ReservedFor(SupplyLine.Bag));
+        public int BagSupplyDeficit => Building.FacilityLayout.Current?.HasCustomLayout==true?Mathf.Max(0,Building.FacilityLayout.Current.SupplyDeficit(SupplyLine.Bag)-HeldBagged()-ReservedFor(SupplyLine.Bag)):BagLine==null||!BagLine.CounterBuilt?0:Mathf.Max(0,SupplyBuffer-BagLine.StockCount-BagLine.OutputCount-BagLine.ProcessingCount-BagLine.InputBurgers-HeldBagged()-ReservedFor(SupplyLine.Bag));
         public const int SupplyBuffer = 4;
         public bool AllTablesDirty
         {
@@ -56,12 +56,12 @@ namespace BurgerShop.Restaurant
             }
         }
         // A partially served order owns its counter. Stock on a different counter cannot finish it.
-        public int DiningSupplyDeficit => Mathf.Max(0, Mathf.Max(SupplyBuffer - (serving != null ? serving.TotalStock : 0),
+        public int DiningSupplyDeficit => Building.FacilityLayout.Current?.HasCustomLayout==true?Mathf.Max(0,Building.FacilityLayout.Current.SupplyDeficit(SupplyLine.Dining)-ReservedFor(SupplyLine.Dining)):Mathf.Max(0, Mathf.Max(SupplyBuffer - (serving != null ? serving.TotalStock : 0),
             serving != null ? serving.ActiveOrderStockDeficit : 0) - ReservedFor(SupplyLine.Dining));
-        public int BoxingSupplyDeficit => driveThru == null || boxing == null || !driveThru.isActiveAndEnabled || !boxing.isActiveAndEnabled ? 0
+        public int BoxingSupplyDeficit => Building.FacilityLayout.Current?.HasCustomLayout==true?Mathf.Max(0,Building.FacilityLayout.Current.SupplyDeficit(SupplyLine.Boxing)-ReservedFor(SupplyLine.Boxing)-HeldBoxes()):driveThru == null || boxing == null || !driveThru.isActiveAndEnabled || !boxing.isActiveAndEnabled ? 0
             : Mathf.Max(0, SupplyBuffer - boxing.OutputCount - boxing.ProcessingCount - boxing.PackageCount
                 - HeldBoxes() - ReservedFor(SupplyLine.Boxing) - boxing.InputCount);
-        public int ColaSupplyDeficit => colaServing == null || !colaServing.isActiveAndEnabled ? 0
+        public int ColaSupplyDeficit => Building.FacilityLayout.Current?.HasCustomLayout==true?Mathf.Max(0,Building.FacilityLayout.Current.SupplyDeficit(SupplyLine.Cola)-ReservedFor(SupplyLine.Cola)):colaServing == null || !colaServing.isActiveAndEnabled ? 0
             : Mathf.Max(0, Mathf.Max(SupplyBuffer - colaServing.TotalStock, colaServing.ActiveOrderStockDeficit)
                 - ReservedFor(SupplyLine.Cola));
         public BurgerServingZone ColaServing => colaServing;
@@ -96,13 +96,16 @@ namespace BurgerShop.Restaurant
 
         public bool TryAssignBoxTransport(RestaurantWorker worker)
         {
-            if (worker == null || boxing == null || driveThru == null || !boxing.isActiveAndEnabled || !driveThru.isActiveAndEnabled) return false;
+            if(worker==null)return false;
+            var boxing=Building.FacilityLayout.Current?.HasCustomLayout==true?Building.FacilityLayout.Current.ChooseBox(worker.transform.position):this.boxing;
+            var lane=Building.FacilityLayout.Current?.HasCustomLayout==true?Building.FacilityLayout.Current.ChooseDrive(worker.transform.position):driveThru;
+            if(boxing==null||lane==null||!boxing.isActiveAndEnabled||!lane.isActiveAndEnabled)return false;
             int reserved = 0;
             foreach (var other in workers)
                 if (other != null && other != worker && other.isActiveAndEnabled)
                     reserved += Mathf.Max(0, other.BoxPickupGoal - other.Inventory.BoxedCount);
             int available = boxing.OutputCount - reserved;
-            int need = SupplyBuffer - boxing.PackageCount - HeldBoxes() - reserved;
+            int need = SupplyBuffer - (lane.PackingStock?.PackageCount??0) - HeldBoxes() - reserved;
             // Raw already on the table is committed to this line. Send an operator to finish it
             // when no unclaimed output is ready, instead of collecting another batch from a grill.
             int workAvailable = boxing.InputCount + boxing.ProcessingCount + boxing.OutputCount - reserved;
@@ -145,7 +148,7 @@ namespace BurgerShop.Restaurant
                 return total;
             }
         }
-        public bool IsAvailable => isActiveAndEnabled && grill != null && grill.isActiveAndEnabled
+        public bool IsAvailable => (GetComponent<UI.SessionGoalTracker>()?.Allows(3)??true) && isActiveAndEnabled && grill != null && grill.isActiveAndEnabled
             && serving != null && serving.isActiveAndEnabled && wallet != null && wallet.isActiveAndEnabled
             && player != null && player.isActiveAndEnabled && pickupPoint != null
             && drop != null && drop.isActiveAndEnabled;
@@ -242,10 +245,11 @@ namespace BurgerShop.Restaurant
         }
 
         public bool AnyColaHasStock() =>
-            colaGrill != null && colaGrill.isActiveAndEnabled && colaGrill.Stock > 0;
+            Building.FacilityLayout.Current?.HasCustomLayout==true?Building.FacilityLayout.Current.HasStock(KitchenProduct.Cola):colaGrill != null && colaGrill.isActiveAndEnabled && colaGrill.Stock > 0;
 
         public bool TryGetCollectTarget(RestaurantWorker worker, out ProductionStation station, out Transform pickup)
         {
+            if(Building.FacilityLayout.Current?.HasCustomLayout==true&&Building.FacilityLayout.Current.CollectTarget(worker!=null&&worker.SupplyTarget==SupplyLine.Cola?KitchenProduct.Cola:KitchenProduct.Burger,out station,out pickup))return true;
             if (worker != null && worker.SupplyTarget == SupplyLine.Cola)
             {
                 station = colaGrill;

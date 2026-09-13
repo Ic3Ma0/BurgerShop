@@ -72,11 +72,15 @@ namespace BurgerShop.UI
                 shown = tracker.Stars;
             }
             label.text = tracker.StarLabel;
-            if(upgradeLabel!=null)upgradeLabel.text=!tracker.IsMaxRank&&tracker.Stars>=tracker.StarCap?"Upgrade":"";
+            if(upgradeLabel!=null)upgradeLabel.text=tracker.CanUpgrade?"Upgrade":"";
             punch.Advance(deltaTime);
             label.rectTransform.localScale = new Vector3(punch.Scale, punch.Scale, 1f);
             if (fillRect != null)
-                HudChrome.SetHorizontalFill(fillRect, tracker.IsMaxRank ? 1f : tracker.StarCap <= 0 ? 0f : tracker.Stars / (float)tracker.StarCap);
+            {
+                // Completed requirements switch to an actionable status; never fake 99%.
+                fillRect.gameObject.SetActive(tracker.ProgressFraction<1f);
+                HudChrome.SetHorizontalFill(fillRect, tracker.ProgressFraction);
+            }
         }
     }
 }

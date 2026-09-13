@@ -30,6 +30,53 @@ namespace BurgerShop.Tests.EditMode
             workerDeliveries = 7, hiredWorkerCount = hired, workerClears = clears
         };
 
+        [Test]
+        public void LegacyZeroThroughFivePreserveCoinsAndTierFallbacks()
+        {
+            for (int level = 0; level <= 5; level++)
+            {
+                Assert.That(store.Save(ProgressV3(1234, level)), Is.True);
+                Assert.That(new LocalSaveStore(directory).Load(out var loaded), Is.EqualTo(SaveLoadResult.Loaded));
+                Assert.That(loaded.ResolvedPlayerSpeedTier, Is.EqualTo(level));
+                Assert.That(loaded.ResolvedPlayerCarryTier, Is.EqualTo(level));
+                Assert.That(loaded.coins, Is.EqualTo(1234));
+            }
+        }
+
+        [Test]
+        public void EveryIndependentTierRejectsNegativeAndTwentyOne()
+        {
+            foreach (var value in new[] { -1, 21 })
+                for (int field = 0; field < 4; field++)
+                {
+                    var data = new RestaurantSaveData {version = RestaurantSaveData.CurrentVersion, grillLevel = 1};
+                    if (field == 0) data.playerSpeedTier = value;
+                    if (field == 1) data.playerCarryTier = value;
+                    if (field == 2) data.staffSpeedTier = value;
+                    if (field == 3) data.staffCarryTier = value;
+                    Assert.That(store.Save(data), Is.False);
+                }
+        }
+
+        [Test]
+        public void AllTwentyTiersRoundTripThroughFreshStore()
+        {
+            for (int tier = 0; tier <= 20; tier++)
+            {
+                var original = new RestaurantSaveData {version = RestaurantSaveData.CurrentVersion,
+                    coins = 12345, grillLevel = 1, boostLevel = tier,
+                    playerSpeedTier = tier, playerCarryTier = tier, staffSpeedTier = tier, staffCarryTier = tier};
+                Assert.That(store.Save(original), Is.True, "Save tier " + tier);
+                var reopened = new LocalSaveStore(directory);
+                Assert.That(reopened.Load(out var loaded), Is.EqualTo(SaveLoadResult.Loaded));
+                Assert.That(loaded.coins, Is.EqualTo(12345));
+                Assert.That(loaded.ResolvedPlayerSpeedTier, Is.EqualTo(tier));
+                Assert.That(loaded.ResolvedPlayerCarryTier, Is.EqualTo(tier));
+                Assert.That(loaded.ResolvedStaffSpeedTier, Is.EqualTo(tier));
+                Assert.That(loaded.ResolvedStaffCarryTier, Is.EqualTo(tier));
+            }
+        }
+
         [Test] public void FirstRunDoesNotCreateOrLoadPhantomProgress()
         {
             Assert.That(store.Load(out var data), Is.EqualTo(SaveLoadResult.NewGame));
@@ -131,10 +178,10 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(data.coins, Is.EqualTo(99));
         }
 
-        [Test] public void Version3RejectsBoostLevelOutsideZeroToFive()
+        [Test] public void Version3RejectsBoostLevelOutsideSupportedRange()
         {
             var data = ProgressV3();
-            data.boostLevel = 6;
+            data.boostLevel = 21;
             Assert.That(store.Save(data), Is.False);
             data = ProgressV3();
             data.boostLevel = -1;
@@ -188,10 +235,10 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(data.ResolvedPlayerCarryTier, Is.EqualTo(2));
         }
 
-        [Test] public void Version4RejectsStaffTiersOutsideZeroToFive()
+        [Test] public void Version4RejectsStaffTiersOutsideSupportedRange()
         {
             var data = ProgressV4();
-            data.staffSpeedTier = 6;
+            data.staffSpeedTier = 21;
             Assert.That(store.Save(data), Is.False);
             data = ProgressV4();
             data.staffCarryTier = -1;
@@ -220,10 +267,10 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(data.staffCarryTier, Is.EqualTo(2));
         }
 
-        [Test] public void Version5RejectsPlayerTiersOutsideZeroToFive()
+        [Test] public void Version5RejectsPlayerTiersOutsideSupportedRange()
         {
             var data = ProgressV5();
-            data.playerSpeedTier = 6;
+            data.playerSpeedTier = 21;
             Assert.That(store.Save(data), Is.False);
             data = ProgressV5();
             data.playerCarryTier = -1;

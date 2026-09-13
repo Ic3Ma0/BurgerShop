@@ -88,8 +88,11 @@ namespace BurgerShop.Restaurant
         public int SquareInvested => SquarePad != null ? SquarePad.Invested : pendingSquareInvestment;
         public int ColaInvested => ColaPad != null ? ColaPad.Invested : pendingColaInvestment;
         public int ColaBarInvested => ColaBarPad != null ? ColaBarPad.Invested : pendingColaBarInvestment;
-        public FacilityUnlockZone NextWingPad => !HasWing ? WingPad : !HasColaMachine ? ColaPad
-            : !HasColaBar ? ColaBarPad : !HasExtraTable ? TablePad : null;
+        public FacilityUnlockZone NextWingPad
+        {
+            get { var pad=!HasWing?WingPad:!HasColaMachine?ColaPad:!HasColaBar?ColaBarPad:!HasExtraTable?TablePad:null;
+                return pad!=null&&pad.RankVisible?pad:null; }
+        }
         public string NextWingHint => !HasWing ? "Install a wing" : !HasColaMachine ? "Install a cola" : !HasColaBar ? "Install a cola bar" : "Install a table";
         TextMesh wingGuide;
         void LateUpdate()
@@ -324,6 +327,12 @@ namespace BurgerShop.Restaurant
 
         public void ApplyRank(int rank)
         {
+            var tracker=GetComponentInParent<UI.SessionGoalTracker>();
+            if(tracker!=null&&tracker.LegacyAccess)rank=int.MaxValue;
+            SetPad(WingPad,ShopRanks.PadUnlocked(rank,"WING"));
+            SetPad(ColaPad,ShopRanks.PadUnlocked(rank,"COLA"));
+            SetPad(ColaBarPad,ShopRanks.PadUnlocked(rank,"BAR"));
+            SetPad(FourSeatPad,rank>=7);SetPad(SquarePad,rank>=7);
             SetPad(TablePad, ShopRanks.PadUnlocked(rank, "TABLE"));
             SetPad(BoxingPad, ShopRanks.PadUnlocked(rank, "BOX"));
             SetPad(GrillPad, ShopRanks.PadUnlocked(rank, "GRILL"));
@@ -333,7 +342,7 @@ namespace BurgerShop.Restaurant
 
         static void SetPad(FacilityUnlockZone pad, bool unlocked)
         {
-            pad?.SetRankVisible(unlocked);
+            pad?.SetRankVisible(unlocked || pad.Invested>0);
         }
 
         void UnlockTable()

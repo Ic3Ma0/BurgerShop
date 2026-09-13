@@ -12,11 +12,11 @@ This is an Android-first Unity 6.3 hamburger-shop game. The accepted MVP is vers
 
 ## Product process
 
-User direction → a spec (`docs/specs/SPEC_TEMPLATE.md`, id `BS-SPEC-XXX`) → implement and verify. Specs own player-visible rules; you own classes, tests, and Git.
+User direction → a concise spec (`docs/specs/SPEC_TEMPLATE.md`, id `BS-SPEC-XXX`) → implement and verify. Specs own player-visible rules; you own classes, tests, and Git. When the user's request establishes the behavior, write the spec and continue implementation; a spec is not a second approval gate. Ask only about unresolved product decisions that would materially change scope or behavior.
 
 Do not add features because they would be “more like Pizza Ready.” Current long-term product intent is a one-to-one of Pizza Ready, but existing code is a prototype. Freeze behavior in a spec first.
 
-Baseline snapshot: `docs/PRODUCT_AGENT_HANDOFF.md`. Save rules: `docs/goal-08-save.md`. Device bar: `docs/goal-09-device-vivo.md`.
+Baseline snapshot: `docs/PRODUCT_AGENT_HANDOFF.md`. Save rules: `docs/goal-08-save.md`. Historical device evidence only: `docs/goal-09-device-vivo.md` (not a current acceptance requirement).
 
 ## Engineering constraints
 
@@ -26,13 +26,25 @@ Baseline snapshot: `docs/PRODUCT_AGENT_HANDOFF.md`. Save rules: `docs/goal-08-sa
 - Player and staff share grill stock, cashier cooldown, and wallet. Do not let extra carriers skip the cashier throttle.
 - Android IL2CPP strips unreferenced colliders and shaders. Keep `_Project/link.xml` and `RuntimeMaterials` (Resources Lit/Unlit). Never rely on `Shader.Find` alone.
 - Project path contains Chinese. Android builds go through `scripts/build-android.sh` (ASCII staging dir). Editor menu build is English-path only.
-- APK success is not device acceptance. Phone changes require install → real touch → logcat → save regression on the user’s vivo S50 when the spec says so.
+- APK success is not device acceptance. Android builds and device verification are deferred until the user explicitly starts a later consolidated acceptance phase.
 
-## Verification
+## Verification and current development priority
 
-- Run Unity EditMode tests after gameplay or save changes. Isolated save tests must not touch the real `persistentDataPath`.
-- Editor Play on SampleScene for the player-visible loop.
-- Cloud VMs cannot replace Unity Editor, APK signing, or the physical phone. Implementation and test agents for this repo should run **locally**.
+Latest user clarification: prioritize new feature implementation and completing the project. Follow requirements → concise actionable spec → direct code changes → proportionate local Unity verification → prompt delivery.
+
+- Product specs focus on behavior, scope, essential parameters, compatibility and reproducible functional acceptance. Do not turn each feature into an elaborate validation project.
+- Prefer targeted automated tests for logic. Use Computer Use on SampleScene in Unity Play when visual, audio or interaction evidence is needed. Protect real saves; isolated tests must not touch real `persistentDataPath`.
+- Do not routinely require long endurance runs, repeated recordings or full regression for small changes. Expand verification only for relevant risk, failures or new evidence. Stop repeating passed checks without a reason.
+- Android packaging, installation, phone operation and platform acceptance are deferred to a later consolidated phase arranged by the user, not permanently cancelled. Do not initiate them after every feature/batch or treat them as current delivery blockers.
+- Deliver once the current functional/local acceptance is satisfied and proceed with requested features. Record actual results and in-scope issues honestly; retain historical device evidence without making future platform work a current defect.
+- Development and verification run locally. Preserve the Android product target and platform compatibility code.
+
+## Task-specific references
+
+- Current development and verification policy is defined above. `.cursor/rules/burgershop-core.mdc` and `local-unity-verification.mdc` route to it rather than adding separate delivery gates.
+- Spatial, furniture, HUD or interaction changes: use `.cursor/rules/burgershop-editmode-gate.mdc` for relevant regression examples.
+- Economy, progression, unlock or monetization changes: use `.cursor/rules/burgershop-pacing-invariants.mdc`; read `docs/GAME_CORE.md` when design rationale is needed. Historical numeric snapshots must be checked against current code and approved specs.
+- Documentation-only work needs diff, reference and format checks; it does not require launching Unity or running gameplay tests.
 
 ## Language
 
