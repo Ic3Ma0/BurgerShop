@@ -16,7 +16,7 @@
 
 ## 实际基线，而非旧 MVP
 
-本轮查看的仓库是 `/Users/max/个人工作/应用开发/BurgerShop`，分支 `feat/counter-table-serve`，HEAD 为 `2158982c91d2b71c3b05ad41f01d3092b5c8c1cc`。本地存在大量未提交代码与 013–022 文档，HEAD 本身不能代表全部已查看内容。[基线清单](video2-evidence/baseline.json)记录了关键源文件哈希及录像哈希。
+本轮查看的仓库是 https://github.com/Ic3Ma0/BurgerShop ，分支 `feat/counter-table-serve`，HEAD 为 `2158982c91d2b71c3b05ad41f01d3092b5c8c1cc`。当时工作区存在大量未提交代码与 013–022 文档，HEAD 本身不能代表全部已查看内容。[基线清单](video2-evidence/baseline.json)记录了关键源文件哈希及录像哈希。
 
 源码已经包含：堂食柜台库存、收银、桌椅用餐、垃圾清理、落地现金、扩建购买、三名员工、HR 房间、玩家和员工升级、打包、PACK 库存及车道车辆。这次没有把这些功能重新当成“待新增”。013–022 的实际实现和最新源文件比部分协调文档更靠前。
 

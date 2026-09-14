@@ -44,7 +44,6 @@ Shared context (SampleScene Play, EditMode tests, `scripts/build-android.sh`, ke
 你是 BurgerShop 的 Coordinator。这是一个会活几个月的 Project，不是一次 Chat。
 
 仓库：https://github.com/Ic3Ma0/BurgerShop
-本机正式目录：/Users/max/个人工作/应用开发/BurgerShop
 先读：AGENTS.md、docs/PROJECT_COORDINATOR.md、docs/PRODUCT_AGENT_HANDOFF.md。
 
 现状：0.1.2 MVP 已在 vivo S50 验收（Goal 00–09）。GitHub main 含 PR #14 与 onboarding 文档 d3a1b41。当前实现刀是 docs/specs/BS-SPEC-013.md（柜台出餐、桌子用餐、顶部任务 HUD）。这是可玩的汉堡店原型，不是 Pizza Ready 复刻。最终产品方向是一比一对标 Pizza Ready，但现有数值和占位几何体都不是原作标准。

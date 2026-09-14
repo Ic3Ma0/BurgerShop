@@ -43,7 +43,7 @@
 - [Android 构建与设备流程](goal-09-android.md)
 - [真实 vivo 验收与截图](goal-09-device-vivo.md)
 
-正式仓库路径：`/Users/max/个人工作/应用开发/BurgerShop`。若无法访问文件，请让用户转交相关文档；不要根据旧聊天自行猜测当前能力。
+正式仓库：https://github.com/Ic3Ma0/BurgerShop 。若无法访问文件，请让用户转交相关文档；不要根据旧聊天自行猜测当前能力。
 
 ## 每份 spec 最需要讲清的内容
 

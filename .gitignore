@@ -26,3 +26,7 @@ crashlytics-build.properties
 # Unity may create this when recovering or migrating the template scene.
 /Assets/LocalSceneBackup.unity
 /Assets/LocalSceneBackup.unity.meta
+
+# Local recovery copies. Keep on disk, never publish.
+/Assets/_Recovery/
+/Assets/_Recovery.meta
