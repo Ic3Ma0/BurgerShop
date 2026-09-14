@@ -26,9 +26,11 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/spec026-028/after-hud.png" alt="任务 HUD 与店铺" width="32%">
-  <img src="docs/images/spec026-028/cash-clean-final.png" alt="柜台出餐与现金" width="32%">
-  <img src="docs/images/spec023-025/vivo-dining-three-complete.png" alt="堂食与收银" width="32%">
+  <img src="docs/images/readme/restaurant.png" alt="当前店铺与街区" width="88%">
+</p>
+<p align="center">
+  <img src="docs/images/readme/lounge.png" alt="饮品休闲区" width="48%">
+  <img src="docs/images/readme/supermarket.png" alt="当前商城与顶栏 HUD" width="32%">
 </p>
 
 ---
