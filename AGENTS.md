@@ -5,7 +5,7 @@ This is an Android-first Unity 6.3 hamburger-shop game. The accepted MVP is vers
 ## Source of truth
 
 - Official repo: this directory only. Sibling folders `BurgerShop-Goal04` … `Goal09` are historical git worktrees. Do not edit them.
-- GitHub: `https://github.com/Ic3Ma0/BurgerShop` (private). Remote `main` already contains Goal 00–09 (merge of PR #14).
+- GitHub: `https://github.com/Ic3Ma0/BurgerShop`. Remote `main` already contains Goal 00–09 (merge of PR #14).
 - Unity: `6000.3.23f1` (LTS). URP 17.3.0. Input System 1.20.0.
 - Play entry: `Assets/Scenes/SampleScene.unity`. The shop is assembled at runtime by `Assets/_Project/Scripts/Core/Goal01Bootstrap.cs`, not by authored prefabs.
 - Keep `_Recovery/` and old stashes. Do not `stash apply` historical backups.

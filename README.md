@@ -5,41 +5,47 @@
 <h1 align="center">Burger Shop</h1>
 
 <p align="center">
-  <strong>一款面向 Android 的单人 3D 汉堡店经营游戏</strong><br>
-  斜俯视 · 单指摇杆 · 持续扩店
+  <strong>面向 Android 的单人 3D 汉堡店经营原型</strong><br>
+  斜俯视 · 单指摇杆 · 制作、送餐、扩店
 </p>
 
 <p align="center">
   <img alt="Unity" src="https://img.shields.io/badge/Unity-6.3%20LTS-222C37?style=for-the-badge&logo=unity&logoColor=white">
   <img alt="URP" src="https://img.shields.io/badge/URP-17.3-46A0F0?style=for-the-badge">
-  <img alt="Android" src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white">
+  <img alt="Android" src="https://img.shields.io/badge/Android-25+-3DDC84?style=for-the-badge&logo=android&logoColor=white">
+  <img alt="Version" src="https://img.shields.io/badge/Version-0.3.0-E27D60?style=for-the-badge">
   <img alt="Status" src="https://img.shields.io/badge/Status-Prototype-F5A623?style=for-the-badge">
 </p>
 
 <p align="center">
+  <a href="https://github.com/Ic3Ma0/BurgerShop">GitHub</a> ·
   <a href="#核心循环">核心循环</a> ·
-  <a href="#第一间店">第一间店</a> ·
-  <a href="#技术基线">技术基线</a> ·
-  <a href="#当前进度">当前进度</a> ·
-  <a href="#本地打开">本地打开</a>
+  <a href="#现在能玩什么">现在能玩什么</a> ·
+  <a href="#本地打开">本地打开</a> ·
+  <a href="#文档">文档</a>
+</p>
+
+<p align="center">
+  <img src="docs/images/spec026-028/after-hud.png" alt="任务 HUD 与店铺" width="32%">
+  <img src="docs/images/spec026-028/cash-clean-final.png" alt="柜台出餐与现金" width="32%">
+  <img src="docs/images/spec023-025/vivo-dining-three-complete.png" alt="堂食与收银" width="32%">
 </p>
 
 ---
 
 ## 关于游戏
 
-玩家经营一间汉堡店：制作、送餐、收款，再把金币投入设备和员工。自动化只在玩家先理解手动循环之后出现，节奏会随着升级逐步加快。
+玩家经营一间汉堡店：烤制、取餐、送到柜台或餐桌、收金币，再把收入投入设备、员工和扩建。自动化只在手动循环跑通之后出现，节奏随升级加快。
 
-| 项目 | 说明 |
+| | |
 | --- | --- |
 | 类型 | 3D Idle Arcade / Tycoon |
 | 平台 | Android 优先，竖屏 |
 | 视角 | 斜俯视第三人称 |
-| 操作 | 单指虚拟摇杆 |
-| 单局 | 持续经营，逐步扩店 |
-| 版本 | `0.1.2` · 经营原型 |
+| 操作 | 单指虚拟摇杆（Editor 也可用 WASD） |
+| 版本 | `0.3.0` 原型，尚未上架商店 |
 
-第一版使用原创占位几何体验证手感与节奏，不依赖付费素材。玩法借鉴经营循环，名称、美术和内容会保持独立设计。
+首版用原创占位几何体验证手感与节奏，不依赖付费素材。
 
 ## 核心循环
 
@@ -54,103 +60,52 @@ flowchart LR
   G --> A
 ```
 
-体验原则：
-
 - 玩家始终清楚下一步去哪里
 - 每次交付都有金币、音效和视觉反馈
 - 先手动跑通循环，再引入自动化
 - 金额、库存和队列状态必须守恒
 
-## 第一间店
+## 现在能玩什么
 
-首版限制在 **一个店铺、一种主商品、一条售卖动线**。
+MVP **0.1.2**（Goal 00–09）已完成：移动、烤台、取餐搬运、顾客排队、收银、升级、雇人、本地存档，以及 Android 真机可玩。
 
-| 设施 | 数量 | 作用 |
-| --- | ---: | --- |
-| 烤台 | 1 | 按时间产出汉堡 |
-| 取餐台 | 1 | 拾取、堆叠、携带 |
-| 收银点 | 1 | 顾客付款离场 |
-| 排队点 | 3 | 顾客进入并下单 |
-| 升级点 | 1 | 用金币提升效率 |
+当前 **0.3.0** 在此之上继续扩店，包括柜台库存与堂食、打包与得来速、员工与人事办公室、店铺等级与侧翼设施、本地进度保存。
 
-MVP 验收见 [`SPEC.md`](SPEC.md)：核心循环可连续完成 3 次，Android 真机可启动和操作。
+完整勾选列表见 [`docs/GOALS.md`](docs/GOALS.md)。规格与交付记录在 [`docs/specs/`](docs/specs/)。
 
 ## 技术基线
 
 | 项目 | 版本 |
 | --- | --- |
 | Unity | 6.3 LTS `6000.3.23f1` |
-| 渲染管线 | Universal Render Pipeline `17.3.0` |
+| 渲染 | Universal Render Pipeline `17.3.0` |
 | 输入 | Input System `1.20.0` |
 | UI | uGUI `2.0.0` |
-| 构建 | Android Build Support |
 | 最低 SDK | Android 25 |
+| 包名 | `com.ic3ma0.burgershop` |
 
-## 仓库结构
-
-```text
-BurgerShop/
-├── Assets/
-│   ├── _Project/          # 游戏内容（脚本、场景、美术、UI）
-│   │   ├── Scripts/
-│   │   │   ├── Player/
-│   │   │   ├── Customer/
-│   │   │   ├── Restaurant/
-│   │   │   ├── Economy/
-│   │   │   ├── Core/
-│   │   │   └── UI/
-│   │   ├── Art/ Audio/ Materials/ Prefabs/ Scenes/ UI/
-│   ├── Scenes/            # Unity 模板场景
-│   └── Settings/          # URP 与渲染配置
-├── Packages/              # 包清单与锁定文件
-├── ProjectSettings/       # 工程与平台设置
-├── docs/                  # 设计、目标与启动草案
-├── SPEC.md                # MVP 范围与验收
-└── README.md
-```
-
-`Library/`、`Temp/`、`Logs/` 等 Unity 生成目录已从版本控制中排除。
-
-## 当前进度
-
-目前可在 Unity Play Mode 和 vivo Android 手机上完成 **制作 → 取餐 → 搬运 → 送餐 → 收款 → 升级 / 雇佣** 的循环。绿色区域取餐，金色区域交付，每单收入 10 金币；再到紫色区域升级烤台，或到青色区域雇佣员工自动取餐、送餐。
-
-| Goal | 内容 | 状态 |
-| ---: | --- | --- |
-| 00 | 创建 Unity 6.3 LTS URP 项目 | 完成 |
-| 01 | 玩家移动与摄像机跟随 | 完成 |
-| 02 | 制作台定时产出汉堡 | 已合并 main |
-| 03 | 拾取、堆叠与携带 | 已合并 main，用户试玩通过 |
-| 04 | 顾客生成、排队与下单 | 已合并 main |
-| 05 | 送餐、付款与离场 | 已合并 main |
-| 06 | 金币与升级点 | 本分支已实现，43 项测试通过 |
-| 07 | 员工自动搬运 | 本分支已实现，55 项测试通过 |
-| 08 | 本地存档 | 本分支已实现，68 项测试通过 |
-| 09 | Android 构建与真机验证 | vivo S50 真机通过，74 项测试通过 |
-
-完整勾选列表见 [`docs/GOALS.md`](docs/GOALS.md)。
+场景在运行时由 `Assets/_Project/Scripts/Core/Goal01Bootstrap.cs` 组装，而不是靠预先摆好的大量 prefab。
 
 ## 本地打开
 
+```bash
+git clone https://github.com/Ic3Ma0/BurgerShop.git
+```
+
 1. 安装 [Unity Hub](https://unity.com/download) 与 **Unity `6000.3.23f1`**，并勾选 **Android Build Support**。
-2. 克隆本仓库，用 Hub 打开仓库根目录。
-3. 打开 `Assets/Scenes/SampleScene.unity`。
-4. 进入 Play Mode。场景会生成占位地面、角色、烤台、绿色取餐标记、点单台、金色交付标记、紫色升级标记、青色雇佣标记、蓝色排队位置和左下角虚拟摇杆。
-5. 用 **WASD** 或拖动摇杆在 XZ 平面走动，确认斜俯视摄像机跟随，且角色不会走出围墙。
-6. 等烤台生产后走到绿色圆形取餐区，汉堡会逐个移到角色身前，最多携带 **4 个**。上方显示数量，满载后停止拾取。
-7. 顾客陆续走到蓝色排队位置，头顶出现 **汉堡 ×1**。带着汉堡走到点单台右侧的 **金色圆形区域**，自动交给已到位的队首顾客。
-8. 每单收入 **10 金币**，右上角显示 `COINS` 和 `SERVED`，成交时有 `+10` 提示及短音效。顾客带餐离开，后排补位；继续往返取餐和送餐即可。
-9. 赚到 **30 金币**后，走进烤台前方的 **紫色区域**并停留 **1.5 秒**，烤台从 LV 1 升至 LV 2，制作时间由 **3 秒缩短至 2 秒**。离开后再次进入，可花 **60 金币**升至 LV 3，缩短至 **1.5 秒**。区域面板显示价格、进度、缺少金币和满级状态；每次进入最多购买一次。
+2. 用 Hub 打开仓库根目录，打开 `Assets/Scenes/SampleScene.unity`。
+3. 进入 Play Mode。用 **WASD** 或左下角摇杆在店内走动。
+4. 烤台出餐后走到取餐点携带汉堡，再送到柜台或餐桌完成交付、收金币。
+5. 赚到金币后可升级烤台、雇佣员工、解锁新设施。进度会写入本地存档。
 
-10. 准备 **50 金币**，到店铺前方的 **青色雇佣区**停留 **1.5 秒**，雇佣一名员工。他会沿通道自动取餐、搬运和交付，每次最多携带 **2 个**；没有汉堡或顾客时原地等待。你可以停下来观察收入增长，也可以和员工一起工作。只收一次雇佣费。
+Android 构建与安装：
 
-功能说明见 [Goal 03 搬运](docs/goal-03-carry.md)、[Goal 04 顾客](docs/goal-04-customers.md)、[Goal 05 送餐收款](docs/goal-05-serving.md)、[Goal 06 升级](docs/goal-06-upgrades.md) 和 [Goal 07 员工](docs/goal-07-staff.md)。2026-09-11 本机 Unity 的 **74 项测试全部通过**，包含七项真实 SampleScene Play Mode 测试。最新测试手动赚取 50 金币并雇佣员工，玩家不动时员工独立完成至少六单，再验证玩家继续参与搬运和送餐。Android 0.1.2 已在 vivo S50 通过真机验收，记录见 [vivo 设备验证](docs/goal-09-device-vivo.md)。
+```bash
+bash scripts/build-android.sh
+bash scripts/install-android.sh
+```
 
-金币、成交数、升级等级和员工现在自动保存，重开后继续经营。每两秒及切到后台/退出时保存，底部显示状态；主存档损坏时尝试恢复备份。位置、顾客和场上汉堡每次重建。详见 [Goal 08 存档](docs/goal-08-save.md)。
-
-Android 构建与安装入口为 `scripts/build-android.sh`、`scripts/install-android.sh`，环境说明与设备验收清单见 [Goal 09 Android](docs/goal-09-android.md)。
-
-后续玩法会落到 `Assets/_Project/`。涉及操作手感、队列或存档的改动，需要在 Editor 和目标 Android 设备上试玩确认。
+环境说明见 [Goal 09 Android](docs/goal-09-android.md)。`Library/`、`Temp/`、`Logs/`、`Builds/` 已从版本控制中排除。
 
 ## 文档
 
@@ -158,5 +113,8 @@ Android 构建与安装入口为 `scripts/build-android.sh`、`scripts/install-a
 | --- | --- |
 | [`SPEC.md`](SPEC.md) | MVP 范围与首版验收 |
 | [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md) | 品类、第一间店与体验原则 |
+| [`docs/GAME_CORE.md`](docs/GAME_CORE.md) | 经营内核与节奏 |
 | [`docs/GOALS.md`](docs/GOALS.md) | 分阶段目标 |
-| [`docs/project-kickoff.md`](docs/project-kickoff.md) | 启动草案、里程碑与协作约定 |
+| [`docs/specs/`](docs/specs/) | 功能规格与交付记录 |
+
+仓库：https://github.com/Ic3Ma0/BurgerShop
