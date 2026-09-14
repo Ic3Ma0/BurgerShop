@@ -29,8 +29,8 @@
   <img src="docs/images/readme/restaurant.png" alt="当前店铺与街区" width="88%">
 </p>
 <p align="center">
-  <img src="docs/images/readme/lounge.png" alt="饮品休闲区" width="48%">
-  <img src="docs/images/readme/supermarket.png" alt="当前商城与顶栏 HUD" width="32%">
+  <img src="docs/images/readme/lounge.png" alt="饮品休闲区" width="52%">
+  <img src="docs/images/readme/supermarket.png" alt="当前商城与顶栏 HUD" width="28%">
 </p>
 
 ---
