@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace BurgerShop.UI
 {
-    public enum FoodIcon { Burger, Box, Coin, Speed, Carry, Clean, Lock, Check, Phone, Gloves, Skates, EmptyBag, Bagged, Chair1, Chair2, Chair3, Chair4, Cola, RedParcel, Parts }
+    public enum FoodIcon { Burger, Box, Coin, Speed, Carry, Clean, Lock, Check, Phone, Gloves, Skates, EmptyBag, Bagged, Chair1, Chair2, Chair3, Chair4, Cola, RedParcel, Parts, Bot }
 
     // Original, code-drawn icons. Supersampled at creation; cached for the whole session.
     public static class FoodIcons
@@ -133,6 +133,15 @@ namespace BurgerShop.UI
                     if(Box(x,y,.2f,.12f,.8f,.67f))return icon==FoodIcon.Bagged&&y>.3f&&y<.48f?HudChrome.Tomato:gold;break;
                 case FoodIcon.Check:
                     if(Line(x,y,.2f,.5f,.43f,.28f,.065f)||Line(x,y,.43f,.28f,.82f,.78f,.065f))return HudChrome.Green;break;
+                case FoodIcon.Bot:
+                    if(Box(x,y,.47f,.78f,.53f,.94f)||Disc(x,y,.5f,.94f,.05f))return ink;
+                    if(Disc(x,y,.5f,.50f,.32f))
+                    {
+                        if(Disc(x,y,.38f,.53f,.05f)||Disc(x,y,.62f,.53f,.05f))return cream;
+                        if(Box(x,y,.22f,.46f,.78f,.60f))return ink;
+                        return gold;
+                    }
+                    break;
             }
             return Color.clear;
         }

@@ -40,7 +40,8 @@ namespace BurgerShop.UI
         {
             foreach(var source in FindObjectsByType<TextMesh>(FindObjectsInactive.Include,FindObjectsSortMode.None))
             {
-                if(source.name=="CourierRoadMark" || source.name=="WingBuildGuide" || source.name=="ShopRankCopy")continue;
+                if(source.name=="CourierRoadMark" || source.name=="WingBuildGuide" || source.name=="ShopRankCopy"
+                    || source.name=="RestroomTrashLabel" || source.name=="CubicleStatus")continue;
                 var renderer=source.GetComponent<Renderer>();if(renderer!=null)renderer.enabled=false;
                 // Cash already has bill meshes, wallet amount and an aggregated pickup receipt.
                 // A card per transient pile both mislabels money and obscures live orders.
