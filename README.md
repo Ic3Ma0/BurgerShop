@@ -10,15 +10,22 @@
 </p>
 
 <p align="center">
+  Android-first 3D burger-shop prototype: cook, serve, collect coins, and expand.<br>
+  Unity 6.3 LTS · URP · one-thumb stick. Public prototype, not a store release.
+</p>
+
+<p align="center">
   <img alt="Unity" src="https://img.shields.io/badge/Unity-6.3%20LTS-222C37?style=for-the-badge&logo=unity&logoColor=white">
   <img alt="URP" src="https://img.shields.io/badge/URP-17.3-46A0F0?style=for-the-badge">
   <img alt="Android" src="https://img.shields.io/badge/Android-25+-3DDC84?style=for-the-badge&logo=android&logoColor=white">
   <img alt="Version" src="https://img.shields.io/badge/Version-0.3.0-E27D60?style=for-the-badge">
   <img alt="Status" src="https://img.shields.io/badge/Status-Prototype-F5A623?style=for-the-badge">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-4C1?style=for-the-badge">
 </p>
 
 <p align="center">
   <a href="https://github.com/Ic3Ma0/BurgerShop">GitHub</a> ·
+  <a href="#english-summary">English</a> ·
   <a href="#核心循环">核心循环</a> ·
   <a href="#现在能玩什么">现在能玩什么</a> ·
   <a href="#本地打开">本地打开</a> ·
@@ -34,6 +41,17 @@
 </p>
 
 ---
+
+## English summary
+
+Burger Shop is an Android-first, single-player 3D hamburger restaurant prototype in Unity 6.3 LTS (URP). Cook food, serve customers, collect coins, hire staff, and expand the shop. Version **0.3.0** is a public prototype, not a store listing.
+
+- **Controls:** one-thumb virtual stick (WASD in the Editor)
+- **Open in Unity:** clone this repo, install Unity `6000.3.23f1` with Android Build Support, open `Assets/Scenes/SampleScene.unity`
+- **License:** [MIT](LICENSE) (Copyright © 2026 Ic3 Ma0)
+- **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
+
+The sections below stay in Chinese. In-game copy is English.
 
 ## 关于游戏
 
@@ -118,5 +136,7 @@ bash scripts/install-android.sh
 | [`docs/GAME_CORE.md`](docs/GAME_CORE.md) | 经营内核与节奏 |
 | [`docs/GOALS.md`](docs/GOALS.md) | 分阶段目标 |
 | [`docs/specs/`](docs/specs/) | 功能规格与交付记录 |
+| [`LICENSE`](LICENSE) | MIT license |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to set up, branch, and open a PR |
 
 仓库：https://github.com/Ic3Ma0/BurgerShop

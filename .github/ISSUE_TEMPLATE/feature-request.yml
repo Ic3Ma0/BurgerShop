@@ -1,0 +1,29 @@
+name: Feature request
+description: Propose a player-visible or tooling change.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the player-visible outcome. Product specs for new gameplay live under `docs/specs/` (Chinese).
+        In-game copy stays English. Do not request another game’s names, art, or audio.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What is missing or painful today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What should the player or contributor be able to do afterwards?
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope (optional)
+      description: Anything this request should not include.

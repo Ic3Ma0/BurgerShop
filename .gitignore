@@ -30,3 +30,9 @@ crashlytics-build.properties
 # Local recovery copies. Keep on disk, never publish.
 /Assets/_Recovery/
 /Assets/_Recovery.meta
+
+# Signing material and secrets. Never commit.
+*.keystore
+*.jks
+key.properties
+**/key.properties
