@@ -105,7 +105,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(GameObject.Find("ColaUnlockPad"), Is.Null);
             Assert.That(expansion.HasWing, Is.False);
             Assert.That(expansion.HasColaMachine, Is.False);
-            Assert.That(dining.TableCount, Is.EqualTo(3));
+            Assert.That(dining.TableCount, Is.EqualTo(2));
             Assert.That(expansion.HasExtraTable, Is.False);
             Assert.That(GameObject.Find("UpgradeSpot"), Is.Null);
             Assert.That(expansion.ExtraGrillUpgrade, Is.Null);
@@ -145,7 +145,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(GameObject.Find("DriveThruUnlockPad"), Is.Not.Null);
             Assert.That(expansion.HasBoxing, Is.False);
             Assert.That(expansion.HasDriveThru, Is.False);
-            Assert.That(dining.TableCount, Is.EqualTo(3));
+            Assert.That(dining.TableCount, Is.EqualTo(2));
             Assert.That(expansion.HasExtraTable, Is.False);
             Assert.That(expansion.HasFourSeatTable, Is.False);
             Assert.That(expansion.HasSquareTable, Is.False);
@@ -199,7 +199,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(Horizontal(ShopLayout.FourSeatUnlock, ShopLayout.FourSeatTable), Is.LessThan(0.05f));
             Assert.That(Horizontal(ShopLayout.SquareUnlock, ShopLayout.SquareTable), Is.LessThan(0.05f));
             Assert.That(Horizontal(ShopLayout.FourSeatTable, ShopLayout.Tables[0]), Is.GreaterThan(ShopLayout.AisleMin));
-            Assert.That(Horizontal(ShopLayout.SquareTable, ShopLayout.Tables[2]), Is.GreaterThan(ShopLayout.AisleMin));
+            Assert.That(Horizontal(ShopLayout.SquareTable, ShopLayout.Tables[1]), Is.GreaterThan(ShopLayout.AisleMin));
             Assert.That(Horizontal(ShopLayout.FourSeatTable, ShopLayout.SquareTable), Is.GreaterThan(ShopLayout.AisleMin));
             Assert.That(Horizontal(ShopLayout.GrillUnlock, ShopLayout.ExtraGrill), Is.LessThan(0.05f));
             Assert.That(Horizontal(ShopLayout.CounterUnlock, ShopLayout.ExtraCounter), Is.LessThan(0.05f));
@@ -217,8 +217,8 @@ namespace BurgerShop.Tests.EditMode
             Hold(expansion.TablePad, 3f);
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(expansion.HasExtraTable, Is.True);
-            Assert.That(dining.TableCount, Is.EqualTo(4));
-            Assert.That(dining.SeatCount, Is.EqualTo(8));
+            Assert.That(dining.TableCount, Is.EqualTo(3));
+            Assert.That(dining.SeatCount, Is.EqualTo(6));
             Assert.That(expansion.ExtraTable.Center, Is.EqualTo(ShopLayout.ExtraTable));
             AssertChairFaces(expansion.ExtraTable, "ChairA");
             AssertChairFaces(expansion.ExtraTable, "ChairB");
@@ -234,8 +234,8 @@ namespace BurgerShop.Tests.EditMode
             Hold(expansion.FourSeatPad, 3f);
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(expansion.HasFourSeatTable, Is.True);
-            Assert.That(dining.TableCount, Is.EqualTo(4));
-            Assert.That(dining.SeatCount, Is.EqualTo(10));
+            Assert.That(dining.TableCount, Is.EqualTo(3));
+            Assert.That(dining.SeatCount, Is.EqualTo(8));
             Assert.That(expansion.FourSeatTable.Center, Is.EqualTo(ShopLayout.FourSeatTable));
             Assert.That(expansion.FourSeatTable.Kind, Is.EqualTo(DiningTableKind.FourSeat));
             Assert.That(expansion.FourSeatTable.SeatCount, Is.EqualTo(4));
@@ -292,8 +292,8 @@ namespace BurgerShop.Tests.EditMode
             Hold(expansion.FourSeatPad, 3f);
             Assert.That(expansion.HasExtraTable, Is.True);
             Assert.That(expansion.HasFourSeatTable, Is.True);
-            Assert.That(dining.TableCount, Is.EqualTo(5));
-            Assert.That(dining.SeatCount, Is.EqualTo(12));
+            Assert.That(dining.TableCount, Is.EqualTo(4));
+            Assert.That(dining.SeatCount, Is.EqualTo(10));
             Assert.That(wallet.Coins, Is.Zero);
             AssertChairFaces(expansion.ExtraTable, "ChairA");
             AssertChairFaces(expansion.FourSeatTable, "ChairD");
@@ -327,7 +327,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(expansion.HasExtraGrill, Is.True);
             Assert.That(expansion.ExtraGrillLevel, Is.EqualTo(1));
             Assert.That(expansion.ExtraGrill.Station.ProductionSeconds, Is.EqualTo(3f));
-            Assert.That(expansion.ExtraGrill.Station.Capacity, Is.EqualTo(4));
+            Assert.That(expansion.ExtraGrill.Station.Capacity, Is.EqualTo(ProductionStation.CapacityForLevel(1)));
             Assert.That(expansion.ExtraGrill.ActiveLookName, Is.EqualTo("Look_Lv1"));
             Assert.That(expansion.ExtraGrill.ActiveLookScale, Is.EqualTo(ExpandableGrill.LookScales[0]));
             int lv1Parts = expansion.ExtraGrill.ActivePartCount;
@@ -343,7 +343,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(upgrade.Level, Is.EqualTo(2));
             Assert.That(wallet.Coins, Is.EqualTo(160));
             Assert.That(expansion.ExtraGrill.Station.ProductionSeconds, Is.EqualTo(1.5f));
-            Assert.That(expansion.ExtraGrill.Station.Capacity, Is.EqualTo(6));
+            Assert.That(expansion.ExtraGrill.Station.Capacity, Is.EqualTo(ProductionStation.CapacityForLevel(2)));
             Assert.That(expansion.ExtraGrill.ActiveLookName, Is.EqualTo("Look_Lv2"));
             Assert.That(expansion.ExtraGrill.ActiveLookScale, Is.EqualTo(ExpandableGrill.LookScales[1]));
             Assert.That(expansion.ExtraGrill.ActivePartCount, Is.Not.EqualTo(lv1Parts));
@@ -358,7 +358,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(upgrade.Level, Is.EqualTo(3));
             Assert.That(wallet.Coins, Is.Zero);
             Assert.That(expansion.ExtraGrill.Station.ProductionSeconds, Is.EqualTo(0.8f));
-            Assert.That(expansion.ExtraGrill.Station.Capacity, Is.EqualTo(8));
+            Assert.That(expansion.ExtraGrill.Station.Capacity, Is.EqualTo(ProductionStation.CapacityForLevel(3)));
             Assert.That(expansion.ExtraGrill.ActiveLookName, Is.EqualTo("Look_Lv3"));
             Assert.That(expansion.ExtraGrill.ActiveLookScale, Is.EqualTo(ExpandableGrill.LookScales[2]));
             Assert.That(expansion.ExtraGrill.ActiveLook.Find("GrillLid_2"), Is.Not.Null);
@@ -432,7 +432,7 @@ namespace BurgerShop.Tests.EditMode
                 expansion = ShopExpansion.Create(root.transform, dining, serving, hiring, player, wallet);
                 expansion.Restore(data.ResolvedBoughtExtraTable, data.ResolvedBoughtExtraGrill,
                     data.ResolvedBoughtExtraCounter, data.ResolvedExtraGrillLevel);
-                Assert.That(dining.TableCount, Is.EqualTo(4));
+                Assert.That(dining.TableCount, Is.EqualTo(3));
                 Assert.That(expansion.HasExtraGrill, Is.True);
                 Assert.That(expansion.ExtraGrillLevel, Is.EqualTo(1));
                 Assert.That(expansion.ExtraGrill.ActiveLookName, Is.EqualTo("Look_Lv1"));
@@ -455,14 +455,14 @@ namespace BurgerShop.Tests.EditMode
                 dining, null, hiring, null, expansion);
             tracker.Restore(1,0,0,0,0,true);
             tracker.Advance(2f);
-            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
+            Assert.That(tracker.Title, Is.EqualTo("Upgrade the burger machine"));
             Hold(expansion.WingPad, 5f);
             tracker.Advance(0.01f);
-            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
+            Assert.That(tracker.Title, Is.EqualTo("Upgrade the burger machine"));
             expansion.Restore(false, false, false, 0, false, false, false, false, true, true, true);
             wallet.RestoreProgress(150, 0);
             tracker.Advance(1f);
-            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
+            Assert.That(tracker.Title, Is.EqualTo("Upgrade the burger machine"));
             Hold(expansion.TablePad, 3f);
             tracker.Advance(0.01f);
             Assert.That(expansion.NextWingPad, Is.Null);

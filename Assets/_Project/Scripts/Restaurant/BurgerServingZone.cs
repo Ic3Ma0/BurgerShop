@@ -192,9 +192,12 @@ namespace BurgerShop.Restaurant
             dining?.BindCash(cashFloor);
         }
 
-        void Update() => Advance(Time.deltaTime);
+        void Update() => Advance(Time.deltaTime,false);
 
-        public void Advance(float deltaTime)
+        // Manual simulations still advance their bound floor; runtime CashFloor owns its single clock.
+        public void Advance(float deltaTime)=>Advance(deltaTime,true);
+
+        void Advance(float deltaTime,bool advanceCash)
         {
             if (deltaTime <= 0f || paused || !isActiveAndEnabled) return;
             cooldown = Mathf.Max(0f, cooldown - deltaTime);
@@ -206,7 +209,7 @@ namespace BurgerShop.Restaurant
             }
             AdvanceHandoff(deltaTime);
             TryServeFrom(inventory);
-            cash?.Advance(deltaTime);
+            if(advanceCash)cash?.Advance(deltaTime);
         }
 
         // Player and staff use the same counter stock and cooldown. Calling this
@@ -225,7 +228,10 @@ namespace BurgerShop.Restaurant
             ownedCounter = index;
             flightServer = carrier;
             flightAge = 0f;
-            flightOrigin = servePoints[index].InverseTransformPoint(flyingBurger != null ? flyingBurger.position : pile.transform.position);
+            Vector3 originWorld = flyingBurger != null
+                ? flyingBurger.position
+                : servePoints[index].position;
+            flightOrigin = servePoints[index].InverseTransformPoint(originWorld);
             if (flyingBurger != null) flyingBurger.SetParent(customer.transform, true);
             return true;
         }
@@ -246,19 +252,29 @@ namespace BurgerShop.Restaurant
             customer.ReceiveItem(flyingBurger);
             DeliveredUnits++;
             cooldown = CooldownForLevel(StockAt(ownedCounter).ServiceLevel);
-            if (customer.Order.IsComplete && customer.Order.TrySettle())
+            if (customer.Order.IsComplete)
             {
-                int amount = customer.OrderSize * price;
-                queue.TryDequeueReadyCustomer(out _);
-                customer.BeginDeparture(flyingBurger, exitRoute, amount, dining!=null&& (GetComponentInParent<UI.SessionGoalTracker>()?.Allows(2)??true)?dining:null, true);
-                wallet.RecordCompletedSale();
-                CompletedOrders++;
-                GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(queue.Product==KitchenProduct.Cola?ShopGoalKind.ColaOrder:ShopGoalKind.ServeCustomers);
-                UI.FeedbackDirector.Current?.World(customer.transform.position,"",.45f,flightServer != null ? flightServer.transform : null);
-                Transform used = ownedCounter < servePoints.Count ? servePoints[ownedCounter] : servingPoint;
-                if (used != null) cash?.DropAt(CashFloor.CounterDropPosition(used.position), amount);
-                else cash?.DropAtCounter(amount);
-                flightServer?.GetComponent<RestaurantWorker>()?.RecordCompletedOrder();
+                bool settled = customer.Order.TrySettle();
+                if (!customer.IsDeparting)
+                {
+                    int amount = customer.OrderSize * price;
+                    queue.ReleaseServed(customer);
+                    var goals = GetComponentInParent<UI.SessionGoalTracker>()
+                        ?? UnityEngine.Object.FindFirstObjectByType<UI.SessionGoalTracker>();
+                    DiningArea hall = dining != null && (goals == null || goals.Allows(ShopRanks.DiningRank)) ? dining : null;
+                    customer.BeginDeparture(flyingBurger, exitRoute, amount, hall, true);
+                    if (settled)
+                    {
+                        wallet.RecordCompletedSale();
+                        CompletedOrders++;
+                        GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(queue.Product==KitchenProduct.Cola?ShopGoalKind.ColaOrder:ShopGoalKind.ServeCustomers);
+                        UI.FeedbackDirector.Current?.World(customer.transform.position,"",.45f,flightServer != null ? flightServer.transform : null);
+                        Transform used = ownedCounter < servePoints.Count ? servePoints[ownedCounter] : servingPoint;
+                        if (used != null) cash?.DropAt(CashFloor.CounterDropPosition(used.position), amount);
+                        else cash?.DropAtCounter(amount);
+                        flightServer?.GetComponent<RestaurantWorker>()?.RecordCompletedOrder();
+                    }
+                }
                 ownedCustomer = null;
                 ownedCounter = -1;
             }

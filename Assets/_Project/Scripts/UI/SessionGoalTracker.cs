@@ -1,6 +1,7 @@
 using System;
 using BurgerShop.Customer;
 using BurgerShop.Economy;
+using BurgerShop.Persistence;
 using BurgerShop.Player;
 using BurgerShop.Restaurant;
 using UnityEngine;
@@ -27,24 +28,61 @@ namespace BurgerShop.UI
         public int MilestoneMask=>milestoneMask;
         public bool LegacyAccess=>legacyAccess;
         public int IncomeRemainder=>incomeRemainder;
-        public bool IsCycle=>rank>=ShopRanks.ContentEnd;
+        public bool IsCycle=>ShopRanks.IsCycleRank(rank);
         public bool MilestoneComplete=>IsCycle||(milestoneMask & (1<<(rank-1)))!=0;
         public int GoalIndex=>MilestoneComplete?1:0;
         public int GoalProgress=>MilestoneComplete?1:0;
         public int Stars {get;private set;}
         public int StarCap=>ShopRanks.StarCap(rank);
+        public int MissingStars=>ShopRanks.MissingStars(Stars,rank);
         public bool IsMaxRank=>false;
         public int CycleCost=>ShopRanks.CycleCost(rank);
         public long MissingCoins=>Math.Max(0,(long)CycleCost-(wallet?.Coins??0));
-        public bool CanUpgrade=>rank<int.MaxValue && (IsCycle?wallet!=null&&wallet.Coins>=CycleCost:MilestoneComplete&&Stars>=StarCap);
-        public string Title=>IsCycle?"Grow cash income":ShopRanks.Goals(rank)[0].Title;
+        public bool CanUpgrade=>rank<int.MaxValue && (IsCycle?wallet!=null&&wallet.Coins>=CycleCost:Stars>=StarCap);
+        public string Title
+        {
+            get
+            {
+                if(IsCycle)return "Grow cash income";
+                ShopGoal[] listed=ShopRanks.Goals(rank);
+                return listed!=null&&listed.Length>0?listed[0].Title:ShopRanks.NextUnlock(rank);
+            }
+        }
         public int Progress=>MilestoneComplete?1:0;
         public int Required=>1;
         public bool IsCelebrating=>celebration>0;
         public bool IsRankingUp {get;private set;}
-        public string StarLabel=>CanUpgrade?$"Lv.{rank} Ready":IsCycle?$"Lv.{rank} · Need {MissingCoins:N0}":$"Lv.{rank}  {Stars}/{StarCap}";
-        public float ProgressFraction=>IsCycle?(float)Math.Min(1,(wallet?.Coins??0)/(double)CycleCost):Mathf.Clamp01(Stars/(float)StarCap);
-        public string BlockReason=>CanUpgrade?"Upgrade":IsCycle?$"Need {MissingCoins:N0} coins":!MilestoneComplete?"Complete milestone first":$"Need {StarCap-Stars} stars";
+        public string StarLabel=>CanUpgrade?$"Lv.{rank} Ready":IsCycle?$"Lv.{rank} · Need {MissingCoins:N0}":$"⭐ {Stars}/{StarCap}  Need {MissingStars} more stars";
+        public float ProgressFraction=>IsCycle?(float)Math.Min(1,(wallet?.Coins??0)/(double)Math.Max(1,CycleCost)):Mathf.Clamp01(Stars/(float)Math.Max(1,StarCap));
+        public string BlockReason=>CanUpgrade?"Upgrade":IsCycle?$"Need {MissingCoins:N0} coins":$"Need {MissingStars} more stars";
+        public string NextRankPreview=>ShopRanks.NextRankPreview(rank,Stars,MissingCoins);
+        public string GuideCopy=>CanUpgrade?(rank==ShopRanks.Min?"Unlock dining":"Upgrade"):rank==ShopRanks.Min&&!MilestoneComplete?"Upgrade grill":"";
+        public OpeningGuide Opening {get;private set;}
+        public string LoopCopy
+        {
+            get
+            {
+                if(dining!=null&&dining.HasTrashOnTables)return "Clear a used dining table";
+                if(inventory!=null&&inventory.Count>0)return "Serve a waiting customer";
+                return ShopRanks.LoopHintCopy;
+            }
+        }
+        bool CurrentTaskVisible
+        {
+            get
+            {
+                if(IsCycle||MilestoneComplete)return false;
+                ShopGoal[] listed=ShopRanks.Goals(rank);
+                if(listed==null||listed.Length==0)return false;
+                return CurrentTaskReachable(listed[0].Kind);
+            }
+        }
+        public string CapsuleTitle=>Opening!=null&&Opening.IsActive?Opening.Title
+            :CanUpgrade?ShopRanks.RankUpCapsule(rank)
+            :CurrentTaskVisible||IsCycle?Title
+            :LoopCopy;
+        public int CapsuleProgress=>Opening!=null&&Opening.IsActive?Opening.Progress:CanUpgrade?1:Progress;
+        public int CapsuleRequired=>Opening!=null&&Opening.IsActive?Opening.Required:CanUpgrade?1:Required;
 
         public void Configure(BurgerInventory carrier,ProductionStation station,CounterStock stock,CustomerQueue customers,
             RestaurantWallet earnings,BurgerServingZone cashier,DiningArea hall=null,TrashInventory trashBag=null,
@@ -52,7 +90,22 @@ namespace BurgerShop.UI
             BurgerServingZone colaCashier=null,ProductionStation cola=null)
         {
             inventory=carrier;wallet=earnings;dining=hall;hiring=staff;expansion=shop;
+            if(Opening==null)Opening=new OpeningGuide();
+            Opening.Bind(wallet,MainGrill(),this);
             ApplyUnlocks();
+        }
+
+        GrillUpgradeZone MainGrill()
+        {
+            GrillUpgradeZone best=GetComponent<GrillUpgradeZone>();
+            float bestD=best!=null?0f:float.MaxValue;
+            foreach(var zone in GetComponentsInChildren<GrillUpgradeZone>(true))
+            {
+                if(zone.Product!=KitchenProduct.Burger)continue;
+                float d=ShopLayout.Horizontal(zone.UpgradePosition,ShopLayout.UpgradeSpot);
+                if(best==null||d<bestD){best=zone;bestD=d;}
+            }
+            return best;
         }
         public void Restore(int nextRank,int nextGoalIndex,int nextGoalProgress,int savedStars=0,
             int savedMilestones=0,bool keepLegacyAccess=false,int savedRemainder=0)
@@ -65,15 +118,63 @@ namespace BurgerShop.UI
         public bool Allows(int requiredRank)=>legacyAccess||rank>=requiredRank;
         public void RecordMilestone(ShopGoalKind kind)
         {
-            for(int stage=1;stage<ShopRanks.ContentEnd;stage++)
+            for(int stage=1;stage<=ShopRanks.StarGateEnd;stage++)
             {
-                if(!Allows(stage)||ShopRanks.Goals(stage)[0].Kind!=kind)continue;
-                int bit=1<<(stage-1);
-                if((milestoneMask&bit)!=0)continue;
-                milestoneMask|=bit;AddUpgradeStars();celebration=.6f;
-                FeedbackDirector.Current?.World(inventory!=null?inventory.transform.position:transform.position,"Milestone +2 stars",.9f);
-                GetComponent<BurgerShop.Persistence.RestaurantPersistence>()?.Flush();
+                ShopGoal[] listed=ShopRanks.Goals(stage);
+                if(listed==null||listed.Length==0||listed[0].Kind!=kind||!Allows(stage))continue;
+                if(ShopRanks.IsThresholdGoal(kind)&&!ThresholdMet(kind))continue;
+                GrantMilestone(stage);
             }
+        }
+        public void EvaluateStarGateTasks()
+        {
+            for(int stage=1;stage<=ShopRanks.StarGateEnd;stage++)
+            {
+                ShopGoal[] listed=ShopRanks.Goals(stage);
+                if(listed==null||listed.Length==0||!ShopRanks.IsThresholdGoal(listed[0].Kind))continue;
+                if(!Allows(stage)||!ThresholdMet(listed[0].Kind))continue;
+                GrantMilestone(stage);
+            }
+        }
+        void GrantMilestone(int stage)
+        {
+            int bit=1<<(stage-1);
+            if((milestoneMask&bit)!=0)return;
+            milestoneMask|=bit;AddUpgradeStars();celebration=.6f;
+            FeedbackDirector.Current?.World(inventory!=null?inventory.transform.position:transform.position,"Milestone "+ShopRanks.StarRewardCopy,.9f);
+            ProgressChanged?.Invoke();
+            FlushSave();
+        }
+        bool ThresholdMet(ShopGoalKind kind)
+        {
+            var boost=GetComponentInChildren<BoostUpgradeZone>(true);
+            var staff=GetComponentInChildren<StaffUpgradeBoard>(true);
+            var growth=GetComponentInChildren<GrowthUpgrades>(true);
+            return ShopRanks.MeetsThreshold(kind,
+                boost!=null?boost.SpeedTier:0,boost!=null?boost.CarryTier:0,
+                staff!=null?staff.SpeedTier:0,staff!=null?staff.CarryTier:0,
+                growth!=null?growth.HighestTryBuyLevel:1,
+                ChosenTableSets());
+        }
+        int ChosenTableSets()
+        {
+            int chosen=0;
+            foreach(var zone in GetComponentsInChildren<TableUpgradeZone>(true))
+                if(zone!=null&&zone.SetId!=TableSetId.Starter)chosen++;
+            return chosen;
+        }
+        int UnlockedTableZones()
+        {
+            int count=0;
+            foreach(var zone in GetComponentsInChildren<TableUpgradeZone>(true))
+                if(zone!=null&&zone.Table!=null&&zone.Table.gameObject.activeInHierarchy)count++;
+            return count;
+        }
+        bool CurrentTaskReachable(ShopGoalKind kind)=>
+            kind!=ShopGoalKind.AllTablesChosen||UnlockedTableZones()>=ShopRanks.RequiredTableSets;
+        public void NotifyCleanTable()
+        {
+            RecordMilestone(ShopGoalKind.CleanTable);
         }
         public void AddUpgradeStars()
         {
@@ -86,8 +187,10 @@ namespace BurgerShop.UI
             else Stars-=StarCap;
             rank++;ApplyUnlocks();celebration=.9f;IsRankingUp=true;
             FeedbackDirector.Current?.Success(inventory!=null?inventory.transform.position:transform.position,"Rank Up!",inventory!=null?inventory.transform:null);
-            ProgressChanged?.Invoke();GetComponent<BurgerShop.Persistence.RestaurantPersistence>()?.Flush();return true;
+            ProgressChanged?.Invoke();FlushSave();return true;
         }
+
+        void FlushSave() => GetComponentInParent<RestaurantPersistence>()?.Flush();
         public int AddIncomeBonus(int amount)
         {
             if(amount<=0||rank<=ShopRanks.ContentEnd)return amount;
@@ -104,25 +207,45 @@ namespace BurgerShop.UI
             celebration=Mathf.Max(0,celebration-deltaTime);if(celebration==0)IsRankingUp=false;
             // Bootstrap finishes creating the optional lines after Configure.
             if(appliedRank!=rank)ApplyUnlocks();
+            EvaluateStarGateTasks();
         }
         public void ApplyUnlocks()
         {
             expansion?.ApplyRank(rank);
             if(dining!=null)
-                foreach(var table in dining.Tables)if(table!=null)table.gameObject.SetActive(Allows(2));
+                foreach(var table in dining.Tables)if(table!=null)table.gameObject.SetActive(Allows(ShopRanks.DiningRank));
             foreach(var zone in GetComponentsInChildren<TableUpgradeZone>(true))
-                zone.SetRankVisible(Allows(2));
-            var bin=GetComponentInChildren<TrashBin>(true);if(bin!=null)bin.gameObject.SetActive(Allows(2));
+                zone.SetRankVisible(Allows(ShopRanks.DiningRank));
+            var bin=GetComponentInChildren<TrashBin>(true);if(bin!=null)bin.gameObject.SetActive(Allows(ShopRanks.DiningRank));
             var courier=GetComponent<CourierLine>();
-            courier?.ApplyAccess(Allows(8),Allows(9));
+            courier?.ApplyAccess(Allows(ShopRanks.CourierRank),Allows(ShopRanks.AutomationRank));
+            GetComponentInChildren<HrOffice>(true)?.SetOpen(Allows(ShopRanks.HireRank));
+            var bay=GetComponentInChildren<BoostRoom>(true);
+            bay?.SetAnnexOpen(Allows(ShopRanks.BoxingRank)||(expansion!=null&&(expansion.HasBoxing||expansion.HasDriveThru)));
+            expansion?.EnsureDriveThruOpen();
             var bag=GetComponent<BagLine>();
-            if(bag!=null&&Allows(10)&&!bag.Expanded)bag.TryExpand();
+            if(bag!=null&&Allows(ShopRanks.WestRank)&&!bag.Expanded)bag.TryExpand();
+            GetComponent<BurgerShop.Core.RestaurantArchitecture>()?.Refresh();
             appliedRank=courier!=null?rank:-1;
+            if(Opening==null)Opening=new OpeningGuide();
+            Opening.Bind(wallet,MainGrill(),this);
+            ReconcileStarterUpgrade();
+            EvaluateStarGateTasks();
             RefreshSign();
+        }
+        void ReconcileStarterUpgrade()
+        {
+            if(rank!=ShopRanks.Min||MilestoneComplete)return;
+            if(ShopRanks.Goals(rank)[0].Kind!=ShopGoalKind.UpgradeGrill)return;
+            foreach(var zone in GetComponentsInChildren<GrillUpgradeZone>(true))
+            {
+                if(zone==null||zone.Product!=KitchenProduct.Burger||zone.Level<=1)continue;
+                RecordMilestone(ShopGoalKind.UpgradeGrill);
+                return;
+            }
         }
         void RefreshSign()
         {
-            if(rank<ShopRanks.ContentEnd)return;
             if(sign==null)
             {
                 sign=new GameObject("ShopRankSign").transform;sign.SetParent(transform,false);
@@ -135,9 +258,28 @@ namespace BurgerShop.UI
                 var text=new GameObject("ShopRankCopy").AddComponent<TextMesh>();text.transform.SetParent(sign,false);
                 text.transform.localPosition=new Vector3(0,0,-.08f);text.anchor=TextAnchor.MiddleCenter;
                 text.characterSize=.12f;text.fontSize=48;text.color=Color.white;
+                Transform row=new GameObject("SignStars").transform;row.SetParent(sign,false);
+                row.localPosition=new Vector3(0,.7f,-.08f);
+                for(int i=0;i<8;i++)
+                {
+                    var star=GameObject.CreatePrimitive(PrimitiveType.Cube);star.name="SignStar"+i;
+                    star.transform.SetParent(row,false);
+                    star.transform.localScale=new Vector3(.18f,.18f,.06f);
+                    star.transform.localPosition=new Vector3((i-3.5f)*.32f,0,0);
+                    var starCol=star.GetComponent<Collider>();starCol.enabled=false;BurgerVisual.Release(starCol);
+                    var starMat=Core.RuntimeMaterials.Create(HudChrome.Gold);
+                    star.GetComponent<Renderer>().sharedMaterial=starMat;star.AddComponent<BurgerVisual>().OwnMaterials(starMat);
+                }
             }
-            signMaterial.color=Color.HSVToRGB(((rank-10)%12)/12f,.55f,.7f);
-            sign.GetComponentInChildren<TextMesh>().text=$"SHOP {rank}\nCash +{2L*Math.Max(0,rank-10)}%";
+            float t=Mathf.Clamp01((rank-1)/14f);
+            sign.localScale=Vector3.one*(.72f+.28f*t);
+            signMaterial.color=Color.HSVToRGB(((rank-1)%12)/12f,.4f+.25f*t,.42f+.38f*t);
+            Transform stars=sign.Find("SignStars");
+            int lit=Mathf.Clamp(rank,1,8);
+            if(stars!=null)for(int i=0;i<stars.childCount;i++)stars.GetChild(i).gameObject.SetActive(i<lit);
+            sign.GetComponentInChildren<TextMesh>().text=rank>ShopRanks.ContentEnd
+                ?$"SHOP {rank}\nCash +{2L*(rank-ShopRanks.ContentEnd)}%"
+                :$"SHOP {rank}";
         }
     }
 }

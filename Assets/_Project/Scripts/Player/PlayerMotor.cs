@@ -18,16 +18,25 @@ namespace BurgerShop.Player
         InputAction _moveAction;
         Transform _cameraTransform;
         int boostLevel;
+        int carryLevel;
 
         public int BoostLevel => boostLevel;
+        public int CarryLevel => carryLevel;
         public float TemporarySpeedMultiplier { get; set; } = 1f;
-        public float MoveSpeed => PlayerBoost.MoveSpeed(boostLevel) * TemporarySpeedMultiplier;
+        public float MoveSpeed => PlayerBoost.MoveSpeed(boostLevel, carryLevel) * TemporarySpeedMultiplier;
 
-        public void ApplyBoostLevel(int level)
+        public void ApplyBoostLevel(int level) => ApplyBoostTiers(level, carryLevel);
+
+        public void ApplyCarryLevel(int level) => ApplyBoostTiers(boostLevel, level);
+
+        public void ApplyBoostTiers(int speedLevel, int nextCarryLevel)
         {
-            if (level < 0 || level > PlayerBoost.MaxLevel)
-                throw new ArgumentOutOfRangeException(nameof(level));
-            boostLevel = level;
+            if (speedLevel < 0 || speedLevel > PlayerBoost.MaxLevel)
+                throw new ArgumentOutOfRangeException(nameof(speedLevel));
+            if (nextCarryLevel < 0 || nextCarryLevel > PlayerBoost.MaxLevel)
+                throw new ArgumentOutOfRangeException(nameof(nextCarryLevel));
+            boostLevel = speedLevel;
+            carryLevel = nextCarryLevel;
             moveSpeed = MoveSpeed;
         }
 

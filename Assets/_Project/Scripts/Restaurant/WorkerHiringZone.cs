@@ -148,7 +148,7 @@ namespace BurgerShop.Restaurant
                 return total;
             }
         }
-        public bool IsAvailable => (GetComponent<UI.SessionGoalTracker>()?.Allows(3)??true) && isActiveAndEnabled && grill != null && grill.isActiveAndEnabled
+        public bool IsAvailable => (GetComponent<UI.SessionGoalTracker>()?.Allows(ShopRanks.HireRank)??true) && isActiveAndEnabled && grill != null && grill.isActiveAndEnabled
             && serving != null && serving.isActiveAndEnabled && wallet != null && wallet.isActiveAndEnabled
             && player != null && player.isActiveAndEnabled && pickupPoint != null
             && drop != null && drop.isActiveAndEnabled;

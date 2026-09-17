@@ -106,7 +106,8 @@ namespace BurgerShop.UI
                 steps[i].color = i < tier ? HudChrome.Gold : HudChrome.TrackNavy;
             bool afford = !max && coins >= cost;
             string values = max ? current : current + " → " + next;
-            string price = max ? "MAX" : afford ? cost.ToString("N0") + " coins" : "Need " + (cost-coins).ToString("N0") + " more";
+            string price = max ? "MAX" : (afford ? cost.ToString("N0") + " coins" : "Need " + (cost-coins).ToString("N0") + " more")
+                + " · " + Restaurant.ShopRanks.StarRewardCopy;
             SetOption(first, name + " · " + tier + "/" + steps.Length + "\n" + values + "\n" + price, afford, afford ? HudChrome.Tomato : Disabled);
         }
 

@@ -238,12 +238,19 @@ namespace BurgerShop.Restaurant
                 trashOnSeat[seat]--;
             if (bag != null && bag.TryCollect(this, seat, visual))
             {
-                GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(ShopGoalKind.CleanTable);
+                if (TrashCount == 0) RecordCleanTable();
                 return;
             }
             if (piles == null || seat < 0 || seat >= piles.Length || visual == null) return;
             piles[seat].Add(visual);
             if (trashOnSeat != null) trashOnSeat[seat]++;
+        }
+
+        void RecordCleanTable()
+        {
+            var goals = GetComponentInParent<UI.SessionGoalTracker>()
+                ?? UnityEngine.Object.FindFirstObjectByType<UI.SessionGoalTracker>();
+            goals?.NotifyCleanTable();
         }
 
         void TickPickups(float deltaTime)

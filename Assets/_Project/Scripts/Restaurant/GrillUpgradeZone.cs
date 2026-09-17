@@ -20,8 +20,10 @@ namespace BurgerShop.Restaurant
         [SerializeField, Min(0.1f)] float holdSeconds = 1.5f;
         float heldTime;
         bool purchasing;
+        bool openingHighlight;
 
         public bool DirectInteraction { get; private set; }
+        public Transform Pad => upgradePoint;
         public event System.Action<int, bool> LevelApplied;
         public ProductionStation Station => station;
         public int Level { get; private set; } = 1;
@@ -75,8 +77,14 @@ namespace BurgerShop.Restaurant
         {
             DirectInteraction = true;
             heldTime = 0f;
-            if (upgradePoint != null) upgradePoint.gameObject.SetActive(false);
+            if (upgradePoint != null) upgradePoint.gameObject.SetActive(openingHighlight);
             if (markerLabel != null) markerLabel.gameObject.SetActive(false);
+        }
+
+        public void SetOpeningHighlight(bool on)
+        {
+            openingHighlight = on;
+            if (upgradePoint != null) upgradePoint.gameObject.SetActive(on || !DirectInteraction);
         }
 
         public bool TryUpgrade(int expectedLevel)
@@ -93,6 +101,8 @@ namespace BurgerShop.Restaurant
                     feedback?.PlayUpgrade(Level);
                     LevelApplied?.Invoke(Level, true);
                     GetComponentInParent<GrowthUpgrades>()?.RecordGrill(this);
+                    if (product == KitchenProduct.Burger && Level == 2)
+                        GetComponentInParent<UI.SessionGoalTracker>()?.RecordMilestone(ShopGoalKind.UpgradeGrill);
                 });
             }
             finally { purchasing = false; }
@@ -115,7 +125,7 @@ namespace BurgerShop.Restaurant
         public void Advance(float deltaTime)
         {
             feedback?.Advance(deltaTime);
-            if (DirectInteraction || deltaTime <= 0f) return;
+            if ((DirectInteraction && !openingHighlight) || deltaTime <= 0f) return;
             if (!IsInRange)
             {
                 heldTime = 0f;
@@ -145,7 +155,7 @@ namespace BurgerShop.Restaurant
         void ApplyStationStats()
         {
             if (station == null) return;
-            station.SetCapacity(ProductionStation.CapacityForLevel(Level));
+            station.SetCapacity(ProductionStation.CapacityForLevel(Level, product));
             station.SetProductionSeconds(SecondsFor(Level));
             station.SetMaxedTier(IsMaxLevel);
         }
@@ -154,7 +164,7 @@ namespace BurgerShop.Restaurant
 
         void LateUpdate()
         {
-            if (DirectInteraction) { UseDirectInteraction(); return; }
+            if (DirectInteraction && !openingHighlight) { UseDirectInteraction(); return; }
             if (markerLabel == null) return;
             // The nearby panel takes over while standing here, keeping text off the player.
             markerLabel.gameObject.SetActive(!IsInRange);
@@ -164,7 +174,7 @@ namespace BurgerShop.Restaurant
         void RefreshVisuals()
         {
             if (markerLabel != null)
-                markerLabel.text = IsMaxLevel ? $"{ProductNoun} LV {Level}\nMAX LEVEL" : $"UPGRADE\n{NextCost} COINS";
+                markerLabel.text = IsMaxLevel ? $"{ProductNoun} LV {Level}\nMAX LEVEL" : $"UPGRADE\n{NextCost} COINS\n{ShopRanks.StarRewardCopy}";
             if (levelIndicators != null)
                 for (int i = 0; i < levelIndicators.Length; i++)
                     if (levelIndicators[i] != null) levelIndicators[i].gameObject.SetActive(i < Level - 1);

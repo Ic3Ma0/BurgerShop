@@ -50,6 +50,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallEastSouth, Is.Not.Null);
             Assert.That(root.transform.Find("Wall+X_Mid"), Is.Not.Null);
             Assert.That(root.transform.Find("WingDoorPlug"), Is.Not.Null);
+            Assert.That(root.transform.Find("HrDoorPlug"), Is.Not.Null);
+            Assert.That(root.transform.Find("BoostDoorPlug"), Is.Not.Null);
             Assert.That(ShopLayout.WingUnlocked, Is.False);
             Assert.That(wallSouthWest, Is.Not.Null);
             Assert.That(wallSouthEast, Is.Not.Null);
@@ -75,7 +77,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopLayout.ExtraServingCircle, Is.EqualTo(new Vector3(0.6f, 0.02f, 8f)));
             Assert.That(ShopLayout.Tables[0], Is.EqualTo(new Vector3(-8f, 0f, 7f)));
             Assert.That(ShopLayout.Tables[1], Is.EqualTo(new Vector3(-8f, 0f, 3f)));
-            Assert.That(ShopLayout.Tables[2], Is.EqualTo(new Vector3(-12f, 0f, 7f)));
+            Assert.That(ShopLayout.Tables.Length, Is.EqualTo(2));
             Assert.That(ShopLayout.ExtraTable, Is.EqualTo(new Vector3(26f, 0f, -6f)));
             Assert.That(ShopLayout.TableUnlock, Is.EqualTo(new Vector3(26f, 0.02f, -6f)));
             Assert.That(ShopLayout.FourSeatTable, Is.EqualTo(new Vector3(30.5f, 0f, -6f)));
@@ -134,7 +136,7 @@ namespace BurgerShop.Tests.EditMode
             const float min = ShopLayout.AisleMin;
             Vector3[] tables =
             {
-                ShopLayout.Tables[0], ShopLayout.Tables[1], ShopLayout.Tables[2], ShopLayout.ExtraTable
+                ShopLayout.Tables[0], ShopLayout.Tables[1], ShopLayout.ExtraTable
             };
 
             AssertFar("grills", ShopLayout.Grill, ShopLayout.ExtraGrill, min);

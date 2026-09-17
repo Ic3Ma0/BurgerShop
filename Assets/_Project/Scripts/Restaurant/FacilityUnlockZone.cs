@@ -82,7 +82,7 @@ namespace BurgerShop.Restaurant
             if (IsPurchased) return;
             Invested = amount;
             ResetEntry();
-            if (Remaining == 0) Complete();
+            if (Remaining == 0) Complete(false);
             RefreshMarker();
         }
 
@@ -117,7 +117,7 @@ namespace BurgerShop.Restaurant
                 if (!wallet.TrySpend(amount, () =>
                 {
                     Invested += amount;
-                    if (Remaining == 0) Complete();
+                    if (Remaining == 0) Complete(true);
                     RefreshMarker();
                 })) break;
                 if (Application.isPlaying)
@@ -126,11 +126,13 @@ namespace BurgerShop.Restaurant
             }
         }
 
-        void Complete()
+        void Complete(bool awardStars)
         {
             if (IsPurchased) return;
             IsPurchased = true;
             PurchasedThisVisit = true;
+            if (awardStars)
+                GetComponentInParent<UI.SessionGoalTracker>()?.AddUpgradeStars();
             onUnlocked?.Invoke();
             UI.FeedbackDirector.Current?.Success(PadPosition,"Built!",player != null ? player.transform : null);
             if (pad != null) pad.gameObject.SetActive(false);
@@ -147,7 +149,7 @@ namespace BurgerShop.Restaurant
         void RefreshMarker()
         {
             if (marker == null) return;
-            marker.text = IsPurchased ? "BUILT!" : $"{Title}\nRemaining {Remaining}";
+            marker.text = IsPurchased ? "BUILT!" : $"{Title}\nRemaining {Remaining}\n{ShopRanks.StarRewardCopy}";
             marker.gameObject.SetActive(!IsPurchased && RankVisible);
         }
     }

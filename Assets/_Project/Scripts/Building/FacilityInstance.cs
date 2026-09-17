@@ -16,8 +16,8 @@ namespace BurgerShop.Building
         public bool IsValid => !string.IsNullOrEmpty(id) && id.Length<=100 && Enum.IsDefined(typeof(FacilityKind),kind)
             && PlacementGeometry.Finite(x)&&PlacementGeometry.Finite(z)&&PlacementGeometry.Finite(yaw)
             && x>=-27 && x<=38 && z>=-28 && z<=40 && yaw>=0&&yaw<360 && level>=1&&level<=4
-            && tableSet>=0&&tableSet<=3 && investment>=0&&investment<=TableSetCatalog.UpgradeCost
-            && (tableSet==0 || investment==TableSetCatalog.UpgradeCost)
+            && tableSet>=0&&tableSet<=3 && investment>=0&&investment<=TableSetCatalog.MaxCost
+            && (tableSet==0 || TableSetCatalog.IsPaidInFull(tableSet,investment))
             && (kind<=(int)FacilityKind.SquareTable || (tableSet==0&&investment==0&&level<=3));
     }
 
@@ -42,7 +42,8 @@ namespace BurgerShop.Building
                 bool hidden=false; for(var p=c.transform;p!=transform&&p!=null;p=p.parent)if(!p.gameObject.activeSelf&&!p.name.StartsWith("Look_Lv")){hidden=true;break;}
                 if(hidden)continue;
                 if(!c.enabled||c.isTrigger||c.GetComponentInParent<Customer.CustomerAgent>()!=null)continue;
-                if(c.name=="Road"||c.name.Contains("Floor"))continue;
+                if(c.name=="Road"||c.name.Contains("Floor")||c.name.Contains("Lane")||c.name.StartsWith("Stop")
+                    ||c.name=="DriveThruMark")continue;
                 // Transform collider corners instead of its world AABB: rotation cannot inflate the footprint.
                 if(!(c is BoxCollider box))continue;
                 for(int i=0;i<8;i++)

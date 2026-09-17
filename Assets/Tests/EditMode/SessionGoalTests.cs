@@ -60,7 +60,7 @@ namespace BurgerShop.Tests.EditMode
 
         [Test] public void OpeningDoesNotCelebratePreplacedFurniture()
         {
-            Assert.That(tracker.Title,Is.EqualTo("Complete a burger order"));
+            Assert.That(tracker.Title,Is.EqualTo("Upgrade the burger machine"));
             Assert.That(tracker.Progress,Is.Zero);Assert.That(tracker.Stars,Is.Zero);
             Assert.That(tracker.IsCelebrating,Is.False);
         }
@@ -68,18 +68,25 @@ namespace BurgerShop.Tests.EditMode
         {
             grill.Advance(12);inventory.TryCollectFrom(grill);tracker.Advance(1);
             Assert.That(tracker.Progress,Is.Zero);
-            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
-            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
+            tracker.RecordMilestone(ShopGoalKind.UpgradeGrill);
+            tracker.RecordMilestone(ShopGoalKind.UpgradeGrill);
             Assert.That(tracker.Stars,Is.EqualTo(2));Assert.That(tracker.Progress,Is.EqualTo(1));
-            Assert.That(tracker.TryUpgradeRank(1),Is.False);
-            tracker.AddUpgradeStars();Assert.That(tracker.TryUpgradeRank(1),Is.True);
+            Assert.That(tracker.Rank,Is.EqualTo(1));
+            Assert.That(tracker.CanUpgrade,Is.False);
+            tracker.AddUpgradeStars();
+            Assert.That(tracker.TryUpgradeRank(1),Is.True);
             Assert.That(tracker.Stars,Is.Zero);
         }
-        [Test] public void CleaningRecordsTheRankTwoMilestone()
+        [Test]         public void CleaningRecordsTheRankTwoMilestoneAndRanksUp()
         {
-            tracker.Restore(2,0,0);table.LeaveMealTrash(0);
+            tracker.Restore(2,0,0,ShopRanks.StarCap(2)-2);table.LeaveMealTrash(0);
             Assert.That(table.TryPickupTrash(trash),Is.True);
-            Assert.That(tracker.MilestoneComplete,Is.True);
+            while(table.TrashCount>0)Assert.That(table.TryPickupTrash(trash),Is.True);
+            Assert.That(tracker.Rank,Is.EqualTo(2));
+            Assert.That(tracker.CanUpgrade,Is.True);
+            Assert.That(tracker.TryUpgradeRank(2),Is.True);
+            Assert.That(tracker.Rank,Is.EqualTo(3));
+            Assert.That(tracker.Title,Is.EqualTo("Let staff complete an order"));
         }
         [Test] public void LockedFutureEventsCannotGrantStars()
         {

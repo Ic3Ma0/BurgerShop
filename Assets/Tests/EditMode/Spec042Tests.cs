@@ -21,36 +21,40 @@ namespace BurgerShop.Tests.EditMode
         }
         [TearDown] public void Cleanup()=>Object.DestroyImmediate(root);
 
-        [Test] public void EveryContentRankRequiresBothGatesAndAwardsOnlyOnce()
+        [Test] public void ContentRanksUseAStarGateWithoutFillingFromMilestones()
         {
             int total=0;
-            for(int rank=1;rank<10;rank++)
+            for(int rank=1;rank<=ShopRanks.StarGateEnd;rank++)
             {
                 int requirement=ShopRanks.StarCap(rank);total+=requirement;
+                goals.Restore(rank,0,0,requirement-1);
+                Assert.That(goals.TryUpgradeRank(rank),Is.False,"short stars, rank "+rank);
+                if(rank<ShopRanks.ContentEnd)
+                {
+                    goals.Restore(rank,0,0);
+                    var kind=ShopRanks.Goals(rank)[0].Kind;
+                    goals.RecordMilestone(kind);goals.RecordMilestone(kind);
+                    Assert.That(goals.Rank,Is.EqualTo(rank),"milestone must not auto-rank "+rank);
+                    Assert.That(goals.Stars,Is.EqualTo(2),"milestone awards +2 only "+rank);
+                    Assert.That(goals.CanUpgrade,Is.False,"milestone does not fill "+rank);
+                }
                 goals.Restore(rank,0,0,requirement);
-                Assert.That(goals.TryUpgradeRank(rank),Is.False,"stars alone, rank "+rank);
-                goals.Restore(rank,0,0);
-                var kind=ShopRanks.Goals(rank)[0].Kind;
-                goals.RecordMilestone(kind);goals.RecordMilestone(kind);
-                Assert.That(goals.Stars,Is.EqualTo(2));
-                Assert.That(goals.TryUpgradeRank(rank),Is.False,"milestone alone, rank "+rank);
-                for(int stars=2;stars<requirement;stars+=2)goals.AddUpgradeStars();
                 Assert.That(goals.TryUpgradeRank(rank),Is.True,"rank "+rank);
                 Assert.That(goals.Stars,Is.Zero);
                 Assert.That(goals.Rank,Is.EqualTo(rank+1));
                 Assert.That(goals.TryUpgradeRank(rank),Is.False,"stale click");
             }
-            Assert.That(total,Is.EqualTo(108));
+            Assert.That(total,Is.EqualTo(149));
         }
         [Test] public void CycleSpendsCoinsPreservesStarsAndChangesSign()
         {
-            goals.Restore(10,0,0,17);wallet.RestoreProgress(499,0);
-            Assert.That(goals.TryUpgradeRank(10),Is.False);
-            wallet.CollectCoins(1);Assert.That(goals.TryUpgradeRank(10),Is.True);
+            goals.Restore(16,0,0,17);wallet.RestoreProgress(499,0);
+            Assert.That(goals.TryUpgradeRank(16),Is.False);
+            wallet.CollectCoins(1);Assert.That(goals.TryUpgradeRank(16),Is.True);
             Assert.That(wallet.Coins,Is.Zero);Assert.That(goals.Stars,Is.EqualTo(17));
-            Assert.That(goals.CycleCost,Is.EqualTo(750));Assert.That(goals.IsMaxRank,Is.False);
-            StringAssert.Contains("SHOP 11",root.GetComponentInChildren<TextMesh>().text);
-            StringAssert.Contains("Cash +2%",root.GetComponentInChildren<TextMesh>().text);
+            Assert.That(goals.CycleCost,Is.EqualTo(575));Assert.That(goals.IsMaxRank,Is.False);
+            StringAssert.Contains("SHOP 17",root.GetComponentInChildren<TextMesh>().text);
+            StringAssert.Contains("Cash +14%",root.GetComponentInChildren<TextMesh>().text);
         }
         [Test] public void SmallCashDropsAccumulateBonusAndRestoreTheirRemainder()
         {
@@ -73,7 +77,8 @@ namespace BurgerShop.Tests.EditMode
             var current=new RestaurantSaveData{version=14,shopRank=3,grillLevel=1,coins=321,upgradeStars=7,
                 milestoneMask=goals.MilestoneMask,legacyAccess=goals.LegacyAccess,incomeRemainder=49};
             Assert.That(current.IsValid,Is.True);Assert.That(current.ResolvedMilestones,Is.EqualTo(7));
-            current.milestoneMask=512;Assert.That(current.IsValid,Is.False);
+            current.milestoneMask=1<<ShopRanks.MilestoneBitCount;Assert.That(current.IsValid,Is.False);
+            current.milestoneMask=1<<(ShopRanks.StatPeakTen-1);Assert.That(current.IsValid,Is.True);
             current.milestoneMask=7;current.incomeRemainder=50;Assert.That(current.IsValid,Is.False);
         }
         [Test] public void LockedDiningAlsoHidesItsInvestmentPadsAndRestoresOnUnlock()
@@ -90,11 +95,9 @@ namespace BurgerShop.Tests.EditMode
         [Test] public void EveryStageHasEnoughPreviouslyUnlockedStarSources()
         {
             int required=0;
-            for(int stage=1;stage<ShopRanks.ContentEnd;stage++)
+            for(int stage=1;stage<=ShopRanks.StarGateEnd;stage++)
             {
                 required+=ShopRanks.StarCap(stage);
-                // Player attributes exist from the start; staff attributes open at 3.
-                // This conservative budget excludes all furniture/facility rewards.
                 int available=2*2*BurgerShop.Player.PlayerBoost.MaxLevel+stage*2;
                 if(stage>=3)available+=2*2*StaffBoost.MaxTier;
                 Assert.That(available,Is.GreaterThanOrEqualTo(required),"stage "+stage);

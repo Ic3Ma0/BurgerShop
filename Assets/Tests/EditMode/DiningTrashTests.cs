@@ -2,6 +2,7 @@ using BurgerShop.Customer;
 using BurgerShop.Economy;
 using BurgerShop.Player;
 using BurgerShop.Restaurant;
+using BurgerShop.UI;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -165,6 +166,60 @@ namespace BurgerShop.Tests.EditMode
             bin.Advance(1f);
             Assert.That(trash.Count, Is.Zero);
             Assert.That(table.OutstandingTrash, Is.Zero);
+        }
+
+        [Test]
+        public void DumpIsFasterThanTablePickupAndTheBinIsLarger()
+        {
+            Assert.That(TrashInventory.DumpDuration, Is.LessThan(TrashMotion.Duration));
+            Assert.That(bin.DropInterval, Is.LessThan(TrashMotion.Duration));
+            Assert.That(bin.DropInterval, Is.GreaterThanOrEqualTo(0.10f));
+            Assert.That(bin.DropInterval, Is.LessThanOrEqualTo(0.12f));
+            Renderer body = bin.transform.Find("Body").GetComponent<Renderer>();
+            Assert.That(body.bounds.size.y, Is.GreaterThan(1.2f));
+            Assert.That(bin.transform.localScale.x, Is.EqualTo(TrashBin.VisualScale).Within(0.01f));
+        }
+
+        [Test]
+        public void DumpSoundRequestDoesNotThrowAndDumpStillCompletes()
+        {
+            table.LeaveMealTrash(0);
+            PickupAllOnTable();
+            int previous = PlayerPrefs.GetInt(FeedbackDirector.SoundPreference, 1);
+            var hudRoot = new GameObject("DumpHud", typeof(RectTransform), typeof(Canvas));
+            hudRoot.transform.SetParent(root.transform, false);
+            try
+            {
+                PlayerPrefs.SetInt(FeedbackDirector.SoundPreference, 1);
+                var hud = FeedbackDirector.Build(hudRoot.transform, inventory);
+                Assert.DoesNotThrow(() => hud.RequestSound(FeedbackSound.Dump));
+                inventory.transform.position = bin.DropPosition;
+                Assert.DoesNotThrow(() => bin.Advance(0.05f));
+                bin.Advance(TrashMotion.Duration);
+                Assert.That(trash.Count, Is.EqualTo(1));
+            }
+            finally
+            {
+                PlayerPrefs.SetInt(FeedbackDirector.SoundPreference, previous);
+                PlayerPrefs.Save();
+            }
+        }
+
+        [Test]
+        public void DumpClipIsAShortProceduralRustle()
+        {
+            var clip = CoinSfx.CreateDump();
+            try
+            {
+                Assert.That(clip.length, Is.GreaterThan(0.05f).And.LessThan(0.25f));
+                var samples = new float[clip.samples];
+                Assert.That(clip.GetData(samples, 0), Is.True);
+                float peak = 0f;
+                for (int i = 0; i < samples.Length; i++)
+                    peak = Mathf.Max(peak, Mathf.Abs(samples[i]));
+                Assert.That(peak, Is.GreaterThan(0.02f).And.LessThan(0.9f));
+            }
+            finally { Object.DestroyImmediate(clip); }
         }
 
         [Test]

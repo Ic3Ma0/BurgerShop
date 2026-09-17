@@ -14,10 +14,11 @@ namespace BurgerShop.Building
     {
         FacilityLayout layout;
         Transform panel,toolbar,preview,backdrop,content;
-        Button buyTab,ownedTab,pickScene;
+        Button buyTab,ownedTab,expansionTab,pickScene;
         Text catalogHint,browseHint;
         ScrollRect catalogScroll;
-        bool ownedPage;
+        bool ownedPage,expansionPage;
+        readonly List<Button> expansionButtons=new List<Button>();
         int worldInputFrame=-1;
         bool awaitDesktopMotion;
         Vector2 initialPointer;
@@ -46,7 +47,6 @@ namespace BurgerShop.Building
         CameraFollow follow;
         bool followWasEnabled;
         Material ghostMaterial;
-        Button restroomButton;
         readonly List<Button> buyButtons=new List<Button>();
         readonly List<FacilityKind> kinds=new List<FacilityKind>();
         public static FacilityShopHud Build(Transform parent,FacilityLayout layout)
@@ -78,14 +78,8 @@ namespace BurgerShop.Building
             HudChrome.Label(panel,"Title",new Vector2(.5f,1),new Vector2(.5f,1),new Vector2(.5f,1),new Vector2(0,-24),new Vector2(800,48),34,HudChrome.Ink,TextAnchor.MiddleCenter,true,false).text="SUPERMARKET";
             buyTab=Button(panel,"BuyTab","Buy",new Vector2(.5f,1),new Vector2(-196,-86),new Vector2(380,64),()=>ShowCatalog(false));
             ownedTab=Button(panel,"MoveExisting","My facilities",new Vector2(.5f,1),new Vector2(196,-86),new Vector2(380,64),()=>ShowCatalog(true));
+            expansionTab=Button(panel,"ExpansionsTab","Expansions",new Vector2(.5f,1),Vector2.zero,new Vector2(250,64),ShowExpansions);
             catalogHint=HudChrome.Label(panel,"CatalogHint",new Vector2(.5f,1),new Vector2(.5f,1),new Vector2(.5f,1),new Vector2(0,-164),new Vector2(840,44),26,HudChrome.Ink,TextAnchor.MiddleCenter,false,false);
-            restroomButton=Button(panel,"BuyRestroom","Restroom expansion",new Vector2(.5f,1),new Vector2(0,-216),new Vector2(840,76),()=>
-            {
-                var room=layout.GetComponent<RestroomExpansion>();
-                if(room!=null&&room.TryPurchase())Close();else RefreshCatalog();
-            });
-            HudChrome.Icon(restroomButton.transform,"RoomPhoto",FacilityThumbnails.Restroom,new Vector2(0,.5f),new Vector2(0,.5f),new Vector2(16,0),new Vector2(148,92),Color.white);
-            var roomLabel=restroomButton.GetComponentInChildren<Text>();roomLabel.rectTransform.offsetMin=new Vector2(182,8);roomLabel.rectTransform.offsetMax=new Vector2(-18,-8);roomLabel.alignment=TextAnchor.MiddleLeft;roomLabel.horizontalOverflow=HorizontalWrapMode.Wrap;
             var viewport=new GameObject("Viewport",typeof(RectTransform),typeof(Image),typeof(RectMask2D)).transform;viewport.SetParent(panel,false);
             var vr=(RectTransform)viewport;vr.anchorMin=Vector2.zero;vr.anchorMax=Vector2.one;vr.offsetMin=new Vector2(26,104);vr.offsetMax=new Vector2(-26,-308);
             viewport.GetComponent<Image>().color=new Color(1,1,1,0);
@@ -97,6 +91,17 @@ namespace BurgerShop.Building
                 var kind=offer.Kind;
                 var button=Card("Buy_"+kind,kind,offer.Name,"Buy",()=>Purchase(kind),out var price);
                 buyButtons.Add(button);kinds.Add(kind);prices.Add(price);
+            }
+            string[] expansionNames={"Drinks lounge","Restroom","Takeaway workshop"};
+            FacilityKind[] photos={FacilityKind.ColaMachine,FacilityKind.TrashBin,FacilityKind.BagMachine};
+            for(int i=0;i<expansionNames.Length;i++)
+            {
+                int choice=i;
+                var card=Card(i==1?"BuyRestroom":"Expand_"+i,photos[i],expansionNames[i],"Build",()=>PurchaseExpansion(choice),out _);
+                if(i==1)card.transform.Find("PhotoBackground/ProductPhoto").GetComponent<Image>().sprite=FacilityThumbnails.Restroom;
+                var description=HudChrome.Label(card.transform,"Description",new Vector2(0,1),new Vector2(0,1),new Vector2(0,1),new Vector2(18,-248),new Vector2(380,138),23,HudChrome.Ink,TextAnchor.UpperLeft,false,false);
+                description.horizontalOverflow=HorizontalWrapMode.Wrap;
+                expansionButtons.Add(card);
             }
             pickScene=Button(panel,"PickInScene","Select in restaurant",new Vector2(.5f,0),new Vector2(-180,20),new Vector2(340,64),SelectInScene);
             browseHint=HudChrome.Label(panel,"BrowseHint",new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(-180,20),new Vector2(340,64),24,HudChrome.Ink,TextAnchor.MiddleCenter,false,false);
@@ -134,7 +139,7 @@ namespace BurgerShop.Building
         }
         void ShowCatalog(bool owned)
         {
-            ownedPage=owned;layout.Discover();RefreshCatalog();
+            ownedPage=owned;expansionPage=false;layout.Discover();RefreshCatalog();
             panel.gameObject.SetActive(true);backdrop.gameObject.SetActive(true);toolbar.gameObject.SetActive(false);
             catalogScroll.verticalNormalizedPosition=1;
             FitCatalog();
@@ -147,21 +152,34 @@ namespace BurgerShop.Building
         }
         void RefreshCatalog()
         {
-            var restroom=layout.GetComponent<RestroomExpansion>();
-            restroomButton.GetComponentInChildren<Text>().text=restroom?.Built==true?"Restroom expansion\nBuilt":restroom?.Unlocked!=true?$"Restroom expansion\nUnlocks at Lv.{RestroomExpansion.UnlockRank}":$"Restroom expansion\n{restroom.Remaining} coins · Build";
-            restroomButton.gameObject.SetActive(!ownedPage&&restroom!=null);
-            restroomButton.interactable=restroom!=null&&!restroom.Built&&restroom.Unlocked&&layout.Wallet.Coins>=restroom.Remaining;
+            layout.GetComponent<Core.RestaurantArchitecture>()?.Refresh();
+            RefreshExpansions();
 
             foreach(var old in ownedButtons){old.gameObject.SetActive(false);BurgerVisual.Release(old.gameObject);}ownedButtons.Clear();
             for(int i=0;i<buyButtons.Count;i++)
             {
-                bool visible=!ownedPage&&layout.Unlocked(kinds[i]);buyButtons[i].gameObject.SetActive(visible);
-                prices[i].text=layout.Price(kinds[i]).ToString("N0");
-                buyButtons[i].interactable=layout.Wallet.Coins>=layout.Price(kinds[i]);
+                var offer=FacilityCatalog.Get(kinds[i]);
+                int rank=layout.GetComponent<SessionGoalTracker>()?.Rank??1;
+                bool unlocked=layout.Unlocked(kinds[i]);
+                bool upcoming=!unlocked&&offer.Rank==rank+1;
+                bool visible=!ownedPage&&!expansionPage&&(unlocked||upcoming);
+                buyButtons[i].gameObject.SetActive(visible);
+                buyButtons[i].interactable=unlocked&&layout.Wallet.Coins>=layout.Price(kinds[i]);
+                prices[i].text=unlocked?layout.Price(kinds[i]).ToString("N0"):$"Unlocks at Lv.{offer.Rank}";
+                prices[i].color=unlocked?HudChrome.Green:HudChrome.Ink;
+                var pill=buyButtons[i].transform.Find("ActionPill");
+                if(pill!=null)
+                {
+                    pill.GetComponent<Image>().color=buyButtons[i].interactable?HudChrome.Green:HudChrome.TrackNavy;
+                    var action=pill.Find("Action")?.GetComponent<Text>();
+                    if(action!=null)action.text=unlocked?"Buy "+ShopRanks.StarRewardCopy:"Locked";
+                }
                 var money=buyButtons[i].transform.Find("MoneyIcon");
                 if(money==null)FoodIcons.Add(buyButtons[i].transform,FoodIcon.Coin,Vector2.zero,32).name="MoneyIcon";
-                var mr=(RectTransform)buyButtons[i].transform.Find("MoneyIcon");mr.anchorMin=mr.anchorMax=Vector2.zero;mr.pivot=new Vector2(0,.5f);mr.anchoredPosition=new Vector2(18,37);
-                prices[i].rectTransform.anchoredPosition=new Vector2(56,16);
+                money=buyButtons[i].transform.Find("MoneyIcon");
+                money.gameObject.SetActive(unlocked);
+                var mr=(RectTransform)money;mr.anchorMin=mr.anchorMax=Vector2.zero;mr.pivot=new Vector2(0,.5f);mr.anchoredPosition=new Vector2(18,37);
+                prices[i].rectTransform.anchoredPosition=unlocked?new Vector2(56,16):new Vector2(20,16);
             }
             if(ownedPage)
             {
@@ -173,13 +191,55 @@ namespace BurgerShop.Building
                     detail.text="Level "+instance.Capture().level;ownedButtons.Add(button);
                 }
             }
-            buyTab.targetGraphic.color=ownedPage?HudChrome.TrackNavy:HudChrome.Green;
+            buyTab.targetGraphic.color=!ownedPage&&!expansionPage?HudChrome.Green:HudChrome.TrackNavy;
             ownedTab.targetGraphic.color=ownedPage?HudChrome.Green:HudChrome.TrackNavy;
-            buyTab.GetComponentInChildren<Text>().color=ownedPage?HudChrome.Ink:Color.white;
+            expansionTab.targetGraphic.color=expansionPage?HudChrome.Green:HudChrome.TrackNavy;
+            buyTab.GetComponentInChildren<Text>().color=!ownedPage&&!expansionPage?Color.white:HudChrome.Ink;
             ownedTab.GetComponentInChildren<Text>().color=ownedPage?Color.white:HudChrome.Ink;
-            catalogHint.text=ownedPage?"Choose a facility · Details / Move":"Choose a model · Pay after placement";
+            expansionTab.GetComponentInChildren<Text>().color=expansionPage?Color.white:HudChrome.Ink;
+            catalogHint.text=ownedPage?"Choose a facility · Details / Move":expansionPage?"Plan your next space · equipment sold separately":"Choose a model · Pay after placement";
             pickScene.gameObject.SetActive(ownedPage);
             browseHint.gameObject.SetActive(!ownedPage);
+        }
+        internal void ShowExpansions()
+        {
+            ownedPage=false;expansionPage=true;layout.Discover();RefreshCatalog();
+            panel.gameObject.SetActive(true);backdrop.gameObject.SetActive(true);toolbar.gameObject.SetActive(false);
+            catalogScroll.verticalNormalizedPosition=1;FitCatalog();
+        }
+        void RefreshExpansions()
+        {
+            var wing=layout.GetComponentInChildren<ShopExpansion>();
+            var room=layout.GetComponent<RestroomExpansion>();
+            var west=layout.GetComponent<BagLine>();
+            var goals=layout.GetComponent<SessionGoalTracker>();
+            bool[] built={wing!=null&&wing.HasWing,room!=null&&room.Built,west!=null&&west.Expanded};
+            int[] rank={ShopRanks.ColaWingRank,RestroomExpansion.UnlockRank,ShopRanks.WestRank};
+            int[] cost={wing?.WingPad?.Remaining??ShopExpansion.WingCost,room?.Remaining??RestroomExpansion.Cost,0};
+            int drinksOpen=ShopExpansion.WingCost+ShopExpansion.GrillCost+ShopExpansion.CounterCost;
+            int westGear=FacilityCatalog.BagMachinePrice+FacilityCatalog.BagTablePrice+FacilityCatalog.BagCounterPrice;
+            string[] purpose={
+                $"Cola lounge and seating\nLand {ShopExpansion.WingCost}+{ShopExpansion.GrillCost}+{ShopExpansion.CounterCost}={drinksOpen} to open\nEquipment sold separately",
+                $"Guest facilities · two cubicles\nToilets and washbasin included\nComplete room {RestroomExpansion.Cost}",
+                $"Paper bags → packing → pickup\nLand included at Lv.{ShopRanks.WestRank}\nRequired equipment {FacilityCatalog.BagMachinePrice}+{FacilityCatalog.BagTablePrice}+{FacilityCatalog.BagCounterPrice}={westGear}"};
+            for(int i=0;i<expansionButtons.Count;i++)
+            {
+                var card=expansionButtons[i];card.gameObject.SetActive(expansionPage);
+                bool unlocked=goals!=null&&goals.Allows(rank[i]);
+                string detail=built[i]?"Built":!unlocked?$"Unlocks at Lv.{rank[i]}":cost[i]==0?"Included":$"Remaining {cost[i]:N0}";
+                card.transform.Find("Detail").GetComponent<Text>().text=detail;
+                card.transform.Find("Description").GetComponent<Text>().text=purpose[i]+(!built[i]&&unlocked&&layout.Wallet.Coins<cost[i]?$"\nNeed {cost[i]-layout.Wallet.Coins:N0} more":"");
+                card.interactable=!built[i]&&unlocked&&layout.Wallet.Coins>=cost[i];
+                card.transform.Find("ActionPill/Action").GetComponent<Text>().text=built[i]?"Built":!unlocked?"Locked":cost[i]==0?"Build":"Build "+ShopRanks.StarRewardCopy;
+                card.transform.Find("ActionPill").GetComponent<Image>().color=card.interactable?HudChrome.Green:HudChrome.TrackNavy;
+            }
+        }
+        void PurchaseExpansion(int choice)
+        {
+            bool bought=choice==0?layout.GetComponentInChildren<ShopExpansion>()?.TryPurchaseWing()==true:
+                choice==1?layout.GetComponent<RestroomExpansion>()?.TryPurchase()==true:layout.GetComponent<BagLine>()?.TryExpand()==true;
+            if(bought){layout.RefreshNavigation();layout.GetComponent<Core.RestaurantArchitecture>()?.Refresh();}
+            RefreshCatalog();FitCatalog();
         }
         internal static bool CanSelect(FacilityInstance instance)
         {
@@ -206,25 +266,26 @@ namespace BurgerShop.Building
             fittedSize=available;
             var size=new Vector2(Mathf.Min(920,available.x-40),Mathf.Min(1200,available.y-64));
             ((RectTransform)panel).sizeDelta=size;
-            float tabsWidth=Mathf.Min(380,(size.x-76)/2);
-            foreach(var tab in new[]{buyTab,ownedTab})((RectTransform)tab.transform).sizeDelta=new Vector2(tabsWidth,64);
-            ((RectTransform)buyTab.transform).anchoredPosition=new Vector2(-tabsWidth/2-6,-86);
-            ((RectTransform)ownedTab.transform).anchoredPosition=new Vector2(tabsWidth/2+6,-86);
+            float tabsWidth=(size.x-68)/3;
+            var tabs=new[]{buyTab,expansionTab,ownedTab};
+            for(int i=0;i<tabs.Length;i++)
+            {((RectTransform)tabs[i].transform).sizeDelta=new Vector2(tabsWidth,64);((RectTransform)tabs[i].transform).anchoredPosition=new Vector2((i-1)*(tabsWidth+8),-86);}
             catalogHint.rectTransform.sizeDelta=new Vector2(size.x-48,44);
-            ((RectTransform)restroomButton.transform).sizeDelta=new Vector2(size.x-52,104);
-            catalogScroll.viewport.offsetMax=new Vector2(-26,restroomButton.gameObject.activeSelf?-334:-218);
-            var cards=ownedPage?ownedButtons:buyButtons;
+            catalogScroll.viewport.offsetMax=new Vector2(-26,-218);
+            var cards=ownedPage?ownedButtons:expansionPage?expansionButtons:buyButtons;
+            float cardHeight=expansionPage?460:308, pitch=cardHeight+20;
             int columns=size.x>=700?2:1,index=0;
             float width=(size.x-52-(columns-1)*20)/columns;
             foreach(var card in cards)
             {
                 if(!card.gameObject.activeSelf)continue;
-                var rect=(RectTransform)card.transform;rect.anchoredPosition=new Vector2((index%columns)*(width+20),-(index/columns)*328);rect.sizeDelta=new Vector2(width,308);index++;
+                var rect=(RectTransform)card.transform;rect.anchoredPosition=new Vector2((index%columns)*(width+20),-(index/columns)*pitch);rect.sizeDelta=new Vector2(width,cardHeight);index++;
                 ((RectTransform)card.transform.Find("Text")).sizeDelta=new Vector2(width-36,64);
                 ((RectTransform)card.transform.Find("PhotoBackground")).sizeDelta=new Vector2(width-24,162);
                 ((RectTransform)card.transform.Find("PhotoBackground/ProductPhoto")).sizeDelta=new Vector2(width-42,154);
+                if(expansionPage)((RectTransform)card.transform.Find("Description")).sizeDelta=new Vector2(width-36,148);
             }
-            ((RectTransform)content).sizeDelta=new Vector2(0,Mathf.CeilToInt(index/(float)columns)*328);
+            ((RectTransform)content).sizeDelta=new Vector2(0,Mathf.CeilToInt(index/(float)columns)*pitch);
             toolbar.localScale=Vector3.one*Mathf.Min(1,(available.x-32)/940);
         }
         void Purchase(FacilityKind kind)

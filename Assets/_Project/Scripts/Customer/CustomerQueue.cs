@@ -14,7 +14,7 @@ namespace BurgerShop.Customer
         Vector3[] route;
         float[] cumulativeDistance;
         float[] slotDistance;
-        Vector3 counterPosition,entranceWorld;
+        Vector3 counterPosition,entranceWorld,localEntry;
         Vector3[] localSlots;
         int layoutRevision=-1;
         public Vector3[] QueuePositions=>localSlots==null?System.Array.Empty<Vector3>():System.Array.ConvertAll(localSlots,transform.TransformPoint);
@@ -52,12 +52,35 @@ namespace BurgerShop.Customer
                 if (Vector3.Distance(slots[i - 1], slots[i]) < minimumGap)
                     throw new ArgumentException("Queue slots must be at least MinimumGap apart.", nameof(slots));
 
-            entranceWorld=entrance;localSlots=System.Array.ConvertAll(slots,transform.InverseTransformPoint);
-            var approach = new System.Collections.Generic.List<Vector3>();
-            if(entrance==ShopLayout.Entrance)approach.AddRange(Core.RestaurantEntrance.Arrival);
+            entranceWorld=entrance;
+            localEntry=transform.InverseTransformPoint(queueEntry);
+            localSlots=System.Array.ConvertAll(slots,transform.InverseTransformPoint);
+            BindRoute(BuildApproach(entrance, queueEntry, slots), slots);
+            counterPosition = transform.InverseTransformPoint(counter);
+            spawnInterval = Mathf.Max(0.1f, interval);
+            spawnCountdown = Mathf.Max(0f, firstArrivalDelay);
+        }
+
+        // Street Arrival once, then indoor Walk from the door/Entrance node — never
+        // concatenate Arrival with a Walk that itself starts on the street.
+        static List<Vector3> BuildApproach(Vector3 entrance, Vector3 queueEntry, Vector3[] slots)
+        {
+            var approach = new List<Vector3>();
+            Vector3 indoorFrom = entrance;
+            if (entrance == ShopLayout.Entrance)
+            {
+                approach.AddRange(Core.RestaurantEntrance.Arrival);
+                indoorFrom = ShopLayout.Entrance;
+            }
             else approach.Add(entrance);
-            approach.AddRange(ShopLayout.WingRoute(entrance, queueEntry));
-            for (int i = slots.Length - 1; i >= 0; i--) approach.Add(slots[i]);
+            ShopLayout.ConcatWalk(approach, ShopLayout.Walk(indoorFrom, queueEntry));
+            for (int i = slots.Length - 1; i >= 0; i--)
+                ShopLayout.ConcatWalk(approach, new[] { slots[i] });
+            return approach;
+        }
+
+        void BindRoute(List<Vector3> approach, Vector3[] slots)
+        {
             route = approach.ToArray();
             for (int i = 0; i < route.Length; i++) route[i] = transform.InverseTransformPoint(route[i]);
             cumulativeDistance = new float[route.Length];
@@ -65,9 +88,6 @@ namespace BurgerShop.Customer
             for (int i = 1; i < route.Length; i++)
                 cumulativeDistance[i] = cumulativeDistance[i - 1] + Vector3.Distance(route[i - 1], route[i]);
             for (int i = 0; i < slots.Length; i++) slotDistance[i] = cumulativeDistance[route.Length - 1 - i];
-            counterPosition = transform.InverseTransformPoint(counter);
-            spawnInterval = Mathf.Max(0.1f, interval);
-            spawnCountdown = Mathf.Max(0f, firstArrivalDelay);
         }
 
         void Update() => Advance(Time.deltaTime);
@@ -128,18 +148,11 @@ namespace BurgerShop.Customer
             // Repeated counters share the public entrance after their world pose is committed.
             if(GameObject.Find("RestaurantEntrance")!=null)entranceWorld=ShopLayout.Entrance;
             var slots=QueuePositions;
-            var walk=Building.FacilityLayout.Current.Route(entranceWorld,slots[slots.Length-1]);
-            if(walk==null)return;
+            var points = BuildApproach(entranceWorld, transform.TransformPoint(localEntry), slots);
+            if(points.Count==0)return;
             float[] progress=new float[customers.Count];
             for(int i=0;i<progress.Length;i++)progress[i]=slotDistance[i]>0?customers[i].DistanceAlongPath/slotDistance[i]:1;
-            var points=new List<Vector3>();
-            if(entranceWorld==ShopLayout.Entrance)points.AddRange(Core.RestaurantEntrance.Arrival);
-            points.AddRange(walk);
-            for(int i=slots.Length-2;i>=0;i--)points.Add(slots[i]);
-            route=System.Array.ConvertAll(points.ToArray(),transform.InverseTransformPoint);
-            cumulativeDistance=new float[route.Length];slotDistance=new float[slots.Length];
-            for(int i=1;i<route.Length;i++)cumulativeDistance[i]=cumulativeDistance[i-1]+Vector3.Distance(route[i-1],route[i]);
-            for(int i=0;i<slots.Length;i++)slotDistance[i]=cumulativeDistance[route.Length-1-i];
+            BindRoute(points, slots);
             for(int i=0;i<customers.Count;i++)
             {
                 float distance=Mathf.Clamp01(progress[i])*slotDistance[i];
@@ -154,8 +167,20 @@ namespace BurgerShop.Customer
             customer = ReadyCustomer;
             if (customer == null)
                 return false;
+            return ReleaseServed(customer);
+        }
+
+        public bool ReleaseServed(CustomerAgent customer)
+        {
+            if (customer == null) return false;
+            int index = customers.IndexOf(customer);
+            if (index < 0)
+            {
+                departingCustomer = customer;
+                return false;
+            }
             customer.Removed -= OnCustomerRemoved;
-            customers.RemoveAt(0);
+            customers.RemoveAt(index);
             customer.LeaveQueue();
             departingCustomer = customer;
             ReassignSlots();

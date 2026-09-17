@@ -20,7 +20,7 @@ namespace BurgerShop.Restaurant
         public bool CanAffordSpeed => !SpeedIsMax && wallet != null && wallet.Coins >= SpeedCost;
         public bool CanAffordCarry => !CarryIsMax && wallet != null && wallet.Coins >= CarryCost;
         public bool IsPlayerInRange =>
-            (GetComponent<UI.SessionGoalTracker>()?.Allows(3)??true) && player != null && ShopLayout.ContainsHrUpgradeRange(player.transform.position);
+            (GetComponent<UI.SessionGoalTracker>()?.Allows(ShopRanks.HireRank)??true) && player != null && ShopLayout.ContainsHrUpgradeRange(player.transform.position);
 
         public void Configure(RestaurantWallet earnings, WorkerHiringZone staff, BurgerInventory carrier)
         {
@@ -60,7 +60,7 @@ namespace BurgerShop.Restaurant
 
         bool TryBuy(bool speed)
         {
-            if (!IsPlayerInRange || wallet == null || !(GetComponent<UI.SessionGoalTracker>()?.Allows(3)??true)) return false;
+            if (!IsPlayerInRange || wallet == null || !(GetComponent<UI.SessionGoalTracker>()?.Allows(ShopRanks.HireRank)??true)) return false;
             bool max = speed ? SpeedIsMax : CarryIsMax;
             int cost = speed ? SpeedCost : CarryCost;
             if (max || wallet.Coins < cost) return false;
@@ -69,6 +69,7 @@ namespace BurgerShop.Restaurant
             if (speed) SpeedTier++;
             else CarryTier++;
             ApplyToHired();
+            GetComponent<UI.SessionGoalTracker>()?.EvaluateStarGateTasks();
             UI.FeedbackDirector.Current?.Success(player.transform.position,"Level Up!",player.transform);
             return true;
         }

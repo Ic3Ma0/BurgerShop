@@ -61,16 +61,21 @@ namespace BurgerShop.Tests.EditMode
         [Test] public void UpgradePathEarnsEnoughStarsWithoutAutomaticRanks()
         {
             goals.Restore(1,0,0,0,511,true);growth.Discover();
-            for(int i=0;i<3;i++)for(int n=1;n<4;n++)Assert.That(growth.TryBuy("table-"+i,n),Is.True);
-            Assert.That(goals.Stars,Is.EqualTo(18));Assert.That(goals.Rank,Is.EqualTo(1));
-            Assert.That(goals.TryUpgradeRank(1),Is.True);Assert.That(goals.TryUpgradeRank(2),Is.True);Assert.That(goals.TryUpgradeRank(3),Is.True);
+            for(int i=0;i<ShopLayout.Tables.Length;i++)for(int n=1;n<4;n++)Assert.That(growth.TryBuy("table-"+i,n),Is.True);
+            Assert.That(goals.Stars,Is.EqualTo(12));Assert.That(goals.Rank,Is.EqualTo(1));
+            Assert.That(goals.TryUpgradeRank(1),Is.True);Assert.That(goals.TryUpgradeRank(2),Is.True);
             expansion.Restore(true,true,true,1,true,false);growth.Discover();
-            foreach(string id in new[]{"table-extra","counter-main","counter-extra","boxing"})
-                for(int n=1;n<(id.StartsWith("table")?4:3);n++)Assert.That(growth.TryBuy(id,n),Is.True,id);
+            for(int n=1;n<4;n++)Assert.That(growth.TryBuy("table-extra",n),Is.True);
+            Assert.That(goals.TryUpgradeRank(3),Is.True);
+            foreach(string id in new[]{"counter-main","counter-extra","boxing"})
+                for(int n=1;n<3;n++)Assert.That(growth.TryBuy(id,n),Is.True,id);
             foreach(var g in new[]{grill.Upgrade,expansion.ExtraGrillUpgrade})
                 for(int n=2;n<=3;n++){g.RestoreLevel(n);growth.RecordGrill(g);growth.RecordGrill(g);}
-            Assert.That(goals.Stars,Is.EqualTo(26));Assert.That(goals.TryUpgradeRank(4),Is.True);Assert.That(goals.TryUpgradeRank(5),Is.True);
-            Assert.That(goals.Rank,Is.EqualTo(6));Assert.That(goals.Stars,Is.EqualTo(4));
+            Assert.That(goals.Rank,Is.EqualTo(4),"must not auto-rank");
+            Assert.That(goals.Stars,Is.EqualTo(25));
+            Assert.That(goals.TryUpgradeRank(4),Is.True);
+            Assert.That(goals.Rank,Is.EqualTo(5));
+            Assert.That(goals.Stars,Is.EqualTo(19));
         }
 
         [Test] public void OldSaveCompensationIsOneTimeAndVersionNineKeepsManualRank()

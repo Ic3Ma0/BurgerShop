@@ -6,12 +6,6 @@ namespace BurgerShop.UI
 {
     public sealed class TaskCapsuleHud : MonoBehaviour
     {
-        // Retired from gameplay; also suppress instances retained across an editor script reload.
-        void OnEnable()
-        {
-            if(Application.isPlaying) gameObject.SetActive(false);
-        }
-
         const int SparkCount = 6;
         SessionGoalTracker tracker;
         Text title;
@@ -33,6 +27,11 @@ namespace BurgerShop.UI
         public bool IsProgressPunching => progressPunch.IsActive;
         public float ProgressPunchScale => progressPunch.Scale;
 
+        public static readonly Vector2 LayoutAnchor = new Vector2(0f, 1f);
+        public static readonly Vector2 LayoutPosition = new Vector2(32f, -128f);
+        public static readonly Vector2 LayoutSize = new Vector2(320f, 52f);
+        public const float ProgressHairline = 3f;
+
         struct Spark
         {
             public RectTransform Rect;
@@ -45,34 +44,55 @@ namespace BurgerShop.UI
 
         public static TaskCapsuleHud Build(Transform parent, SessionGoalTracker goals)
         {
-            Image back = HudChrome.Panel(parent, "TaskCapsule", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -144f), new Vector2(760f, 160f), HudChrome.CapsuleIdle, 0.62f);
+            Image back = HudChrome.Panel(parent, "TaskCapsule", LayoutAnchor, LayoutAnchor,
+                LayoutPosition, LayoutSize, HudChrome.CapsuleIdle, 0.85f);
             Image badge = HudChrome.Icon(back.transform, "TaskBadge", HudChrome.Circle(), new Vector2(0f, 0.5f),
-                new Vector2(0.5f, 0.5f), new Vector2(52f, 4f), new Vector2(72f, 72f), new Color(0.20f, 0.78f, 0.48f, 1f));
+                new Vector2(0.5f, 0.5f), new Vector2(16f, 2f), new Vector2(22f, 22f), new Color(0.20f, 0.78f, 0.48f, 1f));
             Image check = HudChrome.Icon(badge.transform, "TaskCheck", HudChrome.Check(), new Vector2(0.5f, 0.5f),
-                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(40f, 40f), Color.white);
+                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(12f, 12f), Color.white);
             Image glyph = HudChrome.Icon(badge.transform, "TaskGlyph", HudChrome.Star(), new Vector2(0.5f, 0.5f),
-                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(34f, 34f), Color.white);
+                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(12f, 12f), Color.white);
 
-            Text title = HudChrome.Label(back.transform, "TaskTitle", new Vector2(0f, 0.42f), new Vector2(1f, 1f),
-                new Vector2(0f, 1f), Vector2.zero, Vector2.zero, 32, HudChrome.TitleIdle, TextAnchor.MiddleLeft, true, false);
-            title.rectTransform.offsetMin = new Vector2(100f, 0f);
-            title.rectTransform.offsetMax = new Vector2(-18f, -8f);
-            title.horizontalOverflow = HorizontalWrapMode.Wrap;
+            Text title = HudChrome.Label(back.transform, "TaskTitle", new Vector2(0f, 0f), new Vector2(1f, 1f),
+                new Vector2(0f, 0.5f), Vector2.zero, Vector2.zero, 20, HudChrome.TitleIdle, TextAnchor.MiddleLeft, true, false);
+            title.fontSize = 20;
+            title.rectTransform.offsetMin = new Vector2(32f, 7f);
+            title.rectTransform.offsetMax = new Vector2(-50f, -3f);
+            title.horizontalOverflow = HorizontalWrapMode.Overflow;
+            title.verticalOverflow = VerticalWrapMode.Truncate;
+            title.resizeTextForBestFit = true;
+            title.resizeTextMinSize = 16;
+            title.resizeTextMaxSize = 20;
 
-            Image barBack = HudChrome.Panel(back.transform, "TaskBarBack", new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(100f, 16f), new Vector2(500f, 16f), new Color(0.82f, 0.90f, 0.86f, 1f), 0.45f);
-            Image fill = HudChrome.Panel(barBack.transform, "TaskBarFill", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-                Vector2.zero, new Vector2(80f, 16f), HudChrome.FillGreen, 0.45f);
+            Image barBack = Hairline(back.transform, "TaskBarBack", new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(32f, 4f), new Vector2(244f, ProgressHairline), new Color(0.82f, 0.90f, 0.86f, 0.9f));
+            Image fill = Hairline(barBack.transform, "TaskBarFill", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                Vector2.zero, new Vector2(40f, ProgressHairline), HudChrome.FillGreen);
 
-            Text progress = HudChrome.Label(back.transform, "TaskProgress", new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(1f, 0f), new Vector2(-18f, 12f), new Vector2(120f, 40f), 28,
+            Text progress = HudChrome.Label(back.transform, "TaskProgress", new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f), new Vector2(-6f, 2f), new Vector2(48f, 24f), 18,
                 new Color(0.18f, 0.42f, 0.28f, 1f), TextAnchor.MiddleRight, true, false);
+            progress.fontSize = 18;
 
             var hud = back.gameObject.AddComponent<TaskCapsuleHud>();
             hud.BuildSparks(back.transform);
             hud.Configure(goals, title, progress, fill, back, null, badge, check, glyph);
             return hud;
+        }
+
+        static Image Hairline(Transform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 pos, Vector2 size, Color color)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            go.transform.SetParent(parent, false);
+            RectTransform rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = anchor;
+            rect.pivot = pivot;
+            rect.anchoredPosition = pos;
+            rect.sizeDelta = size;
+            Image image = go.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
+            return image;
         }
 
         public void Configure(SessionGoalTracker goals, Text titleText, Text progressText, Image bar, Image back, CanvasGroup celebration)
@@ -116,26 +136,30 @@ namespace BurgerShop.UI
         void Refresh(bool force)
         {
             if (tracker == null || title == null) return;
-            bool changed = force || shownTitle != tracker.Title || shownProgress != tracker.Progress || shownCelebrate != tracker.IsCelebrating;
+            string copy = tracker.CapsuleTitle;
+            int prog = tracker.CapsuleProgress;
+            int need = tracker.CapsuleRequired;
+            bool celebrating = tracker.IsCelebrating && (tracker.Opening == null || !tracker.Opening.IsActive);
+            bool changed = force || shownTitle != copy || shownProgress != prog || shownCelebrate != celebrating;
             if (!changed)
             {
                 return;
             }
 
-            bool justFinished = !force && tracker.IsCelebrating && !shownCelebrate;
-            bool progressUp = !force && tracker.Progress > shownProgress && shownProgress != int.MinValue;
-            shownTitle = tracker.Title;
-            shownProgress = tracker.Progress;
-            shownCelebrate = tracker.IsCelebrating;
+            bool justFinished = !force && celebrating && !shownCelebrate;
+            bool progressUp = !force && prog > shownProgress && shownProgress != int.MinValue;
+            shownTitle = copy;
+            shownProgress = prog;
+            shownCelebrate = celebrating;
             if (progressUp) progressPunch.Play();
-            title.text = tracker.Title;
-            if (progress != null) progress.text = $"{tracker.Progress}/{tracker.Required}";
-            fillTarget=tracker.Required<=0?0f:(float)tracker.Progress/tracker.Required;
+            title.text = copy;
+            if (progress != null) progress.text = $"{prog}/{need}";
+            fillTarget=need<=0?0f:(float)prog/need;
             fillFrom=displayedFill;fillAge=justFinished?0f:.6f;
             if(!justFinished)displayedFill=fillTarget;
             if(fillRect!=null)HudChrome.SetHorizontalFill(fillRect,displayedFill);
 
-            bool done = tracker.IsCelebrating;
+            bool done = celebrating;
             if (background != null) background.color = done ? HudChrome.CapsuleDone : HudChrome.CapsuleIdle;
             if (title != null)
             {
@@ -146,7 +170,7 @@ namespace BurgerShop.UI
             }
             if (progress != null) progress.color = done ? Color.white : new Color(0.18f, 0.42f, 0.28f, 1f);
             if (iconBadge != null)
-                iconBadge.color = done ? new Color(0.12f, 0.62f, 0.36f, 1f) : IconColor(tracker.Title);
+                iconBadge.color = done ? new Color(0.12f, 0.62f, 0.36f, 1f) : IconColor(copy);
             if (checkIcon != null) checkIcon.enabled = done;
             if (glyphIcon != null) glyphIcon.enabled = !done;
             if (justFinished && (FeedbackDirector.Current==null||FeedbackDirector.Current.DecorationsEnabled))
@@ -165,11 +189,11 @@ namespace BurgerShop.UI
             if (self != null)
             {
                 punch = Mathf.MoveTowards(punch, 0f, dt * 2.4f);
-                float scale = 1f + 0.08f * punch;
+                float scale = 1f + 0.04f * punch;
                 self.localScale = new Vector3(scale, scale, 1f);
             }
             if (sparks == null) return;
-            bool celebrating = tracker != null && tracker.IsCelebrating;
+            bool celebrating = tracker != null && tracker.IsCelebrating && (tracker.Opening == null || !tracker.Opening.IsActive);
             for (int i = 0; i < sparks.Length; i++)
             {
                 Spark spark = sparks[i];
@@ -199,8 +223,8 @@ namespace BurgerShop.UI
                 spark.Velocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed;
                 spark.Spin = Random.Range(-220f, 220f);
                 spark.MaxLife = spark.Life = 0.6f;
-                spark.Rect.anchoredPosition = new Vector2(Random.Range(-40f, 40f), Random.Range(-10f, 24f));
-                spark.Rect.localScale = Vector3.one * Random.Range(0.55f, 1.15f);
+                spark.Rect.anchoredPosition = new Vector2(Random.Range(-24f, 24f), Random.Range(-8f, 10f));
+                spark.Rect.localScale = Vector3.one * Random.Range(0.45f, 0.9f);
                 if (spark.Group != null) spark.Group.alpha = 1f;
                 sparks[i] = spark;
             }
@@ -221,7 +245,7 @@ namespace BurgerShop.UI
             for (int i = 0; i < SparkCount; i++)
             {
                 Image image = HudChrome.Icon(parent, "TaskSpark_" + i, HudChrome.Star(), new Vector2(0.5f, 0.5f),
-                    new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(22f, 22f), colors[i % colors.Length]);
+                    new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(10f, 10f), colors[i % colors.Length]);
                 var group = image.gameObject.AddComponent<CanvasGroup>();
                 group.alpha = 0f;
                 group.blocksRaycasts = false;
@@ -236,6 +260,8 @@ namespace BurgerShop.UI
             if (taskTitle != null && taskTitle.StartsWith("Pick")) return new Color(0.96f, 0.62f, 0.22f, 1f);
             if (taskTitle != null && taskTitle.StartsWith("Move")) return new Color(0.28f, 0.62f, 0.94f, 1f);
             if (taskTitle != null && taskTitle.StartsWith("Serve")) return new Color(0.94f, 0.42f, 0.38f, 1f);
+            if (taskTitle != null && taskTitle.StartsWith("Upgrade")) return new Color(0.60f, 0.36f, 0.90f, 1f);
+            if (taskTitle != null && taskTitle.StartsWith("Tap")) return new Color(1f, 0.84f, 0.16f, 1f);
             if (taskTitle != null && taskTitle.StartsWith("Clear")) return new Color(0.86f, 0.55f, 0.28f, 1f);
             if (taskTitle != null && taskTitle.StartsWith("Take trash")) return new Color(0.55f, 0.48f, 0.42f, 1f);
             if (taskTitle != null && taskTitle.StartsWith("Hire")) return new Color(0.18f, 0.78f, 0.88f, 1f);

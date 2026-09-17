@@ -103,6 +103,10 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(FacilityCatalog.IsUnlocked(FacilityKind.ColaMachine,6,false),Is.False);
             Assert.That(FacilityCatalog.IsUnlocked(FacilityKind.ColaMachine,7,false),Is.True);
             Assert.That(FacilityCatalog.IsUnlocked(FacilityKind.ColaMachine,1,true),Is.True);
+            Assert.That(FacilityCatalog.IsUnlocked(FacilityKind.BurgerMachine,3,false),Is.False);
+            Assert.That(FacilityCatalog.IsUnlocked(FacilityKind.BurgerMachine,4,false),Is.True);
+            Assert.That(FacilityCatalog.IsUnlocked(FacilityKind.BurgerCounter,3,false),Is.False);
+            Assert.That(FacilityCatalog.IsUnlocked(FacilityKind.BurgerCounter,4,false),Is.True);
             Assert.That(FacilityCatalog.Offers.Count,Is.EqualTo(15));
         }
     }

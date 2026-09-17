@@ -13,6 +13,7 @@ namespace BurgerShop.UI
         public Text LevelLabel { get; private set; }
         public Button[] SelectButtons { get; private set; }
         public Text[] NameLabels { get; private set; }
+        public Text[] TierLabels { get; private set; }
         public Text[] PayLabels { get; private set; }
         public Text[] SpeedLabels { get; private set; }
         public Text[] SelectLabels { get; private set; }
@@ -44,9 +45,10 @@ namespace BurgerShop.UI
             popup.LevelLabel = HudChrome.Label(plate.transform, "Level", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f), new Vector2(0f, -80f), new Vector2(400f, 40f), 32,
                 HudChrome.Ink, TextAnchor.UpperCenter, true, true);
-            popup.LevelLabel.text = "Level 2";
+            popup.LevelLabel.text = "Level 2 · " + ShopRanks.StarRewardCopy;
             popup.SelectButtons = new Button[3];
             popup.NameLabels = new Text[3];
+            popup.TierLabels = new Text[3];
             popup.PayLabels = new Text[3];
             popup.SpeedLabels = new Text[3];
             popup.SelectLabels = new Text[3];
@@ -55,20 +57,24 @@ namespace BurgerShop.UI
             for (int i = 0; i < 3; i++)
             {
                 Image card = HudChrome.Panel(plate.transform, "Card" + i, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(xs[i], -36f), new Vector2(280f, 360f), Color.white, 1f);
+                    new Vector2(xs[i], -20f), new Vector2(288f, 390f), Color.white, 1f);
                 popup.Swatches[i] = HudChrome.Panel(card.transform, "Swatch" + i, new Vector2(0.5f, 1f),
-                    new Vector2(0.5f, 1f), new Vector2(0f, -28f), new Vector2(160f, 72f), HudChrome.Gold, 1f);
+                    new Vector2(0.5f, 1f), new Vector2(0f, -18f), new Vector2(160f, 52f), HudChrome.Gold, 1f);
                 popup.NameLabels[i] = HudChrome.Label(card.transform, "Name" + i, new Vector2(0.5f, 1f),
-                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -108f), new Vector2(240f, 36f), 32,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -76f), new Vector2(260f, 32f), 30,
+                    HudChrome.Ink, TextAnchor.UpperCenter, true, true);
+                popup.TierLabels[i] = HudChrome.Label(card.transform, "Tier" + i, new Vector2(0.5f, 1f),
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -108f), new Vector2(260f, 26f), 24,
                     HudChrome.Ink, TextAnchor.UpperCenter, true, true);
                 popup.PayLabels[i] = HudChrome.Label(card.transform, "Pay" + i, new Vector2(0.5f, 1f),
-                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -148f), new Vector2(240f, 32f), 28,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -138f), new Vector2(260f, 26f), 24,
                     HudChrome.Ink, TextAnchor.UpperCenter, true, true);
                 popup.SpeedLabels[i] = HudChrome.Label(card.transform, "Speed" + i, new Vector2(0.5f, 1f),
-                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -180f), new Vector2(240f, 32f), 28,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -166f), new Vector2(260f, 26f), 24,
                     HudChrome.Ink, TextAnchor.UpperCenter, true, true);
                 popup.SelectButtons[i] = MakeSelect(card.transform, "Select" + i + "Button");
                 popup.SelectLabels[i] = LabelOn(popup.SelectButtons[i].transform, "Select" + i + "Label");
+                popup.SelectLabels[i].fontSize = 26;
                 popup.SelectLabels[i].text = "SELECT";
             }
             popup.CloseButton = MakeCloseButton(plate.transform);
@@ -79,15 +85,30 @@ namespace BurgerShop.UI
             return popup;
         }
 
-        public void PaintChoices()
+        public void PaintChoices(TableUpgradeZone zone = null)
         {
+            long coins = zone != null && zone.Wallet != null ? zone.Wallet.Coins : long.MaxValue;
+            int invested = zone != null ? zone.Invested : 0;
             for (int i = 0; i < TableSetCatalog.ChoiceCount; i++)
             {
                 var set = TableSetCatalog.Get(TableSetCatalog.Choices[i]);
+                int due = TableSetCatalog.Due(set.Id, invested);
+                bool afford = due == 0 || coins >= due;
                 if (NameLabels[i] != null) NameLabels[i].text = set.Name;
-                if (PayLabels[i] != null) PayLabels[i].text = set.PayLabel;
-                if (SpeedLabels[i] != null) SpeedLabels[i].text = set.SpeedLabel;
+                if (TierLabels[i] != null) TierLabels[i].text = set.TierLabel + " · " + set.Cost.ToString("N0");
+                if (PayLabels[i] != null) PayLabels[i].text = set.MealPay + " / meal · " + set.PayLabel;
+                if (SpeedLabels[i] != null) SpeedLabels[i].text = set.EatSeconds.ToString("0.0") + "s · " + set.SpeedLabel;
                 if (Swatches[i] != null) Swatches[i].color = set.TableColor;
+                if (SelectLabels[i] != null)
+                    SelectLabels[i].text = due == 0 ? "SELECT · Paid · " + ShopRanks.StarRewardCopy
+                        : afford ? "SELECT · " + due.ToString("N0") + " · " + ShopRanks.StarRewardCopy
+                        : "Need " + (due - coins).ToString("N0");
+                if (SelectButtons[i] != null)
+                {
+                    SelectButtons[i].interactable = afford;
+                    var image = SelectButtons[i].GetComponent<Image>();
+                    if (image != null) image.color = afford ? HudChrome.Green : HudChrome.TrackNavy;
+                }
             }
         }
 
@@ -135,6 +156,7 @@ namespace BurgerShop.UI
             for (int i = 0; i < 3; i++)
             {
                 if (NameLabels[i] != null) parts.Append(NameLabels[i].text).Append('\n');
+                if (TierLabels[i] != null) parts.Append(TierLabels[i].text).Append('\n');
                 if (PayLabels[i] != null) parts.Append(PayLabels[i].text).Append('\n');
                 if (SpeedLabels[i] != null) parts.Append(SpeedLabels[i].text).Append('\n');
                 if (SelectLabels[i] != null) parts.Append(SelectLabels[i].text).Append('\n');

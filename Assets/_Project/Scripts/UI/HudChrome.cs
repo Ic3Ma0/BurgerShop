@@ -15,6 +15,7 @@ namespace BurgerShop.UI
         static Sprite star;
         static Sprite bill;
         static Sprite check;
+        static Sprite gear;
 
         public static readonly Color Cream = new Color32(255,245,230,255);
         public static readonly Color Ink = new Color32(62,43,37,255);
@@ -63,6 +64,12 @@ namespace BurgerShop.UI
         {
             if (check == null) check = MakeCheck(64);
             return check;
+        }
+
+        public static Sprite Gear()
+        {
+            if (gear == null) gear = MakeGear(64);
+            return gear;
         }
 
         public static Rect JoystickKeepout()
@@ -348,6 +355,43 @@ namespace BurgerShop.UI
             }
             texture.Apply(false, false);
             return Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 64f, 0, SpriteMeshType.FullRect);
+        }
+
+        static Sprite MakeGear(int size)
+        {
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+            float cx = (size - 1) * 0.5f;
+            float cy = cx;
+            const int teeth = 8;
+            float hole = size * 0.14f;
+            float hub = size * 0.28f;
+            float rim = size * 0.34f;
+            float outer = size * 0.46f;
+            float step = Mathf.PI * 2f / teeth;
+            float halfTooth = step * 0.28f;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x - cx;
+                    float dy = y - cy;
+                    float r = Mathf.Sqrt(dx * dx + dy * dy);
+                    float angle = Mathf.Atan2(dy, dx);
+                    if (angle < 0f) angle += Mathf.PI * 2f;
+                    float sector = angle % step;
+                    float toCenter = Mathf.Min(sector, step - sector);
+                    bool inTooth = r <= outer && r >= rim && toCenter <= halfTooth;
+                    bool inRim = r <= rim && r >= hole;
+                    bool inHub = r <= hub && r >= hole;
+                    float alpha = (inTooth || inRim || inHub) ? Mathf.Clamp01(outer + 0.6f - r) : 0f;
+                    if (r < hole - 0.5f) alpha = 0f;
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+            texture.Apply(false, false);
+            return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 64f, 0, SpriteMeshType.FullRect);
         }
 
         static Sprite MakeCheck(int size)

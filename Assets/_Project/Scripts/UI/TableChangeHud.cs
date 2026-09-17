@@ -24,7 +24,6 @@ namespace BurgerShop.UI
         {
             board = upgrades;
             popup = sheet;
-            popup?.PaintChoices();
             BindButtons();
             Refresh();
         }
@@ -32,7 +31,8 @@ namespace BurgerShop.UI
         public void ClickSelect(int index)
         {
             if (focused == null || index < 0 || index >= TableSetCatalog.ChoiceCount) return;
-            focused.TryChoose(TableSetCatalog.Choices[index]);
+            var id = TableSetCatalog.Choices[index];
+            if (!focused.TryBuySet(id, focused.Invested)) return;
             popup?.SetVisible(false);
         }
 
@@ -64,6 +64,7 @@ namespace BurgerShop.UI
                 popup.SetVisible(false);
                 return;
             }
+            popup.PaintChoices(zone);
             popup.SetVisible(true);
         }
 

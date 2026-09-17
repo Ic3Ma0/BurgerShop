@@ -380,7 +380,9 @@ namespace BurgerShop.Tests.EditMode
             tracker.Advance(0.01f);
             Assert.That(tracker.Title, Is.EqualTo("Pack a blue box"));
             Assert.That(tracker.MilestoneComplete, Is.True);
-            Assert.That(tracker.Stars, Is.EqualTo(2));
+            Assert.That(tracker.Stars, Is.GreaterThanOrEqualTo(2));
+            Assert.That(tracker.Rank, Is.EqualTo(5));
+            Assert.That(tracker.CanUpgrade, Is.EqualTo(tracker.Stars >= tracker.StarCap));
         }
     }
 }

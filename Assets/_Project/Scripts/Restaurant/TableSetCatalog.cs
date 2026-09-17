@@ -12,11 +12,13 @@ namespace BurgerShop.Restaurant
 
     public readonly struct TableSet
     {
-        public TableSet(TableSetId id, string name, int mealPay, float eatSeconds, string payLabel,
-            string speedLabel, Color tableColor, Color chairColor)
+        public TableSet(TableSetId id, string name, string tierLabel, int cost, int mealPay, float eatSeconds,
+            string payLabel, string speedLabel, Color tableColor, Color chairColor)
         {
             Id = id;
             Name = name;
+            TierLabel = tierLabel;
+            Cost = cost;
             MealPay = mealPay;
             EatSeconds = eatSeconds;
             PayLabel = payLabel;
@@ -27,6 +29,8 @@ namespace BurgerShop.Restaurant
 
         public TableSetId Id { get; }
         public string Name { get; }
+        public string TierLabel { get; }
+        public int Cost { get; }
         public int MealPay { get; }
         public float EatSeconds { get; }
         public string PayLabel { get; }
@@ -40,6 +44,9 @@ namespace BurgerShop.Restaurant
     public static class TableSetCatalog
     {
         public const int UpgradeCost = 80;
+        public const int MinCost = 50;
+        public const int MaxCost = 120;
+        public const int LegacyPaidCost = 80;
         public const int StarterPay = 10;
         public const float StarterEatSeconds = 3f;
         public const int MaxSetId = 3;
@@ -51,17 +58,17 @@ namespace BurgerShop.Restaurant
             switch (id)
             {
                 case TableSetId.Bistro:
-                    return new TableSet(id, "Bistro", 12, 3.0f, "PAY +2", "—",
+                    return new TableSet(id, "Bistro", "Value", 50, 12, 3.0f, "PAY +2", "SAME SPEED",
                         new Color(0.86f, 0.52f, 0.18f), new Color(0.82f, 0.62f, 0.22f));
                 case TableSetId.Diner:
-                    return new TableSet(id, "Diner", 12, 2.4f, "PAY +2", "SPEED +20%",
+                    return new TableSet(id, "Diner", "Turnover", 80, 12, 2.4f, "PAY +2", "SPEED +20%",
                         new Color(0.22f, 0.62f, 0.64f), new Color(0.93f, 0.88f, 0.78f));
                 case TableSetId.Patio:
-                    return new TableSet(id, "Patio", 15, 2.7f, "PAY +5", "SPEED +10%",
+                    return new TableSet(id, "Patio", "Premium", 120, 16, 3.6f, "PAY +6", "SLOWER",
                         new Color(0.18f, 0.42f, 0.78f), new Color(0.82f, 0.22f, 0.20f));
                 default:
-                    return new TableSet(TableSetId.Starter, "Starter", StarterPay, StarterEatSeconds, "PAY +0", "—",
-                        new Color(0.86f, 0.22f, 0.18f), new Color(0.18f, 0.42f, 0.72f));
+                    return new TableSet(TableSetId.Starter, "Starter", "Starter", 0, StarterPay, StarterEatSeconds,
+                        "PAY +0", "—", new Color(0.86f, 0.22f, 0.18f), new Color(0.18f, 0.42f, 0.72f));
             }
         }
 
@@ -72,9 +79,20 @@ namespace BurgerShop.Restaurant
 
         public static bool IsValidId(int id) => id >= 0 && id <= MaxSetId;
 
-        public static bool IsValidInvestment(int amount) => amount >= 0 && amount <= UpgradeCost;
+        public static int CostFor(TableSetId id) => Get(id).Cost;
+
+        public static int Due(TableSetId id, int invested) =>
+            Mathf.Max(0, CostFor(id) - Mathf.Max(0, invested));
+
+        public static bool IsValidInvestment(int amount) => amount >= 0 && amount <= MaxCost;
+
+        public static bool IsPaidInFull(int setId, int investment)
+        {
+            if (!IsChoice((TableSetId)setId) || !IsValidInvestment(investment)) return false;
+            return investment >= CostFor((TableSetId)setId) || investment == LegacyPaidCost;
+        }
 
         public static bool IsConsistent(int setId, int investment) =>
-            IsValidId(setId) && IsValidInvestment(investment) && (setId == 0 || investment == UpgradeCost);
+            IsValidId(setId) && IsValidInvestment(investment) && (setId == 0 || IsPaidInFull(setId, investment));
     }
 }

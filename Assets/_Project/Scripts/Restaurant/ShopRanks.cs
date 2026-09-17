@@ -11,7 +11,10 @@ namespace BurgerShop.Restaurant
         BoxBurger,
         InstallGrill,
         InstallCounter,
-        InstallDriveThru, CleanTable, WorkerOrder, ExtraProduction, CarOrder, ColaOrder, CourierOrder, AutomatedOrder
+        InstallDriveThru, CleanTable, WorkerOrder, ExtraProduction, CarOrder, ColaOrder, CourierOrder, AutomatedOrder,
+        UpgradeGrill,
+        StatLinePeakTen, StatLineBreadthEight, StaffLinePeakTwelve,
+        FacilityUpgradeAgain, AllTablesChosen, StatLinePeakEighteen
     }
 
     public readonly struct ShopGoal
@@ -34,19 +37,55 @@ namespace BurgerShop.Restaurant
         public const int LegacyMax = 6;
 
         public const int ContentEnd = 10;
-        public const int MilestoneMask = (1 << (ContentEnd - 1)) - 1;
+        public const int StarGateEnd = 15;
+        public const int CycleStartRank = 16;
+        public const int MilestoneBitCount = StarGateEnd;
+        public const int MilestoneMask = (1 << MilestoneBitCount) - 1;
+        public const int StatPeakTen = 10;
+        public const int StatBreadthEight = 8;
+        public const int StaffPeakTwelve = 12;
+        public const int StatPeakEighteen = 18;
+        public const int RequiredTableSets = 6;
+        public const int FacilityUpgradeLevel = 2;
         public const int CycleBaseCost = 500;
         public const int CycleCostStep = 250;
+        public const double CycleCostGrowth = 1.15d;
+        public const int StarSupplyCap = 248;
+        public const double StarCapBase = 4d;
+        public const double StarCapGrowth = 1.12d;
         public const int IncomeDenominator = 50;
+        public const string StarRewardCopy = "+2 ⭐";
+        public const string LoopHintCopy = "Pick up a burger";
+
+        // Player-visible rank at which listed content is available (after the previous Upgrade click).
+        public const int DiningRank = 2;
+        public const int HireRank = 3;
+        public const int ExtraKitchenRank = 4;
+        public const int BoxingRank = 5;
+        public const int DriveThruRank = 6;
+        public const int ColaWingRank = 7;
+        public const int CourierRank = 8;
+        public const int AutomationRank = 9;
+        public const int WestRank = ContentEnd;
+
         public static bool IsMax(int rank) => false;
-        public static int CycleCost(int rank) => (int)Math.Min(int.MaxValue,
-            CycleBaseCost + CycleCostStep * Math.Max(0L, (long)rank - ContentEnd));
-        public static int CompletedThrough(int rank) => (1 << Math.Min(ContentEnd - 1, Math.Max(0,rank))) - 1;
+        public static bool IsCycleRank(int rank) => rank >= CycleStartRank;
+        public static int CycleCost(int rank)
+        {
+            if (rank < CycleStartRank) return 0;
+            int steps = rank - CycleStartRank;
+            double logCost = Math.Log(CycleBaseCost) + steps * Math.Log(CycleCostGrowth);
+            if (logCost >= Math.Log(int.MaxValue)) return int.MaxValue;
+            return Math.Max(1, (int)Math.Round(CycleBaseCost * Math.Pow(CycleCostGrowth, steps),
+                MidpointRounding.AwayFromZero));
+        }
+        // Legacy v13-and-earlier fills only the original 9 teaching bits; Lv.10–15 stay 0 so they can be made up.
+        public static int CompletedThrough(int rank) => (1 << Math.Min(ContentEnd - 1, Math.Max(0, rank))) - 1;
         public static ShopGoal[] Goals(int rank)
         {
             switch(rank)
             {
-                case 1: return new[]{new ShopGoal(ShopGoalKind.ServeCustomers,"Complete a burger order",1)};
+                case 1: return new[]{new ShopGoal(ShopGoalKind.UpgradeGrill,"Upgrade the burger machine",1)};
                 case 2: return new[]{new ShopGoal(ShopGoalKind.CleanTable,"Clear a used dining table",1)};
                 case 3: return new[]{new ShopGoal(ShopGoalKind.WorkerOrder,"Let staff complete an order",1)};
                 case 4: return new[]{new ShopGoal(ShopGoalKind.ExtraProduction,"Produce on the second grill",1)};
@@ -55,25 +94,89 @@ namespace BurgerShop.Restaurant
                 case 7: return new[]{new ShopGoal(ShopGoalKind.ColaOrder,"Sell a cup of cola",1)};
                 case 8: return new[]{new ShopGoal(ShopGoalKind.CourierOrder,"Complete a courier order",1)};
                 case 9: return new[]{new ShopGoal(ShopGoalKind.AutomatedOrder,"Fulfil an automated courier order",1)};
+                case 10: return new[]{new ShopGoal(ShopGoalKind.StatLinePeakTen,"Get any stat line to Lv.10",1)};
+                case 11: return new[]{new ShopGoal(ShopGoalKind.StatLineBreadthEight,"Get all four stat lines to Lv.8",1)};
+                case 12: return new[]{new ShopGoal(ShopGoalKind.StaffLinePeakTwelve,"Get a staff line to Lv.12",1)};
+                case 13: return new[]{new ShopGoal(ShopGoalKind.FacilityUpgradeAgain,"Upgrade any facility again",1)};
+                case 14: return new[]{new ShopGoal(ShopGoalKind.AllTablesChosen,"Choose a set for all six tables",1)};
+                case 15: return new[]{new ShopGoal(ShopGoalKind.StatLinePeakEighteen,"Get any stat line to Lv.18",1)};
                 default: return Array.Empty<ShopGoal>();
             }
         }
+        public static bool IsThresholdGoal(ShopGoalKind kind)
+        {
+            switch (kind)
+            {
+                case ShopGoalKind.StatLinePeakTen:
+                case ShopGoalKind.StatLineBreadthEight:
+                case ShopGoalKind.StaffLinePeakTwelve:
+                case ShopGoalKind.FacilityUpgradeAgain:
+                case ShopGoalKind.AllTablesChosen:
+                case ShopGoalKind.StatLinePeakEighteen:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        public static bool MeetsThreshold(ShopGoalKind kind, int playerSpeed, int playerCarry,
+            int staffSpeed, int staffCarry, int maxFacilityLevel, int chosenTableSets)
+        {
+            int maxStat = Math.Max(Math.Max(playerSpeed, playerCarry), Math.Max(staffSpeed, staffCarry));
+            int minStat = Math.Min(Math.Min(playerSpeed, playerCarry), Math.Min(staffSpeed, staffCarry));
+            int maxStaff = Math.Max(staffSpeed, staffCarry);
+            switch (kind)
+            {
+                case ShopGoalKind.StatLinePeakTen: return maxStat >= StatPeakTen;
+                case ShopGoalKind.StatLineBreadthEight: return minStat >= StatBreadthEight;
+                case ShopGoalKind.StaffLinePeakTwelve: return maxStaff >= StaffPeakTwelve;
+                case ShopGoalKind.FacilityUpgradeAgain: return maxFacilityLevel >= FacilityUpgradeLevel;
+                case ShopGoalKind.AllTablesChosen: return chosenTableSets >= RequiredTableSets;
+                case ShopGoalKind.StatLinePeakEighteen: return maxStat >= StatPeakEighteen;
+                default: return false;
+            }
+        }
+        public static int NextIncomePercent(int rank) => 2 * Math.Max(0, rank + 1 - ContentEnd);
         public static string NextUnlock(int rank)
         {
-            string[] labels={"Dining & cleaning","Hire staff","Second grill & counter","Blue-box packing",
-                "Drive-thru","Cola side wing","Courier delivery","Conveyor automation","West bag area"};
-            return rank >= 1 && rank < ContentEnd ? labels[rank-1] : "+2% cash income & shop sign";
+            string[] labels={"Dining, cleaning & trash bins","Hire staff","Second grill, burger counter & restroom",
+                "Blue-box packing","Drive-thru counter","Cola lounge, four-seat & square tables",
+                "Courier tray & red-box packing","Conveyor automation","West bag machines & pickup"};
+            return rank >= 1 && rank < ContentEnd
+                ? labels[rank-1]
+                : $"+{NextIncomePercent(rank)}% cash income & shop sign";
         }
-        public static int StarCap(int rank) => rank < ContentEnd ? 2 + 2 * Math.Max(1,rank) : 0;
+        public static int StarCap(int rank)
+        {
+            int n = Math.Max(1, rank);
+            double logCap = Math.Log(StarCapBase) + (n - 1) * Math.Log(StarCapGrowth);
+            if (logCap >= Math.Log(int.MaxValue)) return int.MaxValue;
+            return Math.Max(0, (int)Math.Round(StarCapBase * Math.Pow(StarCapGrowth, n - 1),
+                MidpointRounding.AwayFromZero));
+        }
+        public static int MissingStars(int stars, int rank) => Math.Max(0, StarCap(rank) - Math.Max(0, stars));
+        public static string NextRankPreview(int rank, int stars, long missingCoins)
+        {
+            string unlock = NextUnlock(rank);
+            if (IsCycleRank(rank))
+                return $"Need {missingCoins:N0} coins → Lv.{(long)rank + 1}, unlock {unlock}";
+            return $"Need {MissingStars(stars, rank)} more stars → Lv.{rank + 1}, unlock {unlock}";
+        }
+        public static class Opening
+        {
+            public const string RankUp = "Tap Lv.1 Ready — unlock dining";
+            public static string GrillUpgrade(int cost) => $"Upgrade the grill — {cost} coins";
+        }
+        public static string RankUpCapsule(int rank) => $"Tap Lv.{rank} Ready";
+
         public static bool PadUnlocked(int rank,string title)
         {
             switch(title)
             {
-                case "TABLE": return rank>=2;
-                case "BOX": return rank>=5;
-                case "GRILL": case "COUNTER": return rank>=4;
-                case "LANE": return rank>=6;
-                case "WING": case "COLA": case "BAR": case "FOUR": case "SQUARE": return rank>=7;
+                case "TABLE": return rank>=ColaWingRank;
+                case "BOX": return rank>=BoxingRank;
+                case "GRILL": case "COUNTER": return rank>=ExtraKitchenRank;
+                case "LANE": return rank>=DriveThruRank;
+                case "WING": case "COLA": case "BAR": case "FOUR": case "SQUARE": return rank>=ColaWingRank;
                 default: return false;
             }
         }

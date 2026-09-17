@@ -30,6 +30,7 @@ namespace BurgerShop.Restaurant
         float cooldown;
         float spawnWait;
         bool paused;
+        public bool IsOpen { get; private set; } = true;
         public Func<int> OrderQuantityFactory { get; set; } = OrderQuantities.Drive;
         public CustomerOrder WaitingOrder
         {
@@ -86,6 +87,31 @@ namespace BurgerShop.Restaurant
 
         public BoxingStation PackingStock => boxing;
         public void BindBoxing(BoxingStation station) => boxing = station;
+        public bool SpawnAllowed => isActiveAndEnabled && !paused && IsOpen && RankAllowsCars;
+        public Vector3[] SpawnPath => new[]
+        {
+            transform.TransformPoint(ShopLayout.DriveThruSpawn),
+            transform.TransformPoint(ShopLayout.DriveThruQueue[2]),
+            transform.TransformPoint(ShopLayout.DriveThruQueue[1]),
+            transform.TransformPoint(ShopLayout.DriveThruQueue[0]),
+            transform.TransformPoint(ShopLayout.DriveThruExit)
+        };
+        bool RankAllowsCars
+        {
+            get
+            {
+                var goals = GetComponentInParent<UI.SessionGoalTracker>();
+                return goals == null || goals.Allows(ShopRanks.DriveThruRank);
+            }
+        }
+        public void SetOpen(bool open) => IsOpen = open;
+        public void AttachToWindow(Transform window)
+        {
+            if (window == null) return;
+            transform.SetParent(window, true);
+            transform.localRotation = Quaternion.identity;
+            transform.localPosition = -ShopLayout.PackageCounter;
+        }
 
         public void Configure(BoxingStation station, RestaurantWallet earnings, CashFloor floor,
             BurgerInventory carrier)
@@ -127,7 +153,8 @@ namespace BurgerShop.Restaurant
             if (car == null || boxing == null || !boxing.TryIssueCombo(out Transform box))
                 return false;
             cooldown = SellInterval;
-            car.BeginHandoff(box, HandoffOrigin, carrier);
+            Vector3 from = box != null ? box.position : HandoffOrigin;
+            car.BeginHandoff(box, from, carrier);
             return true;
         }
 
@@ -149,7 +176,7 @@ namespace BurgerShop.Restaurant
         void TrySpawn(float deltaTime)
         {
             spawnWait = Mathf.Max(0f, spawnWait - deltaTime);
-            if (cars.Count >= MaxCars || spawnWait > 0f) return;
+            if (!SpawnAllowed || cars.Count >= MaxCars || spawnWait > 0f) return;
             int slot = FirstFreeSlot();
             if (slot < 0) return;
             cars.Add(LaneCar.Create(transform, slot, CarColors[cars.Count % CarColors.Length], OrderQuantityFactory()));
@@ -228,6 +255,8 @@ namespace BurgerShop.Restaurant
         {
             GameObject root = new GameObject("DriveThruLane");
             root.transform.SetParent(parent, false);
+            root.transform.localPosition = Vector3.zero;
+            root.transform.localRotation = Quaternion.identity;
             DriveThruLane lane = root.AddComponent<DriveThruLane>();
             lane.Build(cutWall);
             lane.Configure(station, earnings, floor, carrier);

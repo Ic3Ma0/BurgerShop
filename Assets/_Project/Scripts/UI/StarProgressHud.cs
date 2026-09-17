@@ -72,7 +72,7 @@ namespace BurgerShop.UI
                 shown = tracker.Stars;
             }
             label.text = tracker.StarLabel;
-            if(upgradeLabel!=null)upgradeLabel.text=tracker.CanUpgrade?"Upgrade":"";
+            if(upgradeLabel!=null)upgradeLabel.text=tracker.GuideCopy;
             punch.Advance(deltaTime);
             label.rectTransform.localScale = new Vector3(punch.Scale, punch.Scale, 1f);
             if (fillRect != null)

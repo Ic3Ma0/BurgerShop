@@ -11,7 +11,7 @@ namespace BurgerShop.Restaurant
 {
     public sealed class RestroomExpansion : MonoBehaviour
     {
-        public const int Cost=300, UnlockRank=4, Capacity=4;
+        public const int Cost=300, UnlockRank=ShopRanks.ExtraKitchenRank, Capacity=4;
         public const float UseSeconds=4, WashSeconds=1, CleanSeconds=3, MaxWaitSeconds=20;
         public static readonly Rect Floor=Rect.MinMaxRect(-5,-21,4,-14);
         public static readonly Vector3 Door=new Vector3(0,0,-15), Wash=new Vector3(2.8f,0,-16.8f);
@@ -25,6 +25,7 @@ namespace BurgerShop.Restaurant
         {
             if(Built||!Unlocked||Pad==null||Pad.Wallet==null)return false;
             if(!Pad.Wallet.TrySpend(Remaining,()=>Pad.RestoreInvestment(Cost)))return false;
+            goals?.AddUpgradeStars();
             GetComponent<RestaurantPersistence>()?.Flush();return Built;
         }
         public int VisitorCount=>visitors.Count;

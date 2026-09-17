@@ -194,8 +194,13 @@ namespace BurgerShop.Customer
             receipt.text = "";
             orderBubble.gameObject.SetActive(true);
             phase = Phase.Handoff;
-            if (hall != null)
-                hall.TryAssignSeat(this, out table, out seatPosition, out seatIndex);
+            if (hall != null && !hall.TryAssignSeat(this, out table, out seatPosition, out seatIndex))
+            {
+                // Dirty or full hall: still leave the counter. Wait by the tables when
+                // they exist; otherwise skip dining and walk out the door.
+                if (table == null && hall.TableCount == 0)
+                    hall = null;
+            }
         }
 
         void Update()
@@ -233,7 +238,7 @@ namespace BurgerShop.Customer
                 {
                     if (hall != null)
                         hall.TryAssignSeat(this, out table, out seatPosition, out seatIndex);
-                    else if (table != null && !table.IsDirty)
+                    else if (table != null && table.gameObject.activeInHierarchy && !table.IsDirty)
                         table.TryAssignSeat(this, out seatPosition, out seatIndex);
                 }
                 Vector3 wait = table != null ? table.WaitPosition : (hall != null ? hall.WaitPosition : transform.position);
@@ -285,22 +290,8 @@ namespace BurgerShop.Customer
 
             while (remaining > 0f && exitWaypoint < exitRoute.Length)
             {
-                if(Building.FacilityLayout.Current?.HasCustomLayout==true||RestroomExpansion.Current?.Built==true)
-                {
-                    if(!StepToward(exitRoute[exitWaypoint],ref remaining))break;
-                    exitWaypoint++;continue;
-                }
-                Vector3 offset = exitRoute[exitWaypoint] - transform.position;
-                float distance = offset.magnitude;
-                if (distance > 0.0001f)
-                    transform.rotation = Quaternion.LookRotation(offset);
-                if (remaining < distance)
-                {
-                    transform.position += offset.normalized * remaining;
-                    break;
-                }
-                transform.position = exitRoute[exitWaypoint++];
-                remaining -= distance;
+                if(!StepToward(exitRoute[exitWaypoint],ref remaining))break;
+                exitWaypoint++;
             }
             if (exitWaypoint == exitRoute.Length)
             {
@@ -353,8 +344,8 @@ namespace BurgerShop.Customer
             {
                 wingTarget = target;
                 layoutRevision=Building.FacilityLayout.Current?.Revision??-1;
-                wingWalk = (Building.FacilityLayout.Current?.HasCustomLayout==true||RestroomExpansion.Current?.Built==true)?Building.FacilityLayout.Current.Route(transform.position,target):ShopLayout.WingRoute(transform.position,target);
-                if(wingWalk==null)return false;
+                wingWalk = PlannedWalk(transform.position, target);
+                if (wingWalk == null || wingWalk.Length == 0) wingWalk = new[] { target };
                 wingStep = 0;
             }
             while (wingStep < wingWalk.Length)
@@ -364,6 +355,8 @@ namespace BurgerShop.Customer
             }
             return true;
         }
+
+        static Vector3[] PlannedWalk(Vector3 from, Vector3 to) => ShopLayout.Walk(from, to);
 
         bool StepDirect(Vector3 target, ref float travel)
         {

@@ -115,7 +115,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallet.Coins, Is.EqualTo(10));
             Assert.That(wallet.CompletedSales, Is.EqualTo(1));
             Assert.That(grill.ProductionSeconds, Is.EqualTo(2f));
-            Assert.That(grill.Capacity, Is.EqualTo(6));
+            Assert.That(grill.Capacity, Is.EqualTo(ProductionStation.CapacityForLevel(2)));
             Assert.That(lamps[0].gameObject.activeSelf, Is.True);
             Assert.That(lamps[1].gameObject.activeSelf, Is.False);
             Assert.That(upgrade.NextCost, Is.EqualTo(60));
@@ -134,7 +134,7 @@ namespace BurgerShop.Tests.EditMode
             Wait(1.5f);
             Assert.That(upgrade.Level, Is.EqualTo(3));
             Assert.That(grill.ProductionSeconds, Is.EqualTo(1.5f));
-            Assert.That(grill.Capacity, Is.EqualTo(8));
+            Assert.That(grill.Capacity, Is.EqualTo(ProductionStation.CapacityForLevel(3)));
             Assert.That(wallet.Coins, Is.EqualTo(30));
             Assert.That(lamps[1].gameObject.activeSelf, Is.True);
             Leave();
@@ -223,13 +223,13 @@ namespace BurgerShop.Tests.EditMode
         {
             grill.Advance(100f);
             grill.SetProductionSeconds(1.5f);
-            Assert.That(grill.Stock, Is.EqualTo(4));
+            Assert.That(grill.Stock, Is.EqualTo(ProductionStation.CapacityForLevel(1)));
             grill.TryTakeBurger();
             grill.Advance(1.49f);
-            Assert.That(grill.Stock, Is.EqualTo(3));
+            Assert.That(grill.Stock, Is.EqualTo(ProductionStation.CapacityForLevel(1) - 1));
             grill.Advance(0.02f);
-            Assert.That(grill.Stock, Is.EqualTo(4));
-            Assert.That(output.childCount, Is.EqualTo(4));
+            Assert.That(grill.Stock, Is.EqualTo(ProductionStation.CapacityForLevel(1)));
+            Assert.That(output.childCount, Is.EqualTo(ProductionStation.CapacityForLevel(1)));
         }
 
         [Test]
@@ -245,23 +245,23 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void UpgradeRaisesStockCapFromFourToSixToEight()
         {
-            Assert.That(ProductionStation.CapacityForLevel(1), Is.EqualTo(4));
-            Assert.That(ProductionStation.CapacityForLevel(2), Is.EqualTo(6));
-            Assert.That(ProductionStation.CapacityForLevel(3), Is.EqualTo(8));
+            Assert.That(ProductionStation.CapacityForLevel(1), Is.EqualTo(5));
+            Assert.That(ProductionStation.CapacityForLevel(2), Is.EqualTo(8));
+            Assert.That(ProductionStation.CapacityForLevel(3), Is.EqualTo(12));
             grill.Advance(100f);
-            Assert.That(grill.Stock, Is.EqualTo(4));
+            Assert.That(grill.Stock, Is.EqualTo(5));
             wallet.RecordSale(90);
-            Enter();
-            Wait(1.5f);
-            Assert.That(grill.Capacity, Is.EqualTo(6));
-            grill.Advance(100f);
-            Assert.That(grill.Stock, Is.EqualTo(6));
-            Leave();
             Enter();
             Wait(1.5f);
             Assert.That(grill.Capacity, Is.EqualTo(8));
             grill.Advance(100f);
             Assert.That(grill.Stock, Is.EqualTo(8));
+            Leave();
+            Enter();
+            Wait(1.5f);
+            Assert.That(grill.Capacity, Is.EqualTo(12));
+            grill.Advance(100f);
+            Assert.That(grill.Stock, Is.EqualTo(12));
         }
 
         [Test]

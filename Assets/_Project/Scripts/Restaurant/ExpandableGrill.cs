@@ -127,7 +127,7 @@ namespace BurgerShop.Restaurant
                 cola ? new Color(0.82f, 0.92f, 1f) : new Color(1f, 0.92f, 0.72f), 36, 0.09f);
             ProductionStation station = root.gameObject.AddComponent<ProductionStation>();
             station.Configure(output, kits[0].Find("ProgressFill"), label, cookSeconds[0],
-                ProductionStation.CapacityForLevel(1), product);
+                ProductionStation.CapacityForLevel(1, product), product);
 
             GameObject spot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             spot.name = pickupName;

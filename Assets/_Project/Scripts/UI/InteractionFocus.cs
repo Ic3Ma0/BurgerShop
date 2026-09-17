@@ -15,12 +15,8 @@ namespace BurgerShop.UI
         public string Verb => label!=null?label.text:"";
         public static InteractionFocus Build(Transform parent,BurgerInventory carrier)
         {
-            var plate=HudChrome.Panel(parent,"ActionHint",new Vector2(.5f,0),Vector2.one*.5f,new Vector2(0,400),new Vector2(272,72),HudChrome.Cream);
-            var f=plate.gameObject.AddComponent<InteractionFocus>();f.player=carrier;f.card=plate;
-            f.label=HudChrome.Label(plate.transform,"Verb",Vector2.zero,Vector2.one,Vector2.one*.5f,Vector2.zero,Vector2.zero,32,HudChrome.Ink,TextAnchor.MiddleCenter,true,false);
-            var obj=new GameObject("ActiveBoundary");obj.transform.SetParent(carrier.transform.root,false);f.ring=obj.AddComponent<LineRenderer>();
-            f.ring.sharedMaterial=Core.RuntimeMaterials.Create(HudChrome.Green,true);f.ring.useWorldSpace=true;f.ring.widthMultiplier=.045f;f.ring.positionCount=49;f.ring.enabled=false;
-            return f;
+            // BS-SPEC-061: Serve/Waiting/Stock card blocked the character. Gameplay zones stay; the HUD hint does not.
+            return null;
         }
         void Discover()
         {
@@ -38,6 +34,7 @@ namespace BurgerShop.UI
         }
         void LateUpdate()
         {
+            if(card==null||label==null||player==null)return;
             if((scan-=Time.deltaTime)<=0){scan=.5f;Discover();}
             Zone best=null;float distance=float.MaxValue;
             foreach(var z in zones)if(z.Near()){float d=ShopLayout.Horizontal(z.Position,player.transform.position);if(d<distance || (best!=null&&!best.Active()&&z.Active())){best=z;distance=d;}}

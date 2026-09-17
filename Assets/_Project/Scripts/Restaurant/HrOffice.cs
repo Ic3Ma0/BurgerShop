@@ -16,10 +16,17 @@ namespace BurgerShop.Restaurant
             root.transform.SetParent(parent, false);
             HrOffice office = root.AddComponent<HrOffice>();
             office.Build(wall, floor);
+            office.SetOpen(true);
             return office;
         }
 
         public bool Contains(Vector3 point) => ShopLayout.ContainsHrOffice(point);
+
+        public void SetOpen(bool open)
+        {
+            if (gameObject.activeSelf != open) gameObject.SetActive(open);
+            ShopLayout.SealDoor(transform.parent, "HrDoorPlug", ShopLayout.HrDoor, ShopLayout.HrDoorPlugSize, !open);
+        }
 
         void Build(Material wall, Material floor)
         {

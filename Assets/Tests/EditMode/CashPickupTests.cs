@@ -234,7 +234,8 @@ namespace BurgerShop.Tests.EditMode
             serving.Advance(0.08f);
             Assert.That(cash.GetComponentsInChildren<CashPickup>().Length,Is.Zero,"Both piles have launched");
             Assert.That(wallet.Coins,Is.Zero,"Credit occurs on arrival");
-            serving.Advance(.3f);
+            // BS-SPEC-057: packets are staggered and each flight now lasts 0.30 seconds.
+            serving.Advance(CashPickup.FlyDuration+CashFloor.PickupInterval);
             Assert.That(wallet.Coins, Is.EqualTo(20));
             Assert.That(cash.GroundValue, Is.Zero);
             Assert.That(cash.PileCount, Is.Zero);

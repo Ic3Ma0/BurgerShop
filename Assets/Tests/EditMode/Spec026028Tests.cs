@@ -116,9 +116,15 @@ namespace BurgerShop.Tests.EditMode
                 var wallet=root.AddComponent<RestaurantWallet>();wallet.RestoreProgress(9999999,0);var goals=root.AddComponent<SessionGoalTracker>();goals.Configure(null,null,null,null,null,null);
                 var stars=StarProgressHud.Build(safe.transform,goals);var sales=SalesHud.Build(safe.transform,wallet);var task=TaskCapsuleHud.Build(safe.transform,goals);
                 var popup=StatUpgradePopup.Build(safe.transform,"PlayerUpgradePopup","Player upgrades","Speed","Carry");var sr=(RectTransform)safe.transform;
+                Canvas.ForceUpdateCanvases();
                 Assert.That(HudChrome.OverlapsJoystickKeepout(popup.Panel,sr),Is.False);
-                Assert.That(304f/sr.rect.height,Is.LessThanOrEqualTo(.18f));
-                Assert.That(((RectTransform)task.transform).rect.width/sr.rect.width,Is.LessThanOrEqualTo(.85f));
+                Rect starRect=HudChrome.LocalRect((RectTransform)stars.transform,sr);
+                Rect taskRect=HudChrome.LocalRect((RectTransform)task.transform,sr);
+                float occupied=sr.rect.height-Mathf.Min(starRect.yMin,taskRect.yMin);
+                Assert.That(occupied/sr.rect.height,Is.LessThanOrEqualTo(.18f));
+                Assert.That(taskRect.width/sr.rect.width,Is.LessThanOrEqualTo(.40f));
+                Assert.That(taskRect.xMin,Is.EqualTo(starRect.xMin).Within(1f));
+                Assert.That(taskRect.yMax,Is.LessThanOrEqualTo(starRect.yMin+1f));
                 Assert.That(HudChrome.LocalRect((RectTransform)stars.transform,sr).Overlaps(HudChrome.LocalRect((RectTransform)sales.transform,sr)),Is.False);
             }finally{Object.DestroyImmediate(root);}
         }
@@ -134,7 +140,8 @@ namespace BurgerShop.Tests.EditMode
                 aggregate.Advance(.6f);Assert.That(aggregate.Age,Is.GreaterThanOrEqualTo(.6f));
                 var budget=new FeedbackBudget();Assert.That(budget.Accept(FeedbackSound.Spend,0),Is.True);
                 Assert.That(budget.Accept(FeedbackSound.Spend,.19f),Is.False);Assert.That(budget.Accept(FeedbackSound.Spend,.20f),Is.True);
-                Assert.That(budget.Accept(FeedbackSound.Cash,0),Is.True);Assert.That(budget.Accept(FeedbackSound.Cash,.119f),Is.False);Assert.That(budget.Accept(FeedbackSound.Cash,.12f),Is.True);
+                // BS-SPEC-057 permits the new stream cadence while still rejecting duplicate sound requests.
+                Assert.That(budget.Accept(FeedbackSound.Cash,0),Is.True);Assert.That(budget.Accept(FeedbackSound.Cash,CashCollectionFeel.SoundInterval-.001f),Is.False);Assert.That(budget.Accept(FeedbackSound.Cash,CashCollectionFeel.SoundInterval),Is.True);
             }finally{Object.DestroyImmediate(root);}
         }
     }

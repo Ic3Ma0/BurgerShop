@@ -50,7 +50,7 @@ namespace BurgerShop.Tests.EditMode
             ExpandableGrill grill = ExpandableGrill.CreateStarter(root.transform, player, wallet);
             grill.Upgrade.RestoreLevel(3);
             grill.Station.Advance(100f);
-            Assert.That(grill.Station.Stock, Is.EqualTo(8));
+            Assert.That(grill.Station.Stock, Is.EqualTo(ProductionStation.CapacityForLevel(3)));
             Transform body = grill.ActiveLook.Find("Body");
             Transform tray = grill.ActiveLook.Find("OutputTray");
             Transform burger = grill.OutputAnchor.GetChild(0);
@@ -72,16 +72,16 @@ namespace BurgerShop.Tests.EditMode
             starter.Station.Advance(100f);
             extra.Upgrade.RestoreLevel(3);
             extra.Station.Advance(100f);
-            Assert.That(starter.Station.Stock, Is.EqualTo(4));
-            Assert.That(extra.Station.Stock, Is.EqualTo(8));
-            Assert.That(starter.Station.Capacity, Is.EqualTo(4));
-            Assert.That(extra.Station.Capacity, Is.EqualTo(8));
-            Assert.That(starter.StatusCopy, Is.EqualTo("GRILL 4/4"));
-            Assert.That(extra.StatusCopy, Is.EqualTo("GRILL 8/8  MAX"));
+            Assert.That(starter.Station.Stock, Is.EqualTo(ProductionStation.CapacityForLevel(1)));
+            Assert.That(extra.Station.Stock, Is.EqualTo(ProductionStation.CapacityForLevel(3)));
+            Assert.That(starter.Station.Capacity, Is.EqualTo(ProductionStation.CapacityForLevel(1)));
+            Assert.That(extra.Station.Capacity, Is.EqualTo(ProductionStation.CapacityForLevel(3)));
+            Assert.That(starter.StatusCopy, Is.EqualTo("GRILL 5/5"));
+            Assert.That(extra.StatusCopy, Is.EqualTo("GRILL 12/12  MAX"));
             Assert.That(CountCopy(starter.transform, "FULL"), Is.Zero);
             Assert.That(CountCopy(extra.transform, "FULL"), Is.Zero);
-            Assert.That(CountCopy(starter.transform, "GRILL 4/4"), Is.EqualTo(1));
-            Assert.That(CountCopy(extra.transform, "GRILL 8/8"), Is.EqualTo(1));
+            Assert.That(CountCopy(starter.transform, "GRILL 5/5"), Is.EqualTo(1));
+            Assert.That(CountCopy(extra.transform, "GRILL 12/12"), Is.EqualTo(1));
         }
 
         static int CountCopy(Transform root, string token)

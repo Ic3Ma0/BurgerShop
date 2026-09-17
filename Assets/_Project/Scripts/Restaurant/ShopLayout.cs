@@ -63,12 +63,11 @@ namespace BurgerShop.Restaurant
         public static readonly Vector3 ExtraCounterTop = new Vector3(ExtraCounter.x, 1.05f, ExtraCounter.z);
         public static readonly Vector3 ExtraServingCircle = new Vector3(0.6f, 0.02f, 8f);
 
-        // Dining: −X, 2×2 grid for the three starters. Extra / 031 pads moved into the back wing.
+        // Dining: −X, two Rank-2 starter pair tables (BS-SPEC-069). Extra / 031 pads stay in the back wing.
         public static readonly Vector3[] Tables =
         {
             new Vector3(-8f, 0f, 7f),
-            new Vector3(-8f, 0f, 3f),
-            new Vector3(-12f, 0f, 7f)
+            new Vector3(-8f, 0f, 3f)
         };
         public static readonly Vector3 ExtraTable = new Vector3(26f, 0f, -6f);
         public static readonly Vector3 TableUnlock = Pad(ExtraTable);
@@ -80,7 +79,8 @@ namespace BurgerShop.Restaurant
         public static Vector3 TableUpgradePad(Vector3 table) => table + TableUpgradeOffset;
         public static readonly Vector3 TrashBin = new Vector3(-13f, 0f, 0f);
 
-        // Boxing / drive-thru: south wall. BOX → PACK → WINDOW on x = −9. Lane west; Boost door east.
+        // Boxing / drive-thru: south wall. BOX → PACK → WINDOW. Cars run on
+        // StreetEnvironment.SouthStreet (z = −30, 8 m wide), just outside the window.
         public static readonly Vector3 BoxingTable = new Vector3(11f, 0f, -19f);
         public static readonly Vector3 BoxingUnlock = Pad(BoxingTable);
         public static readonly Vector3 BoxingCircle = new Vector3(11f, 0.02f, -17f);
@@ -156,6 +156,10 @@ namespace BurgerShop.Restaurant
             BurgerShop.Core.RestaurantEntrance.Outside
         };
 
+        public const float HrPlugHeight = 1.2f;
+        public static readonly Vector3 HrDoorPlugSize = new Vector3(0.4f, HrPlugHeight, HrDoorHalf * 2f);
+        public static readonly Vector3 BoostDoorPlugSize = new Vector3(BoostDoorHalf * 2f, HrPlugHeight, 0.4f);
+
         // Route cross-wing traffic through the south HR corridor, never through the office.
         public static Vector3[] WingRoute(Vector3 from, Vector3 to)
         {
@@ -171,6 +175,268 @@ namespace BurgerShop.Restaurant
             points.Add(to);
             return points.ToArray();
 
+        }
+
+        public static bool IsSouthOfShop(Vector3 point) => point.z < -WallHalf + 0.4f;
+
+        // One indoor router for customers: always a walkable path, never null-as-freeze.
+        public static Vector3[] Walk(Vector3 from, Vector3 to)
+        {
+            var layout = BurgerShop.Building.FacilityLayout.Current;
+            if (layout != null && (layout.HasCustomLayout || RestroomExpansion.Current?.Built == true))
+            {
+                Vector3[] routed = CardinalizeFrom(from, layout.Route(from, to));
+                if (UsableWalk(routed, from, to)) return routed;
+            }
+            return IndoorRoute(from, to);
+        }
+
+        // Customers never walk a straight line through the south wall: they use the 045/046 door.
+        public static Vector3[] IndoorRoute(Vector3 from, Vector3 to)
+        {
+            var points = new System.Collections.Generic.List<Vector3>();
+            Vector3 cursor = from;
+            bool fromStreet = IsSouthOfShop(from);
+            bool toStreet = IsSouthOfShop(to);
+            if (fromStreet && !toStreet)
+            {
+                if (from.x < BurgerShop.Core.RestaurantEntrance.Door.x - 2f)
+                    Append(points, ref cursor, BurgerShop.Core.RestaurantEntrance.Corner);
+                Append(points, ref cursor, BurgerShop.Core.RestaurantEntrance.Door);
+                Append(points, ref cursor, Entrance);
+            }
+            else if (!fromStreet && toStreet)
+            {
+                Append(points, ref cursor, Entrance);
+                Append(points, ref cursor, BurgerShop.Core.RestaurantEntrance.Door);
+                Append(points, ref cursor, BurgerShop.Core.RestaurantEntrance.Corner);
+            }
+            // After the door, wrap the counter on z=0. Do this even when the walk
+            // started on the street — the remaining indoor leg must not clip the desk.
+            if (!IsSouthOfShop(cursor) && !toStreet && CrossesCounter(cursor, to))
+            {
+                float aisleZ = Aisle.z;
+                Append(points, ref cursor, new Vector3(cursor.x, cursor.y, aisleZ));
+                Append(points, ref cursor, new Vector3(to.x, cursor.y, aisleZ));
+            }
+            foreach (var p in WingRoute(cursor, to))
+                Append(points, ref cursor, p);
+            StripLongRetrace(points);
+            if (points.Count == 0) points.Add(to);
+            return points.ToArray();
+        }
+
+        // Arrival (outside→door→Entrance) plus an indoor Walk that also started
+        // on the street would retrace the door corridor. Skip that overlapping prefix.
+        public static void ConcatWalk(System.Collections.Generic.List<Vector3> points, Vector3[] extra)
+        {
+            if (points == null || extra == null) return;
+            for (int i = 0; i < extra.Length; i++)
+            {
+                if (points.Count == 0)
+                {
+                    points.Add(extra[i]);
+                    continue;
+                }
+                Vector3 p = extra[i];
+                if (IsEntryApproach(p) && ContainsNear(points, p, 0.35f)) continue;
+                Vector3 cursor = points[points.Count - 1];
+                Append(points, ref cursor, p);
+            }
+        }
+
+        static bool IsEntryApproach(Vector3 p) =>
+            IsSouthOfShop(p)
+            || Horizontal(p, BurgerShop.Core.RestaurantEntrance.Outside) < 0.4f
+            || Horizontal(p, BurgerShop.Core.RestaurantEntrance.Corner) < 0.4f
+            || Horizontal(p, BurgerShop.Core.RestaurantEntrance.Door) < 0.4f
+            || Horizontal(p, Entrance) < 0.4f;
+
+        static bool ContainsNear(System.Collections.Generic.List<Vector3> points, Vector3 p, float radius)
+        {
+            for (int i = 0; i < points.Count; i++)
+                if (Horizontal(points[i], p) <= radius) return true;
+            return false;
+        }
+
+        static Vector3[] CardinalizeFrom(Vector3 from, Vector3[] route)
+        {
+            if (route == null || route.Length == 0) return route;
+            var points = new System.Collections.Generic.List<Vector3>();
+            Vector3 cursor = from;
+            for (int i = 0; i < route.Length; i++)
+                Append(points, ref cursor, route[i]);
+            StripLongRetrace(points);
+            if (points.Count == 0)
+                points.Add(new Vector3(route[route.Length - 1].x, from.y, route[route.Length - 1].z));
+            return points.ToArray();
+        }
+
+        static void Append(System.Collections.Generic.List<Vector3> points, ref Vector3 cursor, Vector3 next)
+        {
+            next.y = cursor.y;
+            const float eps = 0.05f;
+            for (int guard = 0; guard < 4; guard++)
+            {
+                Vector3 delta = next - cursor;
+                delta.y = 0f;
+                if (delta.sqrMagnitude < 0.0025f) return;
+                bool xMove = Mathf.Abs(delta.x) >= eps;
+                bool zMove = Mathf.Abs(delta.z) >= eps;
+                if (!xMove || !zMove)
+                {
+                    points.Add(next);
+                    cursor = next;
+                    return;
+                }
+                Vector3 elbow = Elbow(cursor, next);
+                if ((elbow - cursor).sqrMagnitude < 0.0025f || Horizontal(elbow, next) < eps)
+                    elbow = new Vector3(next.x, cursor.y, cursor.z);
+                if ((elbow - cursor).sqrMagnitude < 0.0025f)
+                    elbow = new Vector3(cursor.x, cursor.y, next.z);
+                points.Add(elbow);
+                cursor = elbow;
+            }
+            points.Add(next);
+            cursor = next;
+        }
+
+        // Prefer the door axis then a 90° turn into the aisle — never a hypotenuse.
+        static Vector3 Elbow(Vector3 from, Vector3 to)
+        {
+            Vector3 xFirst = new Vector3(to.x, from.y, from.z);
+            Vector3 zFirst = new Vector3(from.x, from.y, to.z);
+            bool xHit = CrossesCounter(from, xFirst) || CrossesCounter(xFirst, to);
+            bool zHit = CrossesCounter(from, zFirst) || CrossesCounter(zFirst, to);
+            if (xHit && !zHit) return zFirst;
+            if (zHit && !xHit) return xFirst;
+            if (xHit && zHit) return new Vector3(from.x, from.y, Aisle.z);
+            float doorX = BurgerShop.Core.RestaurantEntrance.Door.x;
+            if (Mathf.Abs(from.x - doorX) <= 2.5f && Mathf.Abs(to.x - doorX) > 2.5f)
+                return zFirst;
+            if (Mathf.Abs(to.x - doorX) <= 2.5f && Mathf.Abs(from.x - doorX) > 2.5f)
+                return xFirst;
+            if (Mathf.Abs(from.z - Aisle.z) <= 0.2f) return xFirst;
+            return xFirst;
+        }
+
+        static void StripLongRetrace(System.Collections.Generic.List<Vector3> points)
+        {
+            const float eps = 0.08f;
+            const float minReverse = 0.75f;
+            bool changed = true;
+            while (changed && points.Count >= 3)
+            {
+                changed = false;
+                for (int i = 0; i < points.Count - 2; i++)
+                {
+                    Vector3 a = points[i], b = points[i + 1], c = points[i + 2];
+                    bool sameZ = Mathf.Abs(a.z - b.z) < eps && Mathf.Abs(b.z - c.z) < eps;
+                    bool sameX = Mathf.Abs(a.x - b.x) < eps && Mathf.Abs(b.x - c.x) < eps;
+                    float ab = sameZ ? b.x - a.x : sameX ? b.z - a.z : 0f;
+                    float bc = sameZ ? c.x - b.x : sameX ? c.z - b.z : 0f;
+                    if ((sameX || sameZ) && ab * bc < 0f && Mathf.Abs(ab) > minReverse && Mathf.Abs(bc) > minReverse)
+                    {
+                        points.RemoveAt(i + 1);
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        static bool CrossesCounter(Vector3 from, Vector3 to)
+        {
+            return SegmentHitsRect(from, to, -4.8f, -1.2f, 3.2f, 4.8f)
+                || SegmentHitsRect(from, to, -4.8f, -1.2f, 7.2f, 8.8f);
+        }
+
+        static bool SegmentHitsRect(Vector3 a, Vector3 b, float x0, float x1, float z0, float z1)
+        {
+            for (int i = 1; i <= 8; i++)
+            {
+                float t = i / 9f;
+                float x = a.x + (b.x - a.x) * t;
+                float z = a.z + (b.z - a.z) * t;
+                if (x > x0 && x < x1 && z > z0 && z < z1) return true;
+            }
+            return false;
+        }
+
+        static bool UsableWalk(Vector3[] route, Vector3 from, Vector3 to)
+        {
+            if (route == null || route.Length == 0) return false;
+            Vector3 last = route[route.Length - 1];
+            last.y = from.y;
+            Vector3 dest = to;
+            dest.y = from.y;
+            if ((last - dest).sqrMagnitude > 0.36f) return false;
+            bool indoor = !IsSouthOfShop(from) && !IsSouthOfShop(to);
+            for (int i = 0; i < route.Length; i++)
+            {
+                Vector3 p = route[i];
+                if (indoor && IsSouthOfShop(p) && Horizontal(p, BurgerShop.Core.RestaurantEntrance.Door) > 1.2f)
+                    return false;
+                if (Horizontal(p, BurgerShop.Core.RestaurantEntrance.Door) < 1.2f) continue;
+                if (OccupiesWall(p)) return false;
+            }
+            return !HasLongRetrace(from, route);
+        }
+
+        static bool HasLongRetrace(Vector3 from, Vector3[] route)
+        {
+            if (route == null || route.Length == 0) return false;
+            var points = new System.Collections.Generic.List<Vector3>(route.Length + 1) { from };
+            points.AddRange(route);
+            const float eps = 0.08f;
+            const float minReverse = 0.75f;
+            for (int i = 0; i < points.Count - 2; i++)
+            {
+                Vector3 a = points[i], b = points[i + 1], c = points[i + 2];
+                bool sameZ = Mathf.Abs(a.z - b.z) < eps && Mathf.Abs(b.z - c.z) < eps;
+                bool sameX = Mathf.Abs(a.x - b.x) < eps && Mathf.Abs(b.x - c.x) < eps;
+                float ab = sameZ ? b.x - a.x : sameX ? b.z - a.z : 0f;
+                float bc = sameZ ? c.x - b.x : sameX ? c.z - b.z : 0f;
+                if ((sameX || sameZ) && ab * bc < 0f && Mathf.Abs(ab) > minReverse && Mathf.Abs(bc) > minReverse)
+                    return true;
+            }
+            return false;
+        }
+
+        public static bool OccupiesWall(Vector3 point, float radius = 0.32f)
+        {
+            Physics.SyncTransforms();
+            Collider[] hits = Physics.OverlapBox(point + Vector3.up * 0.6f, new Vector3(radius, 0.45f, radius));
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Collider collider = hits[i];
+                if (!SolidOccupancy.BlocksPlayer(collider)) continue;
+                string name = collider.name;
+                if (name.StartsWith("Wall") || name.StartsWith("WingWall") || name.StartsWith("HrWall")
+                    || name.Contains("DoorPlug") || name == "EntranceWallLeft")
+                    return true;
+            }
+            return false;
+        }
+
+        public static void SealDoor(Transform parent, string name, Vector3 door, Vector3 scale, bool sealedShut)
+        {
+            if (parent == null || string.IsNullOrEmpty(name)) return;
+            Transform plug = parent.Find(name);
+            if (sealedShut)
+            {
+                if (plug != null) return;
+                Transform sample = parent.Find("Wall+Z") ?? parent.Find("Wall-X") ?? parent.Find("Wall-Z_W");
+                Material material = sample != null
+                    ? sample.GetComponent<Renderer>().sharedMaterial
+                    : BurgerShop.Core.RuntimeMaterials.Create(new Color(0.40f, 0.29f, 0.17f));
+                CreateWall(parent, name, door + Vector3.up * (scale.y * 0.5f), scale, material);
+                return;
+            }
+            if (plug == null) return;
+            // Play-mode Destroy is deferred: Create() opens then bootstrap closes in the same
+            // frame, so the queued destroy would leave a permanent hole. Always tear down now.
+            Object.DestroyImmediate(plug.gameObject);
         }
 
         public static Vector3 Scaled(float x, float y, float z) => new Vector3(x * Scale, y, z * Scale);
@@ -297,11 +563,7 @@ namespace BurgerShop.Restaurant
             if (WingUnlocked) return;
             WingUnlocked = true;
             Transform plug = parent != null ? parent.Find("WingDoorPlug") : null;
-            if (plug != null)
-            {
-                if (Application.isPlaying) Object.Destroy(plug.gameObject);
-                else Object.DestroyImmediate(plug.gameObject);
-            }
+            if (plug != null) Object.DestroyImmediate(plug.gameObject);
 
             const float height = 1.2f;
             float corridorX = (WingCorridorMinX + WingCorridorMaxX) * 0.5f;
@@ -350,6 +612,8 @@ namespace BurgerShop.Restaurant
 
             CreateWall(parent, "WingDoorPlug", new Vector3(WallHalf, height * 0.5f, SideDoorZ),
                 new Vector3(0.4f, height, SideDoorHalf * 2f), material);
+            CreateWall(parent, "HrDoorPlug", new Vector3(WallHalf, height * 0.5f, HrDoorZ),
+                new Vector3(0.4f, height, HrDoorHalf * 2f), material);
 
             float northLength = WallHalf - hrMax;
             float northCenterZ = (hrMax + WallHalf) * 0.5f;
@@ -370,6 +634,8 @@ namespace BurgerShop.Restaurant
             BurgerShop.Core.RestaurantEntrance.Build(parent);
             CreateWall(parent, "Wall-Z_E", new Vector3(eastCenterX, height * 0.5f, -WallHalf),
                 new Vector3(eastLength, height, 0.4f), material);
+            CreateWall(parent, "BoostDoorPlug", new Vector3(BoostDoorX, height * 0.5f, -WallHalf),
+                new Vector3(BoostDoorHalf * 2f, height, 0.4f), material);
         }
 
         static Vector3 ClampInside(Vector3 point)

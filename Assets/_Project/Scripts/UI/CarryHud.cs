@@ -19,7 +19,7 @@ namespace BurgerShop.UI
             card=HudChrome.Panel(transform.parent,"CarryCard",new Vector2(.5f,0),Vector2.one*.5f,Vector2.zero,new Vector2(392,88),HudChrome.Cream);
             card.transform.SetSiblingIndex(transform.GetSiblingIndex());
             foodIcon=FoodIcons.Add(transform,FoodIcon.Burger,new Vector2(-164,0),40);
-            trashIcon=FoodIcons.Add(transform,FoodIcon.Clean,new Vector2(-164,-20),32);
+            trashIcon=FoodIcons.Add(transform,FoodIcon.Clean,new Vector2(-164,-20),40);
             Refresh(0);
         }
         void LateUpdate()=>Refresh(Time.deltaTime);

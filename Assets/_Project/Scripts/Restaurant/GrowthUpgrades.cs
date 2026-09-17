@@ -33,6 +33,19 @@ namespace BurgerShop.Restaurant
             get { foreach(var offer in offers.Values)if(!offer.Id.StartsWith("table-")||GetComponent<TableUpgradeBoard>()==null)yield return offer; }
         }
         public int Level(string id)=>levels.TryGetValue(id,out int n)?n:1;
+        public int HighestTryBuyLevel
+        {
+            get
+            {
+                int highest=1;
+                foreach(var pair in levels)
+                {
+                    if(pair.Key=="grill-main"||pair.Key=="grill-extra"||pair.Key=="cola-machine")continue;
+                    if(pair.Value>highest)highest=pair.Value;
+                }
+                return highest;
+            }
+        }
         public static bool ValidId(string id)=>(id!=null&&id.StartsWith("custom:")&&Guid.TryParseExact(id.Substring(7),"N",out _))||id=="cola-machine"||id=="grill-main"||id=="grill-extra"||id=="table-0"||id=="table-1"||id=="table-2"||id=="table-extra"||id=="counter-main"||id=="counter-extra"||id=="boxing"||id=="bag-machine"||id=="bag-table"||id=="bag-counter";
         public void Configure(RestaurantWallet earnings,SessionGoalTracker tracker,BurgerInventory player,ShopExpansion shop)
         {
@@ -88,6 +101,7 @@ namespace BurgerShop.Restaurant
             if(level!=expectedLevel||level>offer.Costs.Length||wallet==null||goals==null)return false;
             if(!wallet.TrySpend(offer.Costs[level-1]))return false;
             levels[id]=level+1;offer.Apply(level+1);goals.AddUpgradeStars();
+            goals.EvaluateStarGateTasks();
             FeedbackDirector.Current?.Success(offer.Target.position,"Level Up!",Player!=null?Player.transform:null);
             VisualMeshPulse.Play(offer.Target);
             GetComponent<Persistence.RestaurantPersistence>()?.Flush();

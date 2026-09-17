@@ -15,8 +15,12 @@ namespace BurgerShop.Restaurant
         public static int CarryCapacity(int tier) =>
             BaseCarry + PlayerBoost.CarryBonus(tier);
 
-        public static float WalkSpeed(int tier) =>
-            0.85f * BaseWalkSpeed * PlayerBoost.SpeedMultiplier(tier);
+        public static float WalkSpeed(int speedTier) =>
+            WalkSpeed(speedTier, 0);
+
+        public static float WalkSpeed(int speedTier, int carryTier) =>
+            0.85f * BaseWalkSpeed * PlayerBoost.SpeedMultiplier(speedTier)
+                * PlayerBoost.CarrySpeedMultiplier(carryTier);
 
         public static int CostForNextTier(int currentTier) =>
             currentTier < 0 || currentTier >= MaxTier ? 0 : Costs[currentTier];

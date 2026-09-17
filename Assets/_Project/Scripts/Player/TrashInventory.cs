@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BurgerShop.Restaurant;
+using BurgerShop.UI;
 using UnityEngine;
 
 namespace BurgerShop.Player
@@ -8,6 +9,7 @@ namespace BurgerShop.Player
     public sealed class TrashInventory : MonoBehaviour
     {
         public const float CarrySpacing = 0.28f;
+        public const float DumpDuration = 0.16f;
         readonly List<HeldTrash> items = new List<HeldTrash>();
         readonly List<TrashMotion> dumps = new List<TrashMotion>();
         readonly List<GameObject> spent = new List<GameObject>();
@@ -62,9 +64,10 @@ namespace BurgerShop.Player
             Restack();
             motion = item.Visual.gameObject.AddComponent<TrashMotion>();
             TrashMotion launched = motion;
-            launched.Launch(bin.transform, TrashBin.MouthLocal, Vector3.up * 0.32f, Vector3.one * 0.08f,
-                () => FinishDump(item, launched));
+            launched.Launch(bin.transform, TrashBin.MouthLocal, Vector3.up * 0.42f, Vector3.one * 0.08f,
+                () => FinishDump(item, launched), DumpDuration);
             dumps.Add(launched);
+            FeedbackDirector.Current?.RequestSound(FeedbackSound.Dump);
             return true;
         }
 

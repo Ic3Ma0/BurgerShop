@@ -334,7 +334,7 @@ namespace BurgerShop.Tests.EditMode
             goals.Configure(inventory, burgerGrill.Station, burgerStock, root.GetComponent<CustomerQueue>(), wallet,
                 burgerServing, DiningArea.Wrap(table), null, null, null, null, colaServing, colaMachine.Station);
             goals.Advance(2f);
-            Assert.That(goals.Title, Is.EqualTo("Complete a burger order"));
+            Assert.That(goals.Title, Is.EqualTo("Upgrade the burger machine"));
         }
 
         [Test]

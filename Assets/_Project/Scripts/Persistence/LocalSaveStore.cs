@@ -23,7 +23,10 @@ namespace BurgerShop.Persistence
         public bool CanWrite { get; private set; } = true;
         public string LastError { get; private set; }
 
-        public LocalSaveStore(string directory) => path = Path.Combine(directory, "restaurant-save.json");
+        public LocalSaveStore(string directory) : this(directory, "restaurant-save.json") { }
+
+        public LocalSaveStore(string directory, string fileName)
+            => path = Path.Combine(directory, string.IsNullOrEmpty(fileName) ? "restaurant-save.json" : fileName);
 
         public SaveLoadResult Load(out RestaurantSaveData data)
         {

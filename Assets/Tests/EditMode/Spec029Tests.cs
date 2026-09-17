@@ -68,14 +68,12 @@ namespace BurgerShop.Tests.EditMode
 
         [Test] public void NewShopGatesDiningAndAllExpansionUntilMilestoneAndStars()
         {
-            Assert.That(tracker.StarLabel, Is.EqualTo("Lv.1  0/4"));
-            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
+            Assert.That(tracker.StarLabel, Is.EqualTo("⭐ 0/4  Need 4 more stars"));
+            Assert.That(tracker.Title, Is.EqualTo("Upgrade the burger machine"));
             Assert.That(expansion.WingPad.RankVisible, Is.False);
             Assert.That(expansion.GrillPad.RankVisible, Is.False);
             Assert.That(dining.Tables[0].gameObject.activeSelf, Is.False);
             tracker.Restore(1,0,0,4);
-            Assert.That(tracker.TryUpgradeRank(1), Is.False);
-            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
             Assert.That(tracker.TryUpgradeRank(1), Is.True);
             Assert.That(dining.Tables[0].gameObject.activeSelf, Is.True);
             Assert.That(expansion.WingPad.RankVisible, Is.False);
@@ -95,7 +93,9 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(tracker.MilestoneComplete, Is.False);
             expansion.ExtraGrillUpgrade.Station.Advance(3.1f);
             Assert.That(tracker.MilestoneComplete, Is.True);
-            Assert.That(tracker.Stars, Is.EqualTo(2));
+            Assert.That(tracker.Stars, Is.EqualTo(4));
+            Assert.That(tracker.Rank, Is.EqualTo(4));
+            Assert.That(tracker.CanUpgrade, Is.False);
         }
         [Test] public void RestoreDoesNotReplayRankUp()
         {
@@ -126,21 +126,27 @@ namespace BurgerShop.Tests.EditMode
         {
             wallet.RestoreProgress(0,10);tracker.Restore(1,0,0);tracker.Advance(1);
             Assert.That(tracker.Progress,Is.Zero);
-            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
+            tracker.RecordMilestone(ShopGoalKind.UpgradeGrill);
             Assert.That(tracker.Progress,Is.EqualTo(1));
             Assert.That(tracker.Stars,Is.EqualTo(2));
-            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
+            tracker.RecordMilestone(ShopGoalKind.UpgradeGrill);
             Assert.That(tracker.Stars,Is.EqualTo(2));
+            Assert.That(tracker.Rank,Is.EqualTo(1));
         }
         [Test] public void DirtyTableNoLongerReplacesTheRankMilestone()
         {
-            tracker.Restore(2,0,0);
+            tracker.Restore(2,0,0,ShopRanks.StarCap(2)-2);
             var table=dining.Tables[0];var bag=player.gameObject.AddComponent<TrashInventory>();
             table.LeaveMealTrash(0);
             Assert.That(tracker.Title,Is.EqualTo("Clear a used dining table"));
             Assert.That(table.TryPickupTrash(bag),Is.True);
-            Assert.That(tracker.MilestoneComplete,Is.True);
-            Assert.That(tracker.Stars,Is.EqualTo(2));
+            while(table.TrashCount>0)Assert.That(table.TryPickupTrash(bag),Is.True);
+            Assert.That(tracker.Rank,Is.EqualTo(2));
+            Assert.That(tracker.CanUpgrade,Is.True);
+            Assert.That(tracker.TryUpgradeRank(2),Is.True);
+            Assert.That(tracker.Rank,Is.EqualTo(3));
+            Assert.That(tracker.Title,Is.EqualTo("Let staff complete an order"));
+            Assert.That(tracker.Stars,Is.Zero);
         }
         [Test] public void UnlockThresholdsAreExplicitAndLegacyImpliedRanksStayStable()
         {
@@ -149,6 +155,10 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopRanks.PadUnlocked(4,"GRILL"),Is.True);
             Assert.That(ShopRanks.PadUnlocked(5,"LANE"),Is.False);
             Assert.That(ShopRanks.PadUnlocked(6,"LANE"),Is.True);
+            Assert.That(ShopRanks.PadUnlocked(2,"TABLE"),Is.False);
+            Assert.That(ShopRanks.PadUnlocked(6,"WING"),Is.False);
+            Assert.That(ShopRanks.PadUnlocked(7,"WING"),Is.True);
+            Assert.That(ShopRanks.PadUnlocked(7,"FOUR"),Is.True);
         }
     }
 }

@@ -20,20 +20,36 @@ namespace BurgerShop.Core
             if (Object.FindFirstObjectByType<PlayerMotor>() != null)
                 return;
 
+            InstallShop();
+        }
+
+        public static void RebuildInstalledShop()
+        {
+            var existing = Object.FindFirstObjectByType<PlayerMotor>();
+            if (existing != null)
+            {
+                Transform root = existing.transform.parent;
+                if (root != null) Object.DestroyImmediate(root.gameObject);
+            }
+            InstallShop();
+        }
+
+        static void InstallShop()
+        {
             Transform root = new GameObject("Goal01").transform;
             Material floorMat = CreateLit(new Color(0.80f, 0.68f, 0.50f));
             Material wallMat = CreateLit(new Color(0.40f, 0.29f, 0.17f));
             Material hrFloor = CreateLit(new Color(0.72f, 0.70f, 0.62f));
             Material boostFloor = CreateLit(new Color(0.70f, 0.56f, 0.42f));
             Material playerMat = CreateLit(new Color(0.89f, 0.48f, 0.16f));
-            Material markerMat = CreateLit(new Color(0.22f, 0.55f, 0.38f));
 
             StreetEnvironment.Build(root);
             ShopLayout.CreateFloor(root, floorMat);
             ShopLayout.CreateWalls(root, wallMat);
             HrOffice office = HrOffice.Create(root, wallMat, hrFloor);
+            office.SetOpen(false);
             BoostRoom boostRoom = BoostRoom.Create(root, wallMat, boostFloor);
-            CreateMarkers(root, markerMat);
+            boostRoom.SetAnnexOpen(false);
             Transform player = CreatePlayer(root, playerMat);
             BurgerInventory inventory = player.gameObject.AddComponent<BurgerInventory>();
             TrashInventory trashBag = player.gameObject.AddComponent<TrashInventory>();
@@ -67,7 +83,6 @@ namespace BurgerShop.Core
             goals.Configure(inventory, station, stock, customers, wallet, serving, dining, trashBag, hiring, boost, expansion);
             CreateJoystick(root, inventory, pickup, customers, wallet, upgrade, hiring, goals, trashBag, staffUpgrades,
                 boost, null, tableUpgrades);
-            InteractionFocus.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), inventory);
             FeedbackDirector.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), inventory);
             WorldLabelHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), player);
             expansion.BindUpgradeHud(Object.FindFirstObjectByType<UpgradeHud>());
@@ -83,7 +98,10 @@ namespace BurgerShop.Core
             root.gameObject.AddComponent<RestroomExpansion>().Configure(wallet,inventory,goals);
             RestaurantPersistence persistence = root.gameObject.AddComponent<RestaurantPersistence>();
             persistence.Configure(wallet, upgrade, hiring, boost, expansion, staffUpgrades, goals, tables: tableUpgrades);
+            root.gameObject.AddComponent<RestaurantArchitecture>().Configure();
+            SaveSlotsHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
             FacilityDetailsHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),layout,Object.FindFirstObjectByType<Building.FacilityShopHud>(),growth);
+            UpgradeGuide.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), goals, upgrade, Object.FindFirstObjectByType<StarProgressHud>());
             CreateSaveHud(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"), persistence);
             OfflineSettleHud.Build(Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"),persistence);
             player.gameObject.AddComponent<TemporaryPowerups>().Configure(inventory,motor,wallet,Object.FindFirstObjectByType<Canvas>().transform.Find("SafeArea"));
@@ -196,28 +214,6 @@ namespace BurgerShop.Core
             return part;
         }
 
-        static void CreateMarkers(Transform root, Material material)
-        {
-            float inset = ShopLayout.WallHalf - 2f;
-            Vector3[] corners =
-            {
-                new Vector3(inset, 0.35f, inset),
-                new Vector3(-inset, 0.35f, inset),
-                new Vector3(inset, 0.35f, -inset),
-                new Vector3(-inset, 0.35f, -inset)
-            };
-
-            for (int i = 0; i < corners.Length; i++)
-            {
-                GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                marker.name = "Landmark_" + i;
-                marker.transform.SetParent(root, false);
-                marker.transform.position = corners[i];
-                marker.transform.localScale = new Vector3(1.2f, 0.7f, 1.2f);
-                ApplyMaterial(marker, material);
-            }
-        }
-
         static Transform CreatePlayer(Transform root, Material material)
         {
             GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -328,6 +324,7 @@ namespace BurgerShop.Core
 
             HudChrome.BuildTopBand(uiRoot);
             StarProgressHud.Build(uiRoot, goals);
+            TaskCapsuleHud.Build(uiRoot, goals);
             CreateCustomerHud(uiRoot, customers);
             SalesHud.Build(uiRoot, wallet);
             CreateUpgradeHud(uiRoot, upgrade);

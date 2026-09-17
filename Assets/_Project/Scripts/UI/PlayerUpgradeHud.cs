@@ -55,11 +55,15 @@ namespace BurgerShop.UI
             }
             popup.SetVisible(true);
             popup.PaintStat(true, "Speed (u/s)", board.SpeedTier,
-                Player.PlayerBoost.MoveSpeed(board.SpeedTier).ToString("0.00"),
-                Player.PlayerBoost.MoveSpeed(board.SpeedTier + 1).ToString("0.00"),
+                Player.PlayerBoost.MoveSpeed(board.SpeedTier, board.CarryTier).ToString("0.00"),
+                Player.PlayerBoost.MoveSpeed(board.SpeedTier + 1, board.CarryTier).ToString("0.00"),
                 board.SpeedIsMax, board.SpeedCost, board.Coins);
+            string carryNext = board.CarryIsMax ? Player.PlayerBoost.CarryCapacity(board.CarryTier).ToString()
+                : Player.PlayerBoost.IsEmptyCarryLevel(board.CarryTier + 1)
+                    ? Player.PlayerBoost.CarryCapacity(board.CarryTier + 1) + " · +3% speed"
+                    : Player.PlayerBoost.CarryCapacity(board.CarryTier + 1).ToString();
             popup.PaintStat(false, "Carry", board.CarryTier, Player.PlayerBoost.CarryCapacity(board.CarryTier).ToString(),
-                Player.PlayerBoost.CarryCapacity(board.CarryTier + 1).ToString(), board.CarryIsMax, board.CarryCost, board.Coins);
+                carryNext, board.CarryIsMax, board.CarryCost, board.Coins);
         }
     }
 }

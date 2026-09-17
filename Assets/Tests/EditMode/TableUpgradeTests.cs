@@ -136,9 +136,9 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(serving.TryServeFrom(player), Is.True);
             serving.Advance(BurgerServingZone.HandoffDuration);
             customer.AdvanceDeparture(0.4f);
-            for (int i = 0; i < 240 && !customer.IsEating; i++)
+            for (int i = 0; i < 1200 && !customer.IsEating; i++)
                 customer.AdvanceDeparture(1f / 60f);
-            Assert.That(customer.IsEating, Is.True);
+            Assert.That(customer.IsEating, Is.True, "Customer must sit after the indoor aisle walk");
             customer.AdvanceDeparture(table.EatSeconds + 0.2f);
             return customer;
         }
@@ -147,12 +147,14 @@ namespace BurgerShop.Tests.EditMode
         public void CatalogPaysMoreThanStarterAndMatchesCashFloor()
         {
             Assert.That(TableSetCatalog.StarterPay, Is.EqualTo(CashFloor.DiningDrop));
-            Assert.That(TableSetCatalog.UpgradeCost, Is.EqualTo(80));
+            Assert.That(TableSetCatalog.Get(TableSetId.Bistro).Cost, Is.EqualTo(50));
+            Assert.That(TableSetCatalog.Get(TableSetId.Diner).Cost, Is.EqualTo(80));
+            Assert.That(TableSetCatalog.Get(TableSetId.Patio).Cost, Is.EqualTo(120));
             Assert.That(TableSetCatalog.Get(TableSetId.Bistro).MealPay, Is.EqualTo(12));
             Assert.That(TableSetCatalog.Get(TableSetId.Diner).MealPay, Is.EqualTo(12));
-            Assert.That(TableSetCatalog.Get(TableSetId.Patio).MealPay, Is.EqualTo(15));
+            Assert.That(TableSetCatalog.Get(TableSetId.Patio).MealPay, Is.EqualTo(16));
             Assert.That(TableSetCatalog.Get(TableSetId.Diner).EatSeconds, Is.EqualTo(2.4f));
-            Assert.That(TableSetCatalog.Get(TableSetId.Patio).EatSeconds, Is.EqualTo(2.7f));
+            Assert.That(TableSetCatalog.Get(TableSetId.Patio).EatSeconds, Is.EqualTo(3.6f));
             Assert.That(TableSetCatalog.Get(TableSetId.Bistro).EatSeconds, Is.EqualTo(3f));
             for (int i = 0; i < TableSetCatalog.ChoiceCount; i++)
                 Assert.That(TableSetCatalog.Get(TableSetCatalog.Choices[i]).MealPay,
@@ -162,10 +164,10 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void BuiltStarterTablesGetPurplePadsAndUnbuiltExtraDoesNot()
         {
-            Assert.That(board.ZoneCount, Is.EqualTo(3));
+            Assert.That(board.ZoneCount, Is.EqualTo(2));
             Assert.That(GameObject.Find("Chair3UnlockPad"), Is.Null);
             Assert.That(expansion.HasExtraTable, Is.False);
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 2; i++)
             {
                 TableUpgradeZone zone = board.ZoneAt(i);
                 Assert.That(zone, Is.Not.Null);
@@ -174,6 +176,7 @@ namespace BurgerShop.Tests.EditMode
                 Color color = zone.GetComponent<Renderer>().sharedMaterial.color;
                 Assert.That(color.b, Is.GreaterThan(color.g));
             }
+            Assert.That(board.ZoneAt(2), Is.Null);
         }
 
         [Test]
@@ -182,7 +185,7 @@ namespace BurgerShop.Tests.EditMode
             wallet.RestoreProgress(150, 0);
             HoldFacility(expansion.TablePad, 3f);
             Assert.That(expansion.HasExtraTable, Is.True);
-            Assert.That(board.ZoneCount, Is.EqualTo(4));
+            Assert.That(board.ZoneCount, Is.EqualTo(3));
             Assert.That(board.ZoneAt(3).Table, Is.SameAs(expansion.ExtraTable));
             Assert.That(board.ZoneAt(3).PadPosition, Is.EqualTo(ShopLayout.TableUpgradePad(ShopLayout.ExtraTable)));
         }
@@ -190,18 +193,18 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void BuyingFourSeatAndSquareAddsUpgradePadsOnlyAfterPurchase()
         {
-            Assert.That(board.ZoneCount, Is.EqualTo(3));
+            Assert.That(board.ZoneCount, Is.EqualTo(2));
             Assert.That(GameObject.Find("Chair4UnlockPad"), Is.Null);
             Assert.That(GameObject.Find("Chair5UnlockPad"), Is.Null);
             wallet.RestoreProgress(200, 0);
             HoldFacility(expansion.FourSeatPad, 3f);
-            Assert.That(board.ZoneCount, Is.EqualTo(4));
+            Assert.That(board.ZoneCount, Is.EqualTo(3));
             Assert.That(board.ZoneAt(4).Table, Is.SameAs(expansion.FourSeatTable));
             Assert.That(board.ZoneAt(4).PadPosition, Is.EqualTo(ShopLayout.TableUpgradePad(ShopLayout.FourSeatTable)));
             Assert.That(board.ZoneAt(5), Is.Null);
             wallet.RestoreProgress(150, 0);
             HoldFacility(expansion.SquarePad, 3f);
-            Assert.That(board.ZoneCount, Is.EqualTo(5));
+            Assert.That(board.ZoneCount, Is.EqualTo(4));
             Assert.That(board.ZoneAt(5).Table, Is.SameAs(expansion.SquareTable));
             Assert.That(board.ZoneAt(5).PadPosition, Is.EqualTo(ShopLayout.TableUpgradePad(ShopLayout.SquareTable)));
             string[] chairs = { "ChairA", "ChairB", "ChairC", "ChairD" };
@@ -233,6 +236,17 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(copy, Does.Contain("bistro"));
             Assert.That(copy, Does.Contain("diner"));
             Assert.That(copy, Does.Contain("patio"));
+            Assert.That(copy, Does.Contain("value"));
+            Assert.That(copy, Does.Contain("turnover"));
+            Assert.That(copy, Does.Contain("premium"));
+            Assert.That(copy, Does.Contain("12 / meal"));
+            Assert.That(copy, Does.Contain("16 / meal"));
+            Assert.That(copy, Does.Contain("2.4s"));
+            Assert.That(copy, Does.Contain("3.6s"));
+            Assert.That(hud.Popup.SelectButtons[0].interactable, Is.True);
+            Assert.That(hud.Popup.SelectButtons[1].interactable, Is.True);
+            Assert.That(hud.Popup.SelectButtons[2].interactable, Is.False, "Patio still needs the 40 premium difference");
+            Assert.That(hud.Popup.SelectLabels[2].text.ToLowerInvariant(), Does.Contain("need"));
             Assert.That(copy, Does.Contain("select"));
             Assert.That(copy, Does.Not.Contain("diamond"));
             Assert.That(copy, Does.Not.Contain("ad"));
@@ -240,15 +254,15 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void SelectingPatioRecolorsChairsFacingTheTableAndPaysFifteen()
+        public void SelectingPatioRecolorsChairsFacingTheTableAndPaysSixteen()
         {
-            wallet.RestoreProgress(80, 0);
+            wallet.RestoreProgress(120, 0);
             Hold(board.ZoneAt(0), 2f);
             hud.RefreshNow();
             hud.ClickSelect(2);
             DiningTable table = dining.Tables[0];
             Assert.That(table.SetId, Is.EqualTo(TableSetId.Patio));
-            Assert.That(table.MealPay, Is.EqualTo(15));
+            Assert.That(table.MealPay, Is.EqualTo(16));
             Assert.That(board.ZoneAt(0).PendingChoice, Is.False);
             Assert.That(board.ZoneAt(0).gameObject.activeSelf, Is.False);
             hud.RefreshNow();
@@ -261,7 +275,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(Vector3.Dot(forward.normalized, toward.normalized), Is.GreaterThan(0.9f));
             CustomerAgent guest = FinishMealOn(table);
             Assert.That(guest.IsEating, Is.False);
-            Assert.That(cash.GroundValue, Is.EqualTo(25));
+            Assert.That(cash.GroundValue, Is.EqualTo(26));
         }
 
         [Test]
@@ -277,14 +291,31 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(serving.TryServeFrom(player), Is.True);
             serving.Advance(BurgerServingZone.HandoffDuration);
             customer.AdvanceDeparture(0.4f);
-            for (int i = 0; i < 240 && !customer.IsEating; i++)
+            for (int i = 0; i < 1200 && !customer.IsEating; i++)
                 customer.AdvanceDeparture(1f / 60f);
-            Assert.That(customer.IsEating, Is.True);
+            Assert.That(customer.IsEating, Is.True, "Customer must sit after the indoor aisle walk");
             customer.AdvanceDeparture(2.35f);
             Assert.That(customer.IsEating, Is.True);
             customer.AdvanceDeparture(0.2f);
             Assert.That(customer.IsEating, Is.False);
             Assert.That(cash.GroundValue, Is.EqualTo(22));
+        }
+
+        [Test]
+        public void PatioStillCostsThePremiumDifferenceAfterThePadDeposit()
+        {
+            wallet.RestoreProgress(80, 0);
+            Hold(board.ZoneAt(0), 2f);
+            hud.RefreshNow();
+            hud.ClickSelect(2);
+            Assert.That(dining.Tables[0].SetId, Is.EqualTo(TableSetId.Starter));
+            Assert.That(board.ZoneAt(0).PendingChoice, Is.True);
+            Assert.That(wallet.Coins, Is.Zero);
+            wallet.CollectCoins(40);
+            hud.RefreshNow();
+            hud.ClickSelect(2);
+            Assert.That(dining.Tables[0].SetId, Is.EqualTo(TableSetId.Patio));
+            Assert.That(wallet.Coins, Is.Zero);
         }
 
         [Test]
@@ -383,7 +414,7 @@ namespace BurgerShop.Tests.EditMode
                 Assert.That(data.table0Set, Is.EqualTo((int)TableSetId.Patio));
                 Assert.That(data.table1Investment, Is.EqualTo(80));
                 Assert.That(data.table1Set, Is.Zero);
-                Assert.That(data.coins, Is.EqualTo(40));
+                Assert.That(data.coins, Is.EqualTo(0));
 
                 Object.DestroyImmediate(persistence);
                 dining.Tables[0].ApplySet(TableSetId.Starter);
@@ -391,9 +422,9 @@ namespace BurgerShop.Tests.EditMode
                 persistence = root.AddComponent<RestaurantPersistence>();
                 persistence.Configure(wallet, upgrade, hiring, null, expansion, null, null, directory, tables: board);
                 Assert.That(dining.Tables[0].SetId, Is.EqualTo(TableSetId.Patio));
-                Assert.That(dining.Tables[0].MealPay, Is.EqualTo(15));
+                Assert.That(dining.Tables[0].MealPay, Is.EqualTo(16));
                 Assert.That(board.ZoneAt(1).PendingChoice, Is.True);
-                Assert.That(wallet.Coins, Is.EqualTo(40));
+                Assert.That(wallet.Coins, Is.Zero);
             }
             finally
             {
@@ -441,7 +472,7 @@ namespace BurgerShop.Tests.EditMode
             string directory = Path.Combine(Path.GetTempPath(), "BurgerShopFourSeat-" + System.Guid.NewGuid().ToString("N"));
             try
             {
-                wallet.RestoreProgress(280, 0);
+                wallet.RestoreProgress(320, 0);
                 HoldFacility(expansion.FourSeatPad, 3f);
                 Hold(board.ZoneAt(4), 2f);
                 hud.RefreshNow();
@@ -463,7 +494,7 @@ namespace BurgerShop.Tests.EditMode
                 persistence.Configure(wallet, upgrade, hiring, null, expansion, null, null, directory, tables: board);
                 Assert.That(expansion.HasFourSeatTable, Is.True);
                 Assert.That(expansion.FourSeatTable.SetId, Is.EqualTo(TableSetId.Patio));
-                Assert.That(expansion.FourSeatTable.MealPay, Is.EqualTo(15));
+                Assert.That(expansion.FourSeatTable.MealPay, Is.EqualTo(16));
                 Assert.That(board.ZoneAt(4).HasChosenSet, Is.True);
                 Assert.That(wallet.Coins, Is.Zero);
             }

@@ -175,8 +175,12 @@ namespace BurgerShop.Building
             {floors.Add(Rect.MinMaxRect(14,-8,23.4f,-4.3f));floors.Add(Rect.MinMaxRect(23.4f,-8,37.8f,11.3f));}
             if(CourierLine.Current!=null&&CourierLine.Current.AreaOpen){floors.Add(Rect.MinMaxRect(-14.8f,14,14.8f,39.8f));floors.Add(Rect.MinMaxRect(-30,39,30,44));}
             if(BagLine.Current!=null&&BagLine.Current.Expanded)floors.Add(Rect.MinMaxRect(-26.8f,-8.8f,-14,8.8f));
-            if(goals!=null&&goals.Allows(6)){floors.Add(Rect.MinMaxRect(6.9f,-27.5f,15.1f,-14));floors.Add(Rect.MinMaxRect(-37,-32,30,-27.5f));}
-            floors.Add(Rect.MinMaxRect(6.9f,-27.5f,15.1f,-14));
+            bool southBay=(goals!=null&&goals.Allows(ShopRanks.BoxingRank))||(expansion!=null&&(expansion.HasBoxing||expansion.HasDriveThru));
+            if(southBay)floors.Add(Rect.MinMaxRect(6.9f,-27.5f,15.1f,-14));
+            // South street is z≈-30 ±4; car lane width 3.4 around z=-29. The old
+            // [-32,-27.5] strip left a 0.2m gap so RoadFits rejected the authored pose.
+            if((goals!=null&&goals.Allows(ShopRanks.DriveThruRank))||(expansion!=null&&expansion.HasDriveThru))
+                floors.Add(Rect.MinMaxRect(-37f,-34f,31f,-25.5f));
             return floors;
         }
         public bool CanPlace(FacilityInstance subject,Vector3 position,float yaw,bool checkAccess=false)
@@ -200,6 +204,15 @@ namespace BurgerShop.Building
             {
                 if(!c.enabled||c.isTrigger||c.GetComponentInParent<FacilityInstance>()!=null||c.GetComponentInParent<PlayerMotor>()!=null||c.GetComponentInParent<CustomerAgent>()!=null||c.GetComponentInParent<RestaurantWorker>()!=null)continue;
                 if(!c.name.Contains("Wall")&&!c.name.Contains("Desk")&&!c.name.Contains("Landmark"))continue;
+                if(subject.Kind==FacilityKind.CarCounter)
+                {
+                    if(c.name.StartsWith("ServiceWindow"))continue;
+                    // Boxing's pack desk is the authored drive-thru counter. Until the lane
+                    // is bought it is not a FacilityInstance, so CanPlace would treat it as a
+                    // fixed wall and the supermarket could never complete Rank 6's purchase.
+                    var pack=expansion!=null?expansion.Boxing:null;
+                    if(pack!=null&&pack.CounterRoot!=null&&c.transform.IsChildOf(pack.CounterRoot))continue;
+                }
                 var b=c.bounds;var fixedShape=new PlacementFootprint(new Vector2(b.center.x,b.center.z),new Vector2(b.size.x,b.size.z),0);
                 if(PlacementGeometry.Overlaps(shape,fixedShape,.1f))return Fail("Overlaps a fixed wall");
                 obstacles.Add(fixedShape);
@@ -297,29 +310,34 @@ namespace BurgerShop.Building
         {
             var chosen=Candidate!=null?Candidate:Moving;
             if(!CanPlace(chosen,position,yaw,true))return false;
-            bool purchased=Candidate!=null;
-            var original=purchased?OriginalPad(chosen.Kind):null;
-            if(purchased&&!Unlocked(chosen.Kind))return Fail("Not unlocked");
-            if(purchased&&wallet.Coins<Price(chosen.Kind))return Fail("Not enough coins");
+            bool buying=Candidate!=null;
+            bool spentOnPurchase=buying;
+            var original=buying?OriginalPad(chosen.Kind):null;
+            if(buying&&!Unlocked(chosen.Kind))return Fail("Not unlocked");
+            if(buying&&wallet.Coins<Price(chosen.Kind))return Fail("Not enough coins");
             Committing=true;
             try {
-            if(purchased&&!wallet.TrySpend(Price(chosen.Kind)))return Fail("Not enough coins");
+            if(buying&&!wallet.TrySpend(Price(chosen.Kind)))return Fail("Not enough coins");
             if(original!=null)
             {
                 var kind=chosen.Kind;
                 original.RestoreInvestment(original.Cost);Discover();
-                chosen=instances[OriginalId(kind)];
-                Candidate.gameObject.SetActive(false);BurgerVisual.Release(Candidate.gameObject);Candidate=null;
-                purchased=false;
+                if(instances.TryGetValue(OriginalId(kind),out var existing))
+                {
+                    chosen=existing;
+                    Candidate.gameObject.SetActive(false);BurgerVisual.Release(Candidate.gameObject);Candidate=null;
+                    buying=false;
+                }
             }
             chosen.transform.SetPositionAndRotation(new Vector3(position.x,0,position.z),Quaternion.Euler(0,yaw,0));
-            if(purchased)
+            if(Candidate!=null)
             {
                 chosen.transform.SetParent(transform,true);chosen.gameObject.SetActive(true);
                 instances.Add(chosen.Id,chosen);Activate(chosen);
             }
             chosen.Moved?.Invoke();if(plannedConveyors!=null)GetComponent<CourierLine>()?.ApplyConveyors(plannedConveyors);Candidate=null;Moving=null;HasCustomLayout=true;Revision++;
             } finally { Committing=false; }
+            if(spentOnPurchase)goals?.AddUpgradeStars();
             GetComponent<RestaurantPersistence>()?.Flush();Changed?.Invoke();return true;
         }
         void Activate(FacilityInstance f)
@@ -347,6 +365,12 @@ namespace BurgerShop.Building
                 if(grill.Station.Product==KitchenProduct.Burger)hiring?.RegisterKitchen(grill.Station,grill.Pickup.PickupPoint);
                 FindFirstObjectByType<UpgradeHud>()?.AddZone(grill.Upgrade);
             }
+            foreach(var lane in f.GetComponentsInChildren<DriveThruLane>(true))
+            {
+                expansion?.AdoptDriveThru(lane);
+                var pack=f.GetComponentInChildren<BoxingStation>()??expansion?.Boxing;
+                lane.BindBoxing(pack);
+            }
         }
         FacilityInstance Wrap(string id,FacilityKind kind,Transform model,Vector3 pivot)
         {
@@ -366,7 +390,7 @@ namespace BurgerShop.Building
             for(int i=0;i<dining.TableCount;i++)
             {
                 var table=dining.Tables[i];if(table==null||table.GetComponentInParent<FacilityInstance>()!=null)continue;
-                string id=i<3?"table-"+i:table==expansion.ExtraTable?"table-extra":table==expansion.FourSeatTable?"table-four":"table-square";
+                string id=i<ShopLayout.Tables.Length?"table-"+i:table==expansion.ExtraTable?"table-extra":table==expansion.FourSeatTable?"table-four":"table-square";
                 Wrap(id,(FacilityKind)(int)table.Kind,table.transform,table.Center);
             }
             foreach(var grill in GetComponentsInChildren<ExpandableGrill>(true))
@@ -377,7 +401,8 @@ namespace BurgerShop.Building
             }
             foreach(var stock in GetComponentsInChildren<CounterStock>(true))
             {
-                if(stock.GetComponentInParent<FacilityInstance>()!=null||stock.GetComponent<BoxingStation>()!=null)continue;
+                if(stock.GetComponentInParent<FacilityInstance>()!=null||stock.GetComponentInParent<BoxingStation>()!=null)continue;
+                if(stock.GetComponent<FacilityLayout>()!=null||stock.GetComponent<ShopExpansion>()!=null)continue;
                 if(stock==expansion.ExtraStock&&stock.GetComponent<BurgerServingZone>()==null)
                 {
                     BurgerServingZone main=null;foreach(var line in GetComponentsInChildren<BurgerServingZone>())if(line.Stock!=stock&&line.DropZone.Product==KitchenProduct.Burger){main=line;break;}
@@ -394,11 +419,17 @@ namespace BurgerShop.Building
             }
             var box=expansion.Boxing;
             if(box!=null)
-            {
                 Wrap("boxing",FacilityKind.BlueBoxTable,box.WorkRoot,ShopLayout.BoxingTable);
-                var counter=Wrap("car-counter",FacilityKind.CarCounter,box.CounterRoot,ShopLayout.PackageCounter);
+            if(expansion!=null&&expansion.HasDriveThru)
+            {
+                Transform model=box!=null?box.CounterRoot:expansion.DriveThru.transform;
+                Vector3 pivot=box!=null?ShopLayout.PackageCounter:ShopLayout.DriveThruWindow;
+                var counter=Wrap("car-counter",FacilityKind.CarCounter,model,pivot);
                 if(expansion.DriveThru!=null&&expansion.DriveThru.GetComponentInParent<FacilityInstance>()==null)
-                {expansion.DriveThru.transform.SetParent(counter.transform,true);expansion.DriveThru.transform.localPosition=-ShopLayout.PackageCounter;expansion.DriveThru.transform.localRotation=Quaternion.identity;FacilityFactory.AddPorts(counter);}
+                {
+                    expansion.DriveThru.AttachToWindow(counter.transform);
+                    FacilityFactory.AddPorts(counter);
+                }
             }
             var bag=GetComponent<BagLine>();
             if(bag!=null)

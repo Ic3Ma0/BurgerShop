@@ -34,21 +34,21 @@ namespace BurgerShop.Building
         public const int BagTablePrice=200;
         public const int BagCounterPrice=300;
         static readonly FacilityOffer[] offers={
-            new FacilityOffer(FacilityKind.PairTable,"Dining table",ShopExpansion.TableCost,2),
-            new FacilityOffer(FacilityKind.FourSeatTable,"Four-seat table",ShopExpansion.FourSeatCost,7),
-            new FacilityOffer(FacilityKind.SquareTable,"Square table",ShopExpansion.SquareTableCost,7),
-            new FacilityOffer(FacilityKind.BurgerMachine,"Burger machine",ShopExpansion.GrillCost,1),
-            new FacilityOffer(FacilityKind.ColaMachine,"Cola machine",ShopExpansion.GrillCost,7),
-            new FacilityOffer(FacilityKind.BlueBoxTable,"Blue-box packing",ShopExpansion.BoxingCost,5),
-            new FacilityOffer(FacilityKind.RedBoxMachine,"Red-box packing",RedMachinePrice,8),
-            new FacilityOffer(FacilityKind.BagMachine,"Paper bag machine",BagMachinePrice,10),
-            new FacilityOffer(FacilityKind.BagTable,"Bagging table",BagTablePrice,10),
-            new FacilityOffer(FacilityKind.BurgerCounter,"Burger counter",ShopExpansion.CounterCost,1),
-            new FacilityOffer(FacilityKind.ColaCounter,"Cola counter",ShopExpansion.CounterCost,7),
-            new FacilityOffer(FacilityKind.CarCounter,"Drive-thru counter",ShopExpansion.DriveThruCost,6),
-            new FacilityOffer(FacilityKind.BagCounter,"Pickup counter",BagCounterPrice,10),
-            new FacilityOffer(FacilityKind.CourierTray,"Courier pickup tray",CourierTrayPrice,8),
-            new FacilityOffer(FacilityKind.TrashBin,"Trash bin",TrashBinPrice,2)
+            new FacilityOffer(FacilityKind.PairTable,"Dining table",ShopExpansion.TableCost,ShopRanks.DiningRank),
+            new FacilityOffer(FacilityKind.FourSeatTable,"Four-seat table",ShopExpansion.FourSeatCost,ShopRanks.ColaWingRank),
+            new FacilityOffer(FacilityKind.SquareTable,"Square table",ShopExpansion.SquareTableCost,ShopRanks.ColaWingRank),
+            new FacilityOffer(FacilityKind.BurgerMachine,"Burger machine",ShopExpansion.GrillCost,ShopRanks.ExtraKitchenRank),
+            new FacilityOffer(FacilityKind.ColaMachine,"Cola machine",ShopExpansion.GrillCost,ShopRanks.ColaWingRank),
+            new FacilityOffer(FacilityKind.BlueBoxTable,"Blue-box packing",ShopExpansion.BoxingCost,ShopRanks.BoxingRank),
+            new FacilityOffer(FacilityKind.RedBoxMachine,"Red-box packing",RedMachinePrice,ShopRanks.CourierRank),
+            new FacilityOffer(FacilityKind.BagMachine,"Paper bag machine",BagMachinePrice,ShopRanks.WestRank),
+            new FacilityOffer(FacilityKind.BagTable,"Bagging table",BagTablePrice,ShopRanks.WestRank),
+            new FacilityOffer(FacilityKind.BurgerCounter,"Burger counter",ShopExpansion.CounterCost,ShopRanks.ExtraKitchenRank),
+            new FacilityOffer(FacilityKind.ColaCounter,"Cola counter",ShopExpansion.CounterCost,ShopRanks.ColaWingRank),
+            new FacilityOffer(FacilityKind.CarCounter,"Drive-thru counter",ShopExpansion.DriveThruCost,ShopRanks.DriveThruRank),
+            new FacilityOffer(FacilityKind.BagCounter,"Pickup counter",BagCounterPrice,ShopRanks.WestRank),
+            new FacilityOffer(FacilityKind.CourierTray,"Courier pickup tray",CourierTrayPrice,ShopRanks.CourierRank),
+            new FacilityOffer(FacilityKind.TrashBin,"Trash bin",TrashBinPrice,ShopRanks.DiningRank)
         };
         public static IReadOnlyList<FacilityOffer> Offers=>Array.AsReadOnly(offers);
         public static FacilityOffer Get(FacilityKind kind)

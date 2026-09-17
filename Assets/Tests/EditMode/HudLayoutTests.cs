@@ -73,9 +73,10 @@ namespace BurgerShop.Tests.EditMode
             Text title = capsule.transform.Find("TaskTitle").GetComponent<Text>();
             Text progress = capsule.transform.Find("TaskProgress").GetComponent<Text>();
             Text coins = sales.GetComponent<Text>();
-            Assert.That(starValue.text, Is.EqualTo("Lv.1  0/4"));
-            Assert.That(title.text, Is.EqualTo("Complete a burger order"));
+            Assert.That(starValue.text, Is.EqualTo("⭐ 0/4  Need 4 more stars"));
+            Assert.That(title.text, Is.EqualTo("Upgrade the burger machine"));
             Assert.That(progress.text, Is.EqualTo("0/1"));
+            Assert.That(title.text, Does.Not.Contain("Collect").And.Not.Contain("Stock").And.Not.Contain("Serve"));
             Assert.That(coins.text, Is.EqualTo("0"));
             Assert.That(coins.text, Does.Not.Contain("SERVED").And.Not.Contain("COINS"));
             Assert.That(capsule.GetComponent<Image>().color, Is.EqualTo(HudChrome.CapsuleIdle));
@@ -94,12 +95,41 @@ namespace BurgerShop.Tests.EditMode
             stars.RefreshNow();
             Text title = capsule.transform.Find("TaskTitle").GetComponent<Text>();
             Text progress = capsule.transform.Find("TaskProgress").GetComponent<Text>();
-            Assert.That(tracker.Title, Is.EqualTo("Complete a burger order"));
-            Assert.That(title.text, Is.EqualTo("Complete a burger order"));
+            Assert.That(tracker.Title, Is.EqualTo("Upgrade the burger machine"));
+            Assert.That(title.text, Is.EqualTo("Upgrade the burger machine"));
             Assert.That(progress.text, Is.EqualTo("0/1"));
             Assert.That(capsule.GetComponent<Image>().color, Is.EqualTo(HudChrome.CapsuleIdle));
             Assert.That(capsule.transform.Find("TaskBadge/TaskCheck").GetComponent<Image>().enabled, Is.False);
             Assert.That(capsule.transform.Find("TaskBadge/TaskGlyph").GetComponent<Image>().enabled, Is.True);
+        }
+
+        [Test]
+        public void TaskCapsuleSitsCompactUnderTheRankChip()
+        {
+            RectTransform star = (RectTransform)stars.transform;
+            RectTransform task = (RectTransform)capsule.transform;
+            Assert.That(task.anchorMin, Is.EqualTo(TaskCapsuleHud.LayoutAnchor));
+            Assert.That(task.anchorMax, Is.EqualTo(TaskCapsuleHud.LayoutAnchor));
+            Assert.That(task.pivot, Is.EqualTo(TaskCapsuleHud.LayoutAnchor));
+            Assert.That(task.anchoredPosition, Is.EqualTo(TaskCapsuleHud.LayoutPosition));
+            Assert.That(task.sizeDelta, Is.EqualTo(TaskCapsuleHud.LayoutSize));
+            Assert.That(task.sizeDelta.x, Is.EqualTo(star.sizeDelta.x));
+            Assert.That(task.sizeDelta.y, Is.LessThan(star.sizeDelta.y));
+            Assert.That(task.sizeDelta.y, Is.LessThanOrEqualTo(52f));
+
+            Rect starRect = HudChrome.LocalRect(star, safe);
+            Rect taskRect = HudChrome.LocalRect(task, safe);
+            Assert.That(taskRect.xMin, Is.EqualTo(starRect.xMin).Within(0.5f));
+            Assert.That(taskRect.yMax, Is.LessThanOrEqualTo(starRect.yMin + 0.5f));
+            Assert.That(taskRect.width, Is.LessThanOrEqualTo(starRect.width + 0.5f));
+            Assert.That(HudChrome.LocalRect((RectTransform)sales.transform, safe).Overlaps(taskRect), Is.False);
+
+            RectTransform bar = (RectTransform)capsule.transform.Find("TaskBarBack");
+            Assert.That(bar.sizeDelta.y, Is.EqualTo(TaskCapsuleHud.ProgressHairline));
+            Assert.That(capsule.transform.Find("TaskTitle").GetComponent<Text>().fontSize, Is.EqualTo(20));
+            Assert.That(capsule.transform.Find("TaskTitle").GetComponent<Text>().resizeTextForBestFit, Is.True);
+            Assert.That(capsule.transform.Find("TaskProgress").GetComponent<Text>().fontSize, Is.EqualTo(18));
+            Assert.That(((RectTransform)capsule.transform.Find("TaskBadge")).sizeDelta, Is.EqualTo(new Vector2(22f, 22f)));
         }
 
         [Test]
@@ -145,6 +175,36 @@ namespace BurgerShop.Tests.EditMode
             customerText.font = HudChrome.Font();
             customers.AddComponent<CustomerQueueHud>().Configure(null, customerText);
             Assert.That(customers.GetComponent<CanvasGroup>().alpha, Is.Zero);
+        }
+
+        [Test]
+        public void ServeWaitingHintCardIsNotCreated()
+        {
+            var inventory = new GameObject("HintPlayer").AddComponent<BurgerInventory>();
+            inventory.transform.SetParent(root.transform);
+            inventory.Configure();
+            Assert.That(InteractionFocus.Build(safe, inventory), Is.Null);
+            Assert.That(safe.Find("ActionHint"), Is.Null);
+            Assert.That(Object.FindObjectsByType<InteractionFocus>(FindObjectsSortMode.None).Length, Is.Zero);
+        }
+
+        [Test]
+        public void CarryHudTrashIconMatchesFoodSize()
+        {
+            var carry = new GameObject("CarryStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            carry.transform.SetParent(safe, false);
+            Text carryText = carry.GetComponent<Text>();
+            carryText.font = HudChrome.Font();
+            var inventory = carry.AddComponent<BurgerInventory>();
+            inventory.Configure();
+            var trash = carry.AddComponent<TrashInventory>();
+            carry.AddComponent<CarryHud>().Configure(inventory, null, carryText, trashBag: trash);
+            RectTransform food = (RectTransform)carry.transform.Find("BurgerIcon");
+            RectTransform waste = (RectTransform)carry.transform.Find("CleanIcon");
+            Assert.That(food, Is.Not.Null);
+            Assert.That(waste, Is.Not.Null);
+            Assert.That(food.sizeDelta, Is.EqualTo(new Vector2(40f, 40f)));
+            Assert.That(waste.sizeDelta, Is.EqualTo(new Vector2(40f, 40f)));
         }
 
         [Test]

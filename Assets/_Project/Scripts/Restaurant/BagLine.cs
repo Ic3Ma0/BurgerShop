@@ -63,7 +63,7 @@ namespace BurgerShop.Restaurant
         }
         public bool TryExpand()
         {
-            if(Expanded||goals==null||!goals.Allows(ShopRanks.ContentEnd))return false;
+            if(Expanded||goals==null||!goals.Allows(ShopRanks.WestRank))return false;
             BuildArea();GetComponent<RestaurantPersistence>()?.Flush();return true;
         }
         void BuildArea()
@@ -249,7 +249,7 @@ namespace BurgerShop.Restaurant
         }
         void Update()
         {
-            if(!Expanded&&goals!=null&&goals.Allows(ShopRanks.ContentEnd)&&expandLabel==null)
+            if(!Expanded&&goals!=null&&goals.Allows(ShopRanks.WestRank)&&expandLabel==null)
                 expandLabel=ShopFixtures.CreateStationLabel(transform,"ExpansionMarker",new Vector3(-14,1.4f,-2),"WEST EXPANSION\nTap star → Expand");
             Advance(Time.deltaTime);
         }

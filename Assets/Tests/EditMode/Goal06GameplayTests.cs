@@ -85,7 +85,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(visual.ActiveLookName, Is.EqualTo("Look_Lv2"));
             Assert.That(visual.ActiveLook.Find("Lamp_1"), Is.Not.Null);
             Assert.That(visual.ActiveLook.Find("Splashback"), Is.Not.Null);
-            Assert.That(grill.Capacity, Is.EqualTo(6));
+            Assert.That(grill.Capacity, Is.EqualTo(ProductionStation.CapacityForLevel(2)));
             yield return WaitSeconds(10f);
             Assert.That(upgrade.Level, Is.EqualTo(2));
             Assert.That(wallet.Coins, Is.Zero);

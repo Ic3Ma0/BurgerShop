@@ -34,6 +34,7 @@ namespace BurgerShop.Tests.EditMode
             inventory.Configure();
             Transform output = new GameObject("Output").transform;
             output.SetParent(root.transform);
+            output.position = new Vector3(5f, 0.8f, 9f);
             grill = root.AddComponent<ProductionStation>();
             grill.Configure(output, null, null);
             wallet = root.AddComponent<RestaurantWallet>();
@@ -42,6 +43,7 @@ namespace BurgerShop.Tests.EditMode
             point.position = new Vector3(0.9f, 0f, 3.3f);
             Transform anchor = new GameObject("StockAnchor").transform;
             anchor.SetParent(root.transform);
+            anchor.position = new Vector3(-2f, 1.23f, 4f);
             stock = root.AddComponent<CounterStock>();
             stock.Configure(anchor, null);
             drop = root.AddComponent<CounterDropZone>();
@@ -345,8 +347,61 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(stock.IsFull, Is.False);
             Assert.That(stock.Count, Is.EqualTo(12));
             Assert.That(label.text, Is.EqualTo("12"));
-            Assert.That(anchor.childCount, Is.EqualTo(CounterStock.MaxVisibleBurgers));
-            Assert.That(anchor.childCount, Is.LessThan(stock.Count));
+            Assert.That(anchor.childCount, Is.EqualTo(12));
+            Vector3 first = anchor.GetChild(0).localPosition;
+            for (int i = 0; i < anchor.childCount; i++)
+            {
+                Vector3 local = anchor.GetChild(i).localPosition;
+                Assert.That(local.x, Is.EqualTo(first.x).Within(0.001f));
+                Assert.That(local.z, Is.EqualTo(first.z).Within(0.001f));
+                Assert.That(local.y, Is.EqualTo(i * CounterStock.LayerHeight).Within(0.001f));
+            }
+        }
+
+        [Test]
+        public void TakingABurgerFliesTheCounterVisualNotASpawnAtTheOrigin()
+        {
+            FillQueue();
+            Transform anchor = root.transform.Find("StockAnchor");
+            DepositUntil(12);
+            Assert.That(anchor.childCount, Is.EqualTo(12));
+            Transform piled = anchor.GetChild(anchor.childCount - 1);
+            Vector3 pilePos = piled.position;
+            Assert.That(pilePos.y, Is.GreaterThan(1f));
+            Assert.That(Vector3.Distance(pilePos, Vector3.zero), Is.GreaterThan(2f));
+            Assert.That(Vector3.Distance(pilePos, grill.OutputAnchor.position), Is.GreaterThan(2f));
+
+            AtCounter();
+            Assert.That(serving.TryServeFrom(inventory), Is.True);
+            Assert.That(stock.Count, Is.EqualTo(11));
+            Assert.That(anchor.childCount, Is.EqualTo(11));
+            Assert.That(piled.parent, Is.EqualTo(queue.ReadyCustomer.transform));
+            Assert.That(Vector3.Distance(piled.position, pilePos), Is.LessThan(0.05f));
+
+            serving.Advance(0.08f);
+            Assert.That(piled.gameObject.activeInHierarchy, Is.True);
+            Assert.That(Vector3.Distance(piled.position, pilePos), Is.LessThan(Vector3.Distance(piled.position, Vector3.zero)));
+            Assert.That(Vector3.Distance(piled.position, pilePos),
+                Is.LessThan(Vector3.Distance(piled.position, grill.OutputAnchor.position)));
+        }
+
+        [Test]
+        public void TakingABoxedItemReturnsTheSameCounterTransform()
+        {
+            Transform anchor = root.transform.Find("StockAnchor");
+            grill.Advance(12f);
+            Assert.That(inventory.TryCollectFrom(grill), Is.True);
+            Assert.That(inventory.TryBoxOne(), Is.True);
+            Assert.That(stock.TryPlaceBoxedFrom(inventory), Is.True);
+            Assert.That(anchor.childCount, Is.EqualTo(1));
+            Transform boxed = anchor.GetChild(0);
+            Vector3 pilePos = boxed.position;
+            Assert.That(stock.TryTakeBoxed(out Transform taken), Is.True);
+            Assert.That(taken, Is.SameAs(boxed));
+            Assert.That(stock.Count, Is.Zero);
+            Assert.That(anchor.childCount, Is.Zero);
+            Assert.That(Vector3.Distance(taken.position, pilePos), Is.LessThan(0.01f));
+            Assert.That(Vector3.Distance(taken.position, Vector3.zero), Is.GreaterThan(2f));
         }
 
         [Test]
@@ -406,6 +461,32 @@ namespace BurgerShop.Tests.EditMode
             Vector3 waitOffset = waiter.transform.position - area.WaitPosition;
             waitOffset.y = 0f;
             Assert.That(waitOffset.magnitude, Is.LessThan(0.15f));
+        }
+
+        [Test]
+        public void LastBurgerOfATwoItemOrderLeavesTheCounter()
+        {
+            queue.OrderQuantityFactory = () => 2;
+            FillQueue();
+            Load(2);
+            AtCounter();
+            CustomerAgent customer = queue.ReadyCustomer;
+            Vector3 slot = customer.transform.position;
+            serving.Advance(0.01f);
+            CompleteHandoff();
+            Assert.That(customer.IsDeparting, Is.False);
+            Assert.That(customer.RemainingQuantity, Is.EqualTo(1));
+            Assert.That(queue.ReadyCustomer, Is.SameAs(customer));
+            serving.Advance(1f);
+            CompleteHandoff();
+            Assert.That(customer.Order.IsComplete, Is.True);
+            Assert.That(customer.IsDeparting, Is.True);
+            Assert.That(queue.FrontCustomer, Is.Not.SameAs(customer));
+            customer.AdvanceDeparture(0.4f);
+            for (int i = 0; i < 60; i++) customer.AdvanceDeparture(1f / 60f);
+            Vector3 moved = customer.transform.position - slot;
+            moved.y = 0f;
+            Assert.That(moved.magnitude, Is.GreaterThan(0.4f));
         }
 
         void DepositUntil(int total)

@@ -64,7 +64,7 @@ namespace BurgerShop.UI
             string hint = !zone.IsAvailable ? "Upgrade unavailable"
                 : zone.MissingCoins > 0 ? $"Need {zone.MissingCoins} more coins"
                 : $"Stay here to upgrade - {Mathf.FloorToInt(zone.Progress * 100f)}%";
-            label.text = $"{zone.ProductNoun} LV {zone.Level} > {zone.Level + 1}\n{zone.NextCost} COINS  |  {zone.CurrentProductionSeconds:0.0}s > {zone.NextProductionSeconds:0.0}s\n{hint}";
+            label.text = $"{zone.ProductNoun} LV {zone.Level} > {zone.Level + 1}\n{zone.NextCost} COINS  |  {zone.CurrentProductionSeconds:0.0}s > {zone.NextProductionSeconds:0.0}s\n{ShopRanks.StarRewardCopy}\n{hint}";
         }
     }
 }

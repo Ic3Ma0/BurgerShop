@@ -16,6 +16,8 @@ User direction → a concise spec (`docs/specs/SPEC_TEMPLATE.md`, id `BS-SPEC-XX
 
 Do not add features because they would be “more like Pizza Ready.” Current long-term product intent is a one-to-one of Pizza Ready, but existing code is a prototype. Freeze behavior in a spec first.
 
+For new gameplay, expansion, progression or economic design, use `docs/design/BURGER_RESTAURANT_DIRECTION.md` → “新增玩法的分析要求” and the relevant sections of `docs/specs/SPEC_TEMPLATE.md`. Explain the player's current need, restaurant logic, distinct decision, unlock sequence and economy impact before proposing implementation. More content alone is not a design justification; historical numeric snapshots must be checked against current code.
+
 Baseline snapshot: `docs/PRODUCT_AGENT_HANDOFF.md`. Save rules: `docs/goal-08-save.md`. Historical device evidence only: `docs/goal-09-device-vivo.md` (not a current acceptance requirement).
 
 ## Engineering constraints

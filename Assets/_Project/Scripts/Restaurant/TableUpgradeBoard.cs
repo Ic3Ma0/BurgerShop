@@ -7,7 +7,7 @@ namespace BurgerShop.Restaurant
 {
     public sealed class TableUpgradeBoard : MonoBehaviour
     {
-        public const int StarterTableCount = 3;
+        public const int StarterTableCount = 2;
         public const int ExtraPairIndex = 3;
         public const int FourSeatIndex = 4;
         public const int SquareIndex = 5;

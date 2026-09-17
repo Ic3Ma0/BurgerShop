@@ -83,7 +83,7 @@ namespace BurgerShop.Restaurant
 
         public void ApplyStaffTiers(int speedTier, int carryTier)
         {
-            walkSpeed = StaffBoost.WalkSpeed(speedTier);
+            walkSpeed = StaffBoost.WalkSpeed(speedTier, carryTier);
             Inventory?.Configure(StaffBoost.CarryCapacity(carryTier));
         }
         internal void RecordCompletedOrder(bool window = false)
@@ -447,7 +447,7 @@ namespace BurgerShop.Restaurant
             pickupCooldown = Mathf.Max(0f, pickupCooldown - deltaTime);
             if (pickupCooldown <= 0f && Trash.Count > 0 && bin.TryDumpFrom(Trash, out TrashMotion started))
             {
-                pickupCooldown = 0.35f;
+                pickupCooldown = TrashBin.DumpInterval;
                 CompletedClears++;
                 started.Advance(deltaTime);
             }
@@ -603,7 +603,11 @@ namespace BurgerShop.Restaurant
             else route = new[] { AtHeight(aisleCorner), AtHeight(destination) };
             if (ShopLayout.WingUnlocked && (destination.x > ShopLayout.WallHalf || transform.position.x > ShopLayout.WallHalf))
                 route = System.Array.ConvertAll(ShopLayout.WingRoute(transform.position, destination), AtHeight);
-            if(Building.FacilityLayout.Current?.HasCustomLayout==true||RestroomExpansion.Current?.Built==true)route=Building.FacilityLayout.Current.Route(transform.position,destination);
+            if(Building.FacilityLayout.Current?.HasCustomLayout==true||RestroomExpansion.Current?.Built==true)
+            {
+                var routed=Building.FacilityLayout.Current.Route(transform.position,destination);
+                route=routed!=null&&routed.Length>0?routed:ShopLayout.Walk(transform.position,destination);
+            }
             waypoint = 0;
         }
 

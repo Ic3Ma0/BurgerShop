@@ -7,7 +7,8 @@ namespace BurgerShop.Restaurant
 
     public sealed class ProductionStation : MonoBehaviour
     {
-        public static readonly int[] LevelCaps = { 4, 6, 8 };
+        public static readonly int[] BurgerLevelCaps = { 5, 8, 12 };
+        public static readonly int[] ColaLevelCaps = { 4, 6, 8 };
 
         [SerializeField, Min(0.1f)] float productionSeconds = 3f;
         [SerializeField, Min(1)] int capacity = 4;
@@ -30,7 +31,13 @@ namespace BurgerShop.Restaurant
         public event Action<int> StockChanged;
 
         public static int CapacityForLevel(int level) =>
-            LevelCaps[Mathf.Clamp(level, 1, LevelCaps.Length) - 1];
+            CapacityForLevel(level, KitchenProduct.Burger);
+
+        public static int CapacityForLevel(int level, KitchenProduct product)
+        {
+            int[] caps = product == KitchenProduct.Cola ? ColaLevelCaps : BurgerLevelCaps;
+            return caps[Mathf.Clamp(level, 1, caps.Length) - 1];
+        }
 
         public void Configure(Transform output, Transform fill, TextMesh label, float seconds = 3f, int maxStock = 4,
             KitchenProduct kind = KitchenProduct.Burger)

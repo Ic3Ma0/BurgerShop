@@ -42,11 +42,10 @@ namespace BurgerShop.Tests.EditMode
         public void ShopTablesEachHaveTwoChairsFacingTheTop()
         {
             DiningArea area = DiningArea.Create(root.transform, DiningArea.ShopPositions);
-            Assert.That(area.TableCount, Is.EqualTo(3));
-            Assert.That(area.SeatCount, Is.EqualTo(6));
+            Assert.That(area.TableCount, Is.EqualTo(2));
+            Assert.That(area.SeatCount, Is.EqualTo(4));
             Assert.That(area.Tables[0].Center, Is.EqualTo(ShopLayout.Tables[0]));
             Assert.That(area.Tables[1].Center, Is.EqualTo(ShopLayout.Tables[1]));
-            Assert.That(area.Tables[2].Center, Is.EqualTo(ShopLayout.Tables[2]));
             for (int i = 0; i < area.TableCount; i++)
             {
                 DiningTable dining = area.Tables[i];
@@ -57,11 +56,11 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void ThreeTablesOfferSixSeatsThenAWaitAtTheEdge()
+        public void TwoTablesOfferFourSeatsThenAWaitAtTheEdge()
         {
             DiningArea area = DiningArea.Create(root.transform, DiningArea.ShopPositions);
-            var guests = new CustomerAgent[7];
-            for (int i = 0; i < 6; i++)
+            var guests = new CustomerAgent[5];
+            for (int i = 0; i < 4; i++)
             {
                 guests[i] = new GameObject("Guest_" + i).AddComponent<CustomerAgent>();
                 guests[i].transform.SetParent(root.transform, false);
@@ -71,14 +70,14 @@ namespace BurgerShop.Tests.EditMode
             }
             Assert.That(area.Tables[0].OccupiedSeats, Is.EqualTo(2));
             Assert.That(area.Tables[1].OccupiedSeats, Is.EqualTo(2));
-            Assert.That(area.Tables[2].OccupiedSeats, Is.EqualTo(2));
-            guests[6] = new GameObject("Guest_wait").AddComponent<CustomerAgent>();
-            guests[6].transform.SetParent(root.transform, false);
-            Assert.That(area.TryAssignSeat(guests[6], out _, out Vector3 wait, out int waitingSeat), Is.False);
+            guests[4] = new GameObject("Guest_wait").AddComponent<CustomerAgent>();
+            guests[4].transform.SetParent(root.transform, false);
+            Assert.That(area.TryAssignSeat(guests[4], out _, out Vector3 wait, out int waitingSeat), Is.False);
             Assert.That(waitingSeat, Is.EqualTo(-1));
-            Assert.That(wait, Is.EqualTo(area.WaitPosition));
+            Assert.That(area.OccupiedSeats, Is.EqualTo(4));
+            Assert.That(wait.x, Is.LessThan(area.Tables[0].Center.x));
             area.Tables[1].Release(guests[2]);
-            Assert.That(area.TryAssignSeat(guests[6], out DiningTable opened, out _, out int taken), Is.True);
+            Assert.That(area.TryAssignSeat(guests[4], out DiningTable opened, out _, out int taken), Is.True);
             Assert.That(opened, Is.SameAs(area.Tables[1]));
             Assert.That(taken, Is.GreaterThanOrEqualTo(0));
         }
@@ -89,8 +88,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(table.MealPay, Is.EqualTo(10));
             Assert.That(table.EatSeconds, Is.EqualTo(3f));
             table.ApplySet(TableSetId.Patio);
-            Assert.That(table.MealPay, Is.EqualTo(15));
-            Assert.That(table.EatSeconds, Is.EqualTo(2.7f));
+            Assert.That(table.MealPay, Is.EqualTo(16));
+            Assert.That(table.EatSeconds, Is.EqualTo(3.6f));
             Assert.That(table.FurnitureLevel, Is.EqualTo(2));
             AssertChairFacesTable(table, "ChairA");
             AssertChairFacesTable(table, "ChairB");
@@ -103,7 +102,7 @@ namespace BurgerShop.Tests.EditMode
         {
             DiningArea area = DiningArea.Create(root.transform, DiningArea.ShopPositions);
             DiningTable extra = area.AddTable(ShopLayout.ExtraTable);
-            Assert.That(area.TableCount, Is.EqualTo(4));
+            Assert.That(area.TableCount, Is.EqualTo(3));
             Assert.That(extra.SeatCount, Is.EqualTo(2));
             Assert.That(extra.Kind, Is.EqualTo(DiningTableKind.Pair));
             Assert.That(extra.Center, Is.EqualTo(ShopLayout.ExtraTable));
@@ -125,7 +124,7 @@ namespace BurgerShop.Tests.EditMode
             AssertChairFacesTable(four, "ChairC");
             AssertChairFacesTable(four, "ChairD");
             four.ApplySet(TableSetId.Patio);
-            Assert.That(four.MealPay, Is.EqualTo(15));
+            Assert.That(four.MealPay, Is.EqualTo(16));
             AssertChairFacesTable(four, "ChairC");
             AssertChairFacesTable(four, "ChairD");
         }

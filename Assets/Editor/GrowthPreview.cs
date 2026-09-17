@@ -49,6 +49,7 @@ namespace BurgerShop.EditorTools
             SessionState.SetBool("BurgerShop.BlueCounterPreview",true);StartPreview(false);
         }
         [MenuItem("BurgerShop/Side wing purchase preview (isolated save)")]
+        [MenuItem("BurgerShop/Expansion planning preview (isolated save)")]
         public static void WingPreview()
         {
             if(EditorApplication.isPlayingOrWillChangePlaymode)return;
@@ -60,7 +61,7 @@ namespace BurgerShop.EditorTools
             string directory=Path.Combine(Path.GetTempPath(),"BurgerGrowthPreview-"+Guid.NewGuid().ToString("N"));
             var data = new RestaurantSaveData{version=RestaurantSaveData.CurrentVersion,coins=5000,completedSales=5,grillLevel=1,shopRank=6,upgradeStars=6,
                 boughtExtraTable=true,boughtExtraGrill=true,extraGrillLevel=1,boughtExtraCounter=true,boughtBoxingStation=true,boughtDriveThru=true};
-            if(wing) data = new RestaurantSaveData {version=RestaurantSaveData.CurrentVersion,grillLevel=1,coins=1500,shopRank=6};
+            if(wing) data = new RestaurantSaveData {version=RestaurantSaveData.CurrentVersion,grillLevel=1,coins=1500,shopRank=7};
             if(counters)
             {
                 data.colaLevel=3;

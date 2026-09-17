@@ -15,10 +15,24 @@ namespace BurgerShop.Restaurant
             root.transform.SetParent(parent, false);
             BoostRoom room = root.AddComponent<BoostRoom>();
             room.Build(wall, floor);
+            room.SetAnnexOpen(true);
             return room;
         }
 
         public bool Contains(Vector3 point) => ShopLayout.ContainsBoostRoom(point);
+
+        public void SetAnnexOpen(bool open)
+        {
+            foreach (Transform child in transform)
+            {
+                if (child == BoostPoint || child.name == "BoostPoint" || child.name == "BoostLabel"
+                    || child.name == "PlayerUpgradePoint")
+                    continue;
+                child.gameObject.SetActive(open);
+            }
+            ShopLayout.SealDoor(transform.parent, "BoostDoorPlug", ShopLayout.BoostDoor, ShopLayout.BoostDoorPlugSize,
+                !open);
+        }
 
         void Build(Material wall, Material floor)
         {

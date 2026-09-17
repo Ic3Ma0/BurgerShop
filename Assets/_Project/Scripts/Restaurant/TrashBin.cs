@@ -6,15 +6,19 @@ namespace BurgerShop.Restaurant
     public sealed class TrashBin : MonoBehaviour
     {
         public static Vector3 ShopPosition => ShopLayout.TrashBin;
-        public static readonly Vector3 MouthLocal = new Vector3(0f, 0.48f, 0f);
+        public const float VisualScale = 1.7f;
+        public const float DumpInterval = 0.11f;
+        public const float MinDumpInterval = 0.10f;
+        public static readonly Vector3 MouthLocal = new Vector3(0f, 0.86f, 0f);
 
         TrashInventory inventory;
         [SerializeField, Min(0.1f)] float radius = 1f;
-        [SerializeField, Min(0.05f)] float dropInterval = 0.35f;
+        [SerializeField, Min(0.05f)] float dropInterval = DumpInterval;
         float cooldown;
 
         public Vector3 DropPosition => transform.position;
         public float Radius => radius;
+        public float DropInterval => dropInterval;
 
         public bool IsInRange
         {
@@ -27,11 +31,11 @@ namespace BurgerShop.Restaurant
             }
         }
 
-        public void Configure(TrashInventory carrier, float dropRadius = 1f, float interval = 0.25f)
+        public void Configure(TrashInventory carrier, float dropRadius = 1f, float interval = DumpInterval)
         {
             inventory = carrier;
             radius = Mathf.Max(0.1f, dropRadius);
-            dropInterval = Mathf.Max(0.35f, interval);
+            dropInterval = Mathf.Max(MinDumpInterval, interval);
             cooldown = 0f;
         }
 
@@ -92,6 +96,7 @@ namespace BurgerShop.Restaurant
             GameObject root = new GameObject("TrashBin");
             root.transform.SetParent(parent, false);
             root.transform.position = position;
+            root.transform.localScale = Vector3.one * VisualScale;
             Material body = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.18f, 0.19f, 0.21f));
             Material lid = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.10f, 0.11f, 0.12f));
             Material rim = BurgerShop.Core.RuntimeMaterials.Create(new Color(0.28f, 0.30f, 0.32f));

@@ -241,6 +241,17 @@ namespace BurgerShop.Restaurant
             ApplyWingPadInvestments(table, fourSeat, square, cola, colaBar);
         }
 
+        public bool TryPurchaseWing()
+        {
+            var goals = GetComponentInParent<SessionGoalTracker>();
+            if (HasWing || WingPad == null || wallet == null || goals == null || !goals.Allows(ShopRanks.ColaWingRank)) return false;
+            if (!wallet.TrySpend(WingPad.Remaining, () => WingPad.RestoreInvestment(WingCost))) return false;
+            GetComponentInParent<SessionGoalTracker>()?.AddUpgradeStars();
+            BurgerShop.Building.FacilityLayout.Current?.RefreshNavigation();
+            GetComponentInParent<BurgerShop.Persistence.RestaurantPersistence>()?.Flush();
+            return HasWing;
+        }
+
         void UnlockWing()
         {
             if (wingFloor == null)
@@ -332,12 +343,57 @@ namespace BurgerShop.Restaurant
             SetPad(WingPad,ShopRanks.PadUnlocked(rank,"WING"));
             SetPad(ColaPad,ShopRanks.PadUnlocked(rank,"COLA"));
             SetPad(ColaBarPad,ShopRanks.PadUnlocked(rank,"BAR"));
-            SetPad(FourSeatPad,rank>=7);SetPad(SquarePad,rank>=7);
+            SetPad(FourSeatPad,ShopRanks.PadUnlocked(rank,"FOUR"));SetPad(SquarePad,ShopRanks.PadUnlocked(rank,"SQUARE"));
             SetPad(TablePad, ShopRanks.PadUnlocked(rank, "TABLE"));
             SetPad(BoxingPad, ShopRanks.PadUnlocked(rank, "BOX"));
             SetPad(GrillPad, ShopRanks.PadUnlocked(rank, "GRILL"));
             SetPad(CounterPad, ShopRanks.PadUnlocked(rank, "COUNTER"));
             SetPad(DriveThruPad, ShopRanks.PadUnlocked(rank, "LANE"));
+            if (rank >= ShopRanks.DriveThruRank)
+                EnsureDriveThruOpen();
+            else
+                driveThru?.SetOpen(false);
+        }
+
+        public void EnsureDriveThruOpen()
+        {
+            var tracker = GetComponentInParent<SessionGoalTracker>();
+            bool rankAllows = tracker == null || tracker.Allows(ShopRanks.DriveThruRank);
+            if (!rankAllows)
+            {
+                driveThru?.SetOpen(false);
+                return;
+            }
+            if (tracker != null && !CarWindowReady(tracker))
+                return;
+            if (!HasDriveThru)
+                driveThru = DriveThruLane.Create(transform, boxing, wallet, cash, player);
+            AdoptDriveThru(driveThru);
+            DriveThruPad?.RestorePurchased();
+        }
+
+        bool CarWindowReady(SessionGoalTracker tracker)
+        {
+            if (tracker.Allows(ShopRanks.BoxingRank) || HasBoxing || HasDriveThru)
+                return true;
+            Transform world = transform.parent != null ? transform.parent : transform;
+            Transform floor = world.Find("BoostRoom/CarServiceFloor");
+            if (floor == null)
+            {
+                BoostRoom bay = world.GetComponentInChildren<BoostRoom>(true);
+                floor = bay != null ? bay.transform.Find("CarServiceFloor") : null;
+            }
+            return floor != null && floor.gameObject.activeInHierarchy;
+        }
+
+        public void AdoptDriveThru(DriveThruLane lane)
+        {
+            if (lane == null) return;
+            if (driveThru == null) driveThru = lane;
+            driveThru.BindBoxing(boxing);
+            hiring?.RegisterDriveThru(driveThru);
+            var tracker = GetComponentInParent<SessionGoalTracker>();
+            driveThru.SetOpen(tracker == null || tracker.Allows(ShopRanks.DriveThruRank));
         }
 
         static void SetPad(FacilityUnlockZone pad, bool unlocked)
@@ -407,9 +463,8 @@ namespace BurgerShop.Restaurant
 
         void UnlockDriveThru()
         {
-            if (HasDriveThru) return;
-            driveThru = DriveThruLane.Create(transform, boxing, wallet, cash, player);
-            hiring?.RegisterDriveThru(driveThru);
+            EnsureDriveThruOpen();
+            GetComponentInParent<SessionGoalTracker>()?.ApplyUnlocks();
         }
 
         FacilityUnlockZone MakePad(string name, Vector3 position, int cost, string title, Action unlocked)

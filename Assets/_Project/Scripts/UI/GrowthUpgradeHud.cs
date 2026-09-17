@@ -50,8 +50,8 @@ namespace BurgerShop.UI
             {
                 panel.gameObject.SetActive(true);currentIcon.enabled=nextIcon.enabled=false;
                 body.text=goals.IsCycle
-                    ? $"Shop Lv.{goals.Rank} → {(long)goals.Rank+1}\nCash income +{2L*(goals.Rank-10)}% → +{2L*(goals.Rank-9)}%\nCost: {goals.CycleCost:N0} coins"
-                    : $"Shop Lv.{goals.Rank} → {goals.Rank+1}\n{(goals.MilestoneComplete ? "Done" : "Goal")}: {goals.Title}\nStars: {goals.Stars}/{goals.StarCap}\nUnlock: {ShopRanks.NextUnlock(goals.Rank)}";
+                    ? $"Shop Lv.{goals.Rank} → {(long)goals.Rank+1}\nCash income +{2L*System.Math.Max(0,goals.Rank-ShopRanks.ContentEnd)}% → +{2L*System.Math.Max(0,goals.Rank+1-ShopRanks.ContentEnd)}%\nCost: {goals.CycleCost:N0} coins\n{goals.NextRankPreview}"
+                    : $"Shop Lv.{goals.Rank} → {goals.Rank+1}\n{(goals.MilestoneComplete ? "Hint" : "Goal")}: {goals.Title}\n⭐ {goals.Stars}/{goals.StarCap}  Need {goals.MissingStars} more stars\n{goals.NextRankPreview}";
                 buy.interactable=ready&&previewRank==goals.Rank;
                 buyLabel.text=goals.BlockReason;
                 return;
@@ -68,7 +68,7 @@ namespace BurgerShop.UI
             panel.gameObject.SetActive(selected!=null&&selected.Id!=dismissed);if(selected==null||selected.Id==dismissed)return;
             int level=growth.Level(selected.Id);previewLevel=level;bool max=level>selected.Costs.Length;
             long need=max?0:System.Math.Max(0,selected.Costs[level-1]-wallet.Coins);
-            body.text=$"{selected.Title} · Lv.{level}\n{selected.Benefit(level)}"+(max?"\nMAX":$"\n→ {selected.Benefit(level+1)}\n+2 Stars");
+            body.text=$"{selected.Title} · Lv.{level}\n{selected.Benefit(level)}"+(max?"\nMAX":$"\n→ {selected.Benefit(level+1)}\n{ShopRanks.StarRewardCopy}");
             buy.interactable=!max&&need==0;buyLabel.text=max?"MAX":need>0?$"Need {need} more":$"Upgrade · {selected.Costs[level-1]}";
             currentIcon.enabled=nextIcon.enabled=true;
             bool table=selected.Id.StartsWith("table-");

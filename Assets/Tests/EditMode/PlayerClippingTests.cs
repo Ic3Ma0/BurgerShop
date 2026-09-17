@@ -85,6 +85,7 @@ namespace BurgerShop.Tests.EditMode
             AssertBlocks(boxing.WorkRoot.Find("BoxTable").GetComponent<Collider>());
             AssertBlocks(boxing.CounterRoot.Find("PackageDesk").GetComponent<Collider>());
             AssertBlocks(bin.transform.Find("Body").GetComponent<Collider>());
+            Assert.That(bin.transform.Find("Body").GetComponent<Renderer>().bounds.size.y, Is.GreaterThan(1.2f));
             AssertBlocks(boxing.CounterRoot.Find("PackageDesk").GetComponent<Collider>());
             Assert.That(SolidOccupancy.BlocksPlayer(grill.transform.Find("PickupSpot").GetComponent<Collider>()),
                 Is.False);
@@ -185,7 +186,7 @@ namespace BurgerShop.Tests.EditMode
             Vector3 towardDesk = Flatten(ShopLayout.HrDesk - office.transform.Find("Chair").position);
             Vector3 chairForward = Flatten(office.transform.Find("Chair").forward);
             Assert.That(Vector3.Dot(chairForward.normalized, towardDesk.normalized), Is.GreaterThan(0.9f));
-            AssertBlocks(boost.transform.Find("TrainingPad").GetComponent<Collider>());
+            AssertBlocks(boost.transform.Find("CarServiceFloor"));
             Assert.That(ShopLayout.ContainsHrDoorway(new Vector3(ShopLayout.WallHalf, 0f, ShopLayout.HrDoorZ)), Is.True);
             Assert.That(root.transform.Find("Wall+X"), Is.Null);
             Assert.That(Physics.CheckBox(ShopLayout.HrDoor + Vector3.up * 0.6f, new Vector3(0.2f, 0.4f, 0.9f)), Is.False);

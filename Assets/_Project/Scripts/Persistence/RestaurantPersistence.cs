@@ -19,6 +19,8 @@ namespace BurgerShop.Persistence
         GrillUpgradeZone colaUpgrade;
         TableUpgradeBoard tableUpgrades;
         LocalSaveStore store;
+        SaveSlotStore slots;
+        string saveDirectory;
         string lastChecksum;
         float elapsed;
         bool ready;
@@ -36,6 +38,9 @@ namespace BurgerShop.Persistence
         public SaveLoadResult LoadResult { get; private set; }
         public string Status { get; private set; } = "NEW GAME - AUTOSAVE ON";
         public string FilePath => store?.FilePath;
+        public int ActiveSlotId => slots != null ? slots.ActiveSlotId : 1;
+        public SaveSlotInfo[] SlotSummaries => slots != null ? slots.Slots : System.Array.Empty<SaveSlotInfo>();
+        public bool CanStartNewGame => slots != null && slots.CanStartNewGame;
         public int RestoredRank { get; private set; } = ShopRanks.Min;
         public int RestoredGoalIndex { get; private set; }
         public int RestoredGoalProgress { get; private set; }
@@ -61,7 +66,9 @@ namespace BurgerShop.Persistence
         {
             if(partsWallet!=null)partsWallet.Changed-=RequestSave;
             partsWallet=GetComponent<PartsWallet>();
+            if (wallet != null) wallet.CoinsSpent -= OnSpend;
             wallet = earnings;
+            if (wallet != null) wallet.CoinsSpent += OnSpend;
             upgrade = grill;
             hiring = staff;
             boost = playerBoost;
@@ -84,71 +91,178 @@ namespace BurgerShop.Persistence
                 if (!string.IsNullOrEmpty(testDirectory)) directory = testDirectory;
 #endif
             }
-            store = new LocalSaveStore(directory);
+            saveDirectory = directory;
+            slots = new SaveSlotStore(directory);
+            store = new LocalSaveStore(directory, slots.ActiveFileName);
+            ApplyLoadedSnapshot(resetIfMissing: false);
+        }
+
+        public bool CanDeleteSlot(int id) => slots != null && slots.CanDelete(id);
+
+        public bool SaveNow() => Flush();
+
+        public bool StartNewGame()
+        {
+            if (!ready || slots == null) return false;
+            Flush();
+            RememberActiveSlot();
+            if (!slots.TryCreateSlot(out _)) return false;
+            BindActiveStore();
+            ApplyNewGame();
+            RememberActiveSlot();
+            return true;
+        }
+
+        public bool SwitchToSlot(int id)
+        {
+            if (!ready || slots == null || id == ActiveSlotId) return false;
+            Flush();
+            RememberActiveSlot();
+            if (!slots.TryActivate(id)) return false;
+            BindActiveStore();
+            ApplyLoadedSnapshot(resetIfMissing: true);
+            RememberActiveSlot();
+            GetComponent<Core.RestaurantArchitecture>()?.Refresh();
+            return true;
+        }
+
+        public bool DeleteSlot(int id) => slots != null && slots.TryDelete(id);
+
+        void BindActiveStore()
+        {
+            store = new LocalSaveStore(saveDirectory, slots.ActiveFileName);
+            lastChecksum = null;
+        }
+
+        void RememberActiveSlot()
+        {
+            if (slots == null || wallet == null) return;
+            int rank = goals != null ? goals.Rank : RestoredRank;
+            slots.RecordActive(rank < 1 ? ShopRanks.Min : rank, wallet.Coins, UtcNowTicks());
+        }
+
+        void ApplyLoadedSnapshot(bool resetIfMissing)
+        {
             LoadResult = store.Load(out RestaurantSaveData data);
-            if (data != null)
+            if (data != null) ApplySave(data);
+            else if (resetIfMissing) ApplyNewGame();
+            else ApplyMissingKeepRuntime();
+            ready = true;
+            if (LoadResult == SaveLoadResult.RecoveredBackup) lastChecksum = null;
+            if (!resetIfMissing || data != null) SettleOffline();
+        }
+
+        void ApplyMissingKeepRuntime()
+        {
+            RestoredRank = ShopRanks.Min;
+            RestoredGoalIndex = 0;
+            RestoredGoalProgress = 0;
+            partsWallet?.Restore(0);
+            if (partsWallet != null)
             {
-                wallet.RestoreProgress(data.coins, data.completedSales);
-                upgrade.RestoreLevel(data.grillLevel);
-                staffUpgrades?.RestoreTiers(data.ResolvedStaffSpeedTier, data.ResolvedStaffCarryTier);
-                hiring.RestoreWorkers(data.ResolvedHiredCount, data.workerDeliveries, data.workerClears);
-                staffUpgrades?.ApplyToHired();
-                boost?.RestoreTiers(data.ResolvedPlayerSpeedTier, data.ResolvedPlayerCarryTier);
-                expansion?.Restore(data.ResolvedBoughtExtraTable, data.ResolvedBoughtExtraGrill,
-                    data.ResolvedBoughtExtraCounter, data.ResolvedExtraGrillLevel,
-                    data.ResolvedBoughtBoxingStation, data.ResolvedBoughtDriveThru,
-                    data.ResolvedBoughtFourSeatTable, data.ResolvedBoughtSquareTable,
-                    data.ResolvedBoughtSideWing || data.ResolvedBoughtExtraTable
-                        || data.ResolvedBoughtFourSeatTable || data.ResolvedBoughtSquareTable
-                        || data.ResolvedBoughtColaMachine || data.ResolvedBoughtColaCounter,
-                    data.ResolvedBoughtColaMachine, data.ResolvedBoughtColaCounter, data.ResolvedColaLevel);
-                if (data.version >= 7)
-                    expansion?.RestoreInvestments(data.tableInvestment, data.grillInvestment, data.counterInvestment,
-                        data.boxingInvestment, data.driveThruInvestment,
-                        data.ResolvedFourSeatInvestment, data.ResolvedSquareTableInvestment,
-                        data.ResolvedWingInvestment, data.ResolvedColaMachineInvestment,
-                        data.ResolvedColaCounterInvestment);
-                tableUpgrades?.Restore(data.ResolvedTable0Set, data.ResolvedTable1Set, data.ResolvedTable2Set,
-                    data.ResolvedExtraTableSet, data.ResolvedTable0Investment, data.ResolvedTable1Investment,
-                    data.ResolvedTable2Investment, data.ResolvedExtraTableInvestment,
-                    data.ResolvedFourSeatSet, data.ResolvedSquareTableSet,
-                    data.ResolvedFourSeatUpgradeInvestment, data.ResolvedSquareTableUpgradeInvestment);
-                colaUpgrade?.RestoreLevel(data.ResolvedColaLevel);
-                lastChecksum = data.Checksum();
-                RestoredRank = data.ResolvedShopRank;
-                RestoredGoalIndex = data.ResolvedGoalIndex;
-                RestoredGoalProgress = data.ResolvedGoalProgress;
+                partsWallet.Changed -= RequestSave;
+                partsWallet.Changed += RequestSave;
             }
-            else
+            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, 0, 0, false, 0);
+            GetComponent<BagLine>()?.Restore(null);
+            GetComponent<GrowthUpgrades>()?.Restore(null, 1, 0, 1);
+            if (goals != null) goals.ApplyUnlocks();
+            GetComponent<Building.FacilityLayout>()?.Restore(null);
+            GetComponent<RestroomExpansion>()?.Restore(false, 0, 0);
+            Status = "NEW GAME - AUTOSAVE ON";
+            lastSeen = 0;
+            OfflineGrant = 0;
+            OfflineTicks = 0;
+            OfflineStaffCount = 0;
+            OfflineVisible = false;
+        }
+
+        void ApplyNewGame()
+        {
+            LoadResult = SaveLoadResult.NewGame;
+            lastChecksum = null;
+            lastSeen = 0;
+            OfflineGrant = 0;
+            OfflineTicks = 0;
+            OfflineStaffCount = 0;
+            OfflineVisible = false;
+            RestoredRank = ShopRanks.Min;
+            RestoredGoalIndex = 0;
+            RestoredGoalProgress = 0;
+            wallet?.RestoreProgress(0, 0);
+            if (upgrade != null) upgrade.RestoreLevel(1);
+            staffUpgrades?.RestoreTiers(0, 0);
+            hiring?.RestoreWorkers(0, 0);
+            staffUpgrades?.ApplyToHired();
+            boost?.RestoreTiers(0, 0);
+            colaUpgrade?.RestoreLevel(1);
+            partsWallet?.Restore(0);
+            goals?.Restore(ShopRanks.Min, 0, 0, 0, 0, false, 0);
+            GetComponent<GrowthUpgrades>()?.Restore(null, 1, 0, 1);
+            if (goals != null) goals.ApplyUnlocks();
+            GetComponent<Building.FacilityLayout>()?.Restore(null);
+            GetComponent<RestroomExpansion>()?.Restore(false, 0, 0);
+            tableUpgrades?.Restore(0, 0, 0, 0, 0, 0, 0, 0);
+            Status = "NEW GAME - AUTOSAVE ON";
+            GetComponent<Core.RestaurantArchitecture>()?.Refresh();
+        }
+
+        void ApplySave(RestaurantSaveData data)
+        {
+            wallet.RestoreProgress(data.coins, data.completedSales);
+            upgrade.RestoreLevel(data.grillLevel);
+            staffUpgrades?.RestoreTiers(data.ResolvedStaffSpeedTier, data.ResolvedStaffCarryTier);
+            hiring.RestoreWorkers(data.ResolvedHiredCount, data.workerDeliveries, data.workerClears);
+            staffUpgrades?.ApplyToHired();
+            boost?.RestoreTiers(data.ResolvedPlayerSpeedTier, data.ResolvedPlayerCarryTier);
+            expansion?.Restore(data.ResolvedBoughtExtraTable, data.ResolvedBoughtExtraGrill,
+                data.ResolvedBoughtExtraCounter, data.ResolvedExtraGrillLevel,
+                data.ResolvedBoughtBoxingStation, data.ResolvedBoughtDriveThru,
+                data.ResolvedBoughtFourSeatTable, data.ResolvedBoughtSquareTable,
+                data.ResolvedBoughtSideWing || data.ResolvedBoughtExtraTable
+                    || data.ResolvedBoughtFourSeatTable || data.ResolvedBoughtSquareTable
+                    || data.ResolvedBoughtColaMachine || data.ResolvedBoughtColaCounter,
+                data.ResolvedBoughtColaMachine, data.ResolvedBoughtColaCounter, data.ResolvedColaLevel);
+            if (data.version >= 7)
+                expansion?.RestoreInvestments(data.tableInvestment, data.grillInvestment, data.counterInvestment,
+                    data.boxingInvestment, data.driveThruInvestment,
+                    data.ResolvedFourSeatInvestment, data.ResolvedSquareTableInvestment,
+                    data.ResolvedWingInvestment, data.ResolvedColaMachineInvestment,
+                    data.ResolvedColaCounterInvestment);
+            tableUpgrades?.Restore(data.ResolvedTable0Set, data.ResolvedTable1Set, data.ResolvedTable2Set,
+                data.ResolvedExtraTableSet, data.ResolvedTable0Investment, data.ResolvedTable1Investment,
+                data.ResolvedTable2Investment, data.ResolvedExtraTableInvestment,
+                data.ResolvedFourSeatSet, data.ResolvedSquareTableSet,
+                data.ResolvedFourSeatUpgradeInvestment, data.ResolvedSquareTableUpgradeInvestment);
+            colaUpgrade?.RestoreLevel(data.ResolvedColaLevel);
+            lastChecksum = data.Checksum();
+            RestoredRank = data.ResolvedShopRank;
+            RestoredGoalIndex = data.ResolvedGoalIndex;
+            RestoredGoalProgress = data.ResolvedGoalProgress;
+            partsWallet?.Restore(data.ResolvedParts);
+            if (partsWallet != null)
             {
-                RestoredRank = ShopRanks.Min;
-                RestoredGoalIndex = 0;
-                RestoredGoalProgress = 0;
+                partsWallet.Changed -= RequestSave;
+                partsWallet.Changed += RequestSave;
             }
-            partsWallet?.Restore(data?.ResolvedParts ?? 0);
-            if(partsWallet!=null)partsWallet.Changed+=RequestSave;
-            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, data?.ResolvedUpgradeStars ?? 0, data?.ResolvedMilestones ?? 0, data?.ResolvedLegacyAccess ?? false, data?.ResolvedIncomeRemainder ?? 0);
+            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, data.ResolvedUpgradeStars, data.ResolvedMilestones, data.ResolvedLegacyAccess, data.ResolvedIncomeRemainder);
             GetComponent<BagLine>()?.Restore(data);
-            GetComponent<GrowthUpgrades>()?.Restore(data?.facilityLevels, data?.grillLevel ?? 1, data?.ResolvedExtraGrillLevel ?? 0, data?.ResolvedColaLevel ?? 1);
+            GetComponent<GrowthUpgrades>()?.Restore(data.facilityLevels, data.grillLevel, data.ResolvedExtraGrillLevel, data.ResolvedColaLevel);
             if (goals != null)
                 goals.ApplyUnlocks();
-            GetComponent<Building.FacilityLayout>()?.Restore(data?.version >= 15 ? data.layout : null);
-            GetComponent<RestroomExpansion>()?.Restore(data?.version>=17&&data.restroomBuilt,data?.version>=17?data.restroomInvestment:0,data?.version>=17?data.restroomDirtyMask:0);
+            GetComponent<Building.FacilityLayout>()?.Restore(data.version >= 15 ? data.layout : null);
+            GetComponent<RestroomExpansion>()?.Restore(data.version>=17&&data.restroomBuilt,data.version>=17?data.restroomInvestment:0,data.version>=17?data.restroomDirtyMask:0);
             Status = LoadResult == SaveLoadResult.Loaded ? "PROGRESS RESTORED"
                 : LoadResult == SaveLoadResult.RecoveredBackup ? "BACKUP RESTORED"
                 : LoadResult == SaveLoadResult.NewerVersion ? "NEWER SAVE - SAVING DISABLED"
                 : LoadResult == SaveLoadResult.Unreadable ? "SAVE UNREADABLE - FILES KEPT"
                 : LoadResult == SaveLoadResult.Unavailable ? "SAVE UNAVAILABLE"
                 : "NEW GAME - AUTOSAVE ON";
-            lastSeen=data!=null&&data.version>=16?data.lastSeenUtcTicks:0;
-            OfflineGrant=data!=null&&data.version>=16?data.offlineReceiptGrant:0;
-            OfflineTicks=data!=null&&data.version>=16?data.offlineReceiptTicks:0;
-            OfflineStaffCount=data!=null&&data.version>=16?data.offlineReceiptStaffCount:0;
-            OfflineVisible=data!=null&&data.version>=16&&data.offlineReceiptVisible;
-            ready = true;
-            // Repair a damaged primary from the validated backup on the next save.
-            if (LoadResult == SaveLoadResult.RecoveredBackup) lastChecksum = null;
-            SettleOffline();
+            lastSeen=data.version>=16?data.lastSeenUtcTicks:0;
+            OfflineGrant=data.version>=16?data.offlineReceiptGrant:0;
+            OfflineTicks=data.version>=16?data.offlineReceiptTicks:0;
+            OfflineStaffCount=data.version>=16?data.offlineReceiptStaffCount:0;
+            OfflineVisible=data.version>=16&&data.offlineReceiptVisible;
         }
 
         void LateUpdate() => Advance(Time.unscaledDeltaTime);
@@ -170,12 +284,17 @@ namespace BurgerShop.Persistence
             var data=Capture();
             if(!away)data.lastSeenUtcTicks=UtcNowTicks();
             string checksum = data.Checksum();
-            if (checksum == lastChecksum) return true;
+            if (checksum == lastChecksum)
+            {
+                RememberActiveSlot();
+                return true;
+            }
             if (!store.Save(data)) { Status = "SAVE FAILED - RETRYING"; return false; }
             lastSeen=data.lastSeenUtcTicks;
             lastChecksum = checksum;
             saveRequested = false;
             Status = "PROGRESS SAVED";
+            RememberActiveSlot();
             return true;
         }
 
@@ -285,8 +404,10 @@ namespace BurgerShop.Persistence
             else{away=false;SettleOffline();}
         }
         void RequestSave() => saveRequested = true;
+        void OnSpend(int _) => RequestSave();
         void OnDestroy()
         {
+            if (wallet != null) wallet.CoinsSpent -= OnSpend;
             if (expansion != null) expansion.PurchaseCompleted -= RequestSave;
             if (goals != null) goals.ProgressChanged -= RequestSave;
             if(partsWallet!=null)partsWallet.Changed-=RequestSave;

@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 namespace BurgerShop.UI
 {
-    public enum FeedbackSound { Light, Cash, Spend, Task, Success }
+    public enum FeedbackSound { Light, Cash, Spend, Task, Success, Dump }
     public sealed class PickupAccumulator
     {
         public long Amount {get;private set;}
@@ -15,11 +15,11 @@ namespace BurgerShop.UI
     }
     public sealed class FeedbackBudget
     {
-        readonly float[] next=new float[5];
+        readonly float[] next=new float[8];
         public bool Accept(FeedbackSound sound,float time)
         {
-            int i=(int)sound;if(time<next[i])return false;
-            next[i]=time+(sound==FeedbackSound.Spend?.20f:.12f);return true;
+            int i=(int)sound;if(i<0||i>=next.Length||time<next[i])return false;
+            next[i]=time+(sound==FeedbackSound.Cash?CashCollectionFeel.SoundInterval:sound==FeedbackSound.Spend?.20f:sound==FeedbackSound.Dump?.09f:.12f);return true;
         }
     }
     [DefaultExecutionOrder(300)]
@@ -35,10 +35,14 @@ namespace BurgerShop.UI
         public int MaxVoicesSeen {get;private set;}
         public readonly PickupAccumulator Pickups=new PickupAccumulator();
         readonly FeedbackBudget budget=new FeedbackBudget();
+        readonly CashSoundSequence cashSequence=new CashSoundSequence();
+        float pendingPitch=1f;
         readonly List<Prompt> prompts=new List<Prompt>();
         readonly List<Particle> particles=new List<Particle>();
         readonly AudioSource[] voices=new AudioSource[4];
-        readonly AudioClip[] clips=new AudioClip[5];
+        readonly AudioClip[] clips=new AudioClip[8];
+        AudioSource music;
+        AudioClip musicClip;
         RectTransform space; Transform player; Text pickupText; Text soundText;
         int pending=-1;bool paused, applicationPaused, focusLost;float lightUntil;int previousCount;
         BurgerInventory inventory;
@@ -54,24 +58,37 @@ namespace BurgerShop.UI
             var toggle=HudChrome.Panel(parent,"SoundButton",new Vector2(1,0),new Vector2(1,0),new Vector2(-32,32),new Vector2(176,132),HudChrome.Cream);
             toggle.raycastTarget=true;var button=toggle.gameObject.AddComponent<Button>();button.targetGraphic=toggle;
             f.soundText=HudChrome.Label(toggle.transform,"SoundState",Vector2.zero,Vector2.one,Vector2.one*.5f,Vector2.zero,Vector2.zero,28,HudChrome.Ink,TextAnchor.MiddleCenter,true,false);
-            button.onClick.AddListener(()=>f.SetSound(!f.SoundEnabled));f.PaintSound();return f;
+            button.onClick.AddListener(()=>f.SetSound(!f.SoundEnabled));
+            f.ReadSoundPreference();f.EnsureAudio();f.PaintSound();return f;
         }
         void Awake()
         {
-            Current=this;SoundEnabled=PlayerPrefs.GetInt(SoundPreference,1)!=0;
+            Current=this;ReadSoundPreference();EnsureAudio();
+        }
+        void ReadSoundPreference(){SoundEnabled=PlayerPrefs.GetInt(SoundPreference,1)!=0;}
+        void EnsureAudio()
+        {
+            if(music!=null)return;
             for(int i=0;i<4;i++){voices[i]=gameObject.AddComponent<AudioSource>();voices[i].playOnAwake=false;voices[i].volume=.18f;voices[i].spatialBlend=0;}
-            clips[0]=CoinSfx.CreateLight();clips[1]=CoinSfx.CreateCoin();clips[2]=CoinSfx.CreateSpend();clips[3]=CoinSfx.CreateSuccess();clips[4]=clips[3];
+            clips[0]=CoinSfx.CreateLight();clips[1]=CoinSfx.CreateCoin();clips[2]=CoinSfx.CreateSpend();clips[3]=CoinSfx.CreateSuccess();clips[4]=clips[3];clips[5]=CoinSfx.CreateDump();
+            music=gameObject.AddComponent<AudioSource>();music.playOnAwake=false;music.loop=true;music.volume=1f;music.spatialBlend=0;music.priority=180;
+            musicClip=ShopBgm.CreateLoop();music.clip=musicClip;
         }
         public void SetSound(bool enabled)
         {
             SoundEnabled=enabled;PlayerPrefs.SetInt(SoundPreference,enabled?1:0);PlayerPrefs.Save();
-            if(!enabled)StopAudio();PaintSound();
+            if(!enabled)StopAudio();else SyncMusic();PaintSound();
         }
         void PaintSound(){if(soundText!=null)soundText.text=SoundEnabled?"Sound\nOn":"Sound\nOff";}
         public bool RequestSound(FeedbackSound sound)
         {
             if(paused||!SoundEnabled||!DecorationsEnabled||!budget.Accept(sound,Time.time))return false;
-            pending=Mathf.Max(pending,(int)sound);return true;
+            if((int)sound>=pending)
+            {
+                pending=(int)sound;
+                pendingPitch=sound==FeedbackSound.Cash?cashSequence.Next(Time.time):1f;
+            }
+            return true;
         }
         void OnItems(int count)
         {
@@ -85,11 +102,11 @@ namespace BurgerShop.UI
             if(paused||!DecorationsEnabled||amount<=0)return;
             Pickups.Add(amount);
             Vector2 from=Project(position);
-            // Five is a visual budget, never an amount multiplier.
-            for(int i=0;i<5&&particles.Count<5;i++)
+            // One receipt bill per arrival gives a continuous stream instead of a five-icon burst.
+            if(particles.Count<CashCollectionFeel.HudParticleLimit)
             {
-                var icon=HudChrome.Icon(transform,"CoinFlight",FoodIcons.Get(FoodIcon.Coin),Vector2.zero,Vector2.one*.5f,from,Vector2.one*24,Color.white);
-                particles.Add(new Particle{Image=icon,Origin=from+new Vector2(i*8,-i*4)});
+                var icon=HudChrome.Icon(transform,"CoinFlight",FoodIcons.Get(FoodIcon.Coin),Vector2.zero,Vector2.one*.5f,from,new Vector2(34,23),Color.white);
+                particles.Add(new Particle{Image=icon,Origin=from});
             }
         }
         public bool World(Vector3 position,string text,float seconds,Transform actor=null)
@@ -125,12 +142,14 @@ namespace BurgerShop.UI
         }
         void LateUpdate()
         {
+            SyncMusic();
             if(paused)return;
             if(pending>=0)
             {
                 int slot=-1;for(int i=0;i<4;i++)if(!voices[i].isPlaying){slot=i;break;}
                 if(slot<0&&pending>=(int)FeedbackSound.Task)slot=0;
-                if(slot>=0){voices[slot].Stop();voices[slot].clip=clips[pending];voices[slot].Play();}
+                if(slot>=0&&pending>=0&&pending<clips.Length&&clips[pending]!=null)
+                {voices[slot].Stop();voices[slot].pitch=pendingPitch;voices[slot].clip=clips[pending];voices[slot].Play();}
                 pending=-1;MaxVoicesSeen=Mathf.Max(MaxVoicesSeen,ActiveVoices);
             }
             float dt=Time.deltaTime;Pickups.Advance(dt);
@@ -152,11 +171,31 @@ namespace BurgerShop.UI
         }
         void OnApplicationPause(bool value){applicationPaused=value;paused=applicationPaused||focusLost;if(paused)StopAudio();}
         void OnApplicationFocus(bool value){focusLost=!value;paused=applicationPaused||focusLost;if(paused)StopAudio();}
-        void StopAudio(){pending=-1;foreach(var v in voices)if(v!=null)v.Stop();}
+        void StopAudio()
+        {
+            pending=-1;foreach(var v in voices)if(v!=null)v.Stop();
+            if(music!=null)music.Pause();
+        }
+        void SyncMusic()
+        {
+            if(music==null||music.clip==null)return;
+            bool want=ShopBgm.ShouldPlay(SoundEnabled,DecorationsEnabled,paused,Time.timeScale);
+            if(!want){if(music.isPlaying)music.Pause();return;}
+            if(music.isPlaying)return;
+            if(music.time>0f&&music.time<music.clip.length)music.UnPause();
+            else music.Play();
+        }
         void OnDestroy()
         {
             if(Current==this)Current=null;if(inventory!=null)inventory.CountChanged-=OnItems;
-            for(int i=0;i<4;i++)if(clips[i]!=null)Restaurant.BurgerVisual.Release(clips[i]);
+            for(int i=0;i<clips.Length;i++)
+            {
+                if(clips[i]==null)continue;
+                bool dup=false;
+                for(int j=0;j<i;j++)if(clips[j]==clips[i]){dup=true;break;}
+                if(!dup)Restaurant.BurgerVisual.Release(clips[i]);
+            }
+            if(musicClip!=null)Restaurant.BurgerVisual.Release(musicClip);
         }
     }
 }

@@ -52,8 +52,8 @@ namespace BurgerShop.Restaurant
         public void Configure(RestaurantWallet earnings,PartsWallet currency,BurgerInventory actor,CashFloor floor,ProductionStation burgerSource=null,bool independentProduction=false)
         {
             Current=this;wallet=earnings;parts=currency;player=actor;cash=floor;source=burgerSource;dedicatedSource=independentProduction;Build();
-            if(source!=null && (GetComponent<SessionGoalTracker>()?.Allows(9)??true))BuildAutomation();
-            ApplyAccess(GetComponent<SessionGoalTracker>()?.Allows(8)??true, GetComponent<SessionGoalTracker>()?.Allows(9)??true);
+            if(source!=null && (GetComponent<SessionGoalTracker>()?.Allows(ShopRanks.AutomationRank)??true))BuildAutomation();
+            ApplyAccess(GetComponent<SessionGoalTracker>()?.Allows(ShopRanks.CourierRank)??true, GetComponent<SessionGoalTracker>()?.Allows(ShopRanks.AutomationRank)??true);
         }
         public bool AutomationEnabled=>intakeBelt!=null;
         public IEnumerable<Vector3[]> ConveyorPaths {get {if(intakeBelt!=null)yield return intakeBelt.WorldPath;if(machineBelt!=null)yield return machineBelt.WorldPath;if(parcelBelt!=null)yield return parcelBelt.WorldPath;}}

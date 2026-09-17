@@ -103,12 +103,14 @@ namespace BurgerShop.Restaurant
         {
             if (!PendingChoice || !TableSetCatalog.IsChoice(id) || table == null) return false;
             table.ApplySet(id);
-            GetComponentInParent<UI.SessionGoalTracker>()?.AddUpgradeStars();
+            var goals = GetComponentInParent<UI.SessionGoalTracker>();
+            goals?.AddUpgradeStars();
             PendingChoice = false;
             HidePad();
             RefreshMarker();
             UI.VisualMeshPulse.Play(table.transform);
             changed?.Invoke();
+            goals?.EvaluateStarGateTasks();
             return true;
         }
 
@@ -124,13 +126,24 @@ namespace BurgerShop.Restaurant
         {
             if (table == null || !table.isActiveAndEnabled || wallet == null || !wallet.isActiveAndEnabled
                 || HasChosenSet || !TableSetCatalog.IsChoice(id) || Invested != expectedInvestment) return false;
-            if (Remaining == 0) return TryChoose(id);
-            return wallet.TrySpend(Remaining, () =>
+            int due = TableSetCatalog.Due(id, Invested);
+            if (due == 0)
             {
-                Invested = Cost;
-                IsPurchased = PendingChoice = true;
-                TryChoose(id);
+                IsPurchased = true;
+                return TryChoose(id) || FinishPaidChoice(id);
+            }
+            return wallet.TrySpend(due, () =>
+            {
+                Invested += due;
+                IsPurchased = true;
+                if (!TryChoose(id)) FinishPaidChoice(id);
             });
+        }
+
+        bool FinishPaidChoice(TableSetId id)
+        {
+            PendingChoice = true;
+            return TryChoose(id);
         }
 
         void Update() => Advance(Time.deltaTime);

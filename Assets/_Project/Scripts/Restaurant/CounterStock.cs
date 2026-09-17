@@ -9,7 +9,7 @@ namespace BurgerShop.Restaurant
     {
         public Vector3 CounterPosition => stockAnchor!=null?stockAnchor.position-new Vector3(.55f,.18f,0):transform.position;
         public int ServiceLevel { get; set; } = 1;
-        public const int MaxVisibleBurgers = 8;
+        public const float LayerHeight = 0.22f;
         Transform stockAnchor;
         TextMesh countLabel;
         readonly List<Transform> burgers = new List<Transform>();
@@ -74,49 +74,29 @@ namespace BurgerShop.Restaurant
 
         bool Accept(Transform item, bool boxed)
         {
-            if (burgers.Count < MaxVisibleBurgers)
-                AttachVisual(item, boxed);
-            else if (item != null)
-                BurgerVisual.Release(item.gameObject);
+            AttachVisual(item, boxed);
             count++;
             RefreshLabel();
             return true;
         }
 
-        public bool TryTakeBurger(out Transform burger)
-        {
-            burger = null;
-            if (count == 0) return false;
-            count--;
-            if (count >= MaxVisibleBurgers)
-                burger = CreateVisual(null, 0);
-            else if (burgers.Count > 0)
-            {
-                burger = burgers[burgers.Count - 1];
-                burgers.RemoveAt(burgers.Count - 1);
-                if (burger != null) burger.SetParent(null, true);
-            }
-            else
-                burger = CreateVisual(null, 0);
-            RefreshLabel();
-            return true;
-        }
+        public bool TryTakeBurger(out Transform burger) => TryTakeItem(out burger, false);
 
-        public bool TryTakeBoxed(out Transform box)
+        public bool TryTakeBoxed(out Transform box) => TryTakeItem(out box, true);
+
+        bool TryTakeItem(out Transform item, bool boxed)
         {
-            box = null;
+            item = null;
             if (count == 0) return false;
             count--;
-            if (count >= MaxVisibleBurgers)
-                box = BoxVisualFactory.Create(null, 0);
-            else if (burgers.Count > 0)
+            if (burgers.Count > 0)
             {
-                box = burgers[burgers.Count - 1];
+                item = burgers[burgers.Count - 1];
                 burgers.RemoveAt(burgers.Count - 1);
-                if (box != null) box.SetParent(null, true);
+                if (item != null) item.SetParent(null, true);
             }
             else
-                box = BoxVisualFactory.Create(null, 0);
+                item = SpawnDetached(count, boxed);
             RefreshLabel();
             return true;
         }
@@ -130,14 +110,35 @@ namespace BurgerShop.Restaurant
         {
             if (burger == null)
                 burger = boxed
-                    ? BoxVisualFactory.Create(stockAnchor, burgers.Count)
-                    : CreateVisual(stockAnchor, burgers.Count);
+                    ? BoxVisualFactory.Create(VisualParent, burgers.Count)
+                    : CreateVisual(VisualParent, burgers.Count);
             else
-                burger.SetParent(stockAnchor, false);
-            burger.localPosition = new Vector3(0f, burgers.Count * 0.22f, 0f);
-            burger.localRotation = Quaternion.identity;
-            burger.localScale = Vector3.one * 0.85f;
+                burger.SetParent(VisualParent, false);
+            Place(burger, burgers.Count);
             burgers.Add(burger);
+        }
+
+        Transform SpawnDetached(int slotIndex, bool boxed)
+        {
+            Transform item = boxed
+                ? BoxVisualFactory.Create(VisualParent, slotIndex)
+                : CreateVisual(VisualParent, slotIndex);
+            Place(item, slotIndex);
+            item.SetParent(null, true);
+            return item;
+        }
+
+        Transform VisualParent => stockAnchor != null ? stockAnchor : transform;
+
+        public static Vector3 SlotLocal(int index) =>
+            new Vector3(0f, Mathf.Max(0, index) * LayerHeight, 0f);
+
+        static void Place(Transform item, int index)
+        {
+            if (item == null) return;
+            item.localPosition = SlotLocal(index);
+            item.localRotation = Quaternion.identity;
+            item.localScale = Vector3.one * 0.85f;
         }
 
         void LateUpdate()

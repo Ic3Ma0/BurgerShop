@@ -126,7 +126,7 @@ namespace BurgerShop.Restaurant
             for (int i = 0; i < tables.Length; i++)
             {
                 DiningTable candidate = tables[i];
-                if (candidate == null || candidate.IsDirty) continue;
+                if (candidate == null || !candidate.gameObject.activeInHierarchy || candidate.IsDirty) continue;
                 if (!candidate.TryAssignSeat(guest, out sitPosition, out seatIndex)) continue;
                 table = candidate;
                 return true;

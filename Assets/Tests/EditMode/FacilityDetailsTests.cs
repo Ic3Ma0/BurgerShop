@@ -45,26 +45,26 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(zone.TryUpgrade(1),Is.True);Assert.That(wallet.Coins,Is.EqualTo(60));Assert.That(observed,Is.EqualTo(2));
             Assert.That(zone.TryUpgrade(1),Is.False,"An old UI event must not buy the next tier");
             Assert.That(zone.TryUpgrade(2),Is.True); Assert.That(station.ProductionSeconds,Is.EqualTo(1.5f));
-            Assert.That(station.Capacity,Is.EqualTo(8)); Assert.That(wallet.Coins,Is.Zero);
+            Assert.That(station.Capacity,Is.EqualTo(ProductionStation.CapacityForLevel(3, kind))); Assert.That(wallet.Coins,Is.Zero);
             Assert.That(zone.TryUpgrade(3),Is.False);
         }
-        [TestCase(0,TableSetId.Bistro)] [TestCase(25,TableSetId.Diner)] [TestCase(80,TableSetId.Patio)]
-        public void TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(int invested,TableSetId choice)
+        [TestCase(0,TableSetId.Bistro,50)] [TestCase(25,TableSetId.Diner,80)] [TestCase(80,TableSetId.Patio,120)]
+        public void TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(int invested,TableSetId choice,int price)
         {
             var table=DiningTable.Create(root.transform,Vector3.zero);
             var pad=new GameObject("TableUpgrade");pad.transform.SetParent(table.transform);
             var zone=pad.AddComponent<TableUpgradeZone>();int changes=0;
             zone.Configure(table,0,wallet,player,pad.transform,null,()=>changes++);
             zone.Restore(0,invested);zone.UseDirectInteraction();zone.SetRankVisible(true);
-            wallet.RestoreProgress(80-invested,0);
+            wallet.RestoreProgress(price-invested,0);
             for(int i=0;i<60;i++)zone.Advance(.1f);
             Assert.That(zone.Invested,Is.EqualTo(invested)); Assert.That(pad.activeSelf,Is.False);
             Assert.That(zone.TryBuySet(TableSetId.Starter,invested),Is.False);
             Assert.That(zone.TryBuySet(choice,invested+1),Is.False);
             Assert.That(zone.TryBuySet(choice,invested),Is.True);
-            Assert.That(zone.Invested,Is.EqualTo(80));Assert.That(zone.PendingChoice,Is.False);
+            Assert.That(zone.Invested,Is.EqualTo(price));Assert.That(zone.PendingChoice,Is.False);
             Assert.That(table.SetId,Is.EqualTo(choice));Assert.That(wallet.Coins,Is.Zero);Assert.That(changes,Is.EqualTo(1));
-            Assert.That(zone.TryBuySet(choice,80),Is.False);Assert.That(changes,Is.EqualTo(1));
+            Assert.That(zone.TryBuySet(choice,price),Is.False);Assert.That(changes,Is.EqualTo(1));
         }
         [Test]
         public void InsufficientTableMoneyDoesNotLosePartialCredit()

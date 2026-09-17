@@ -156,25 +156,27 @@ namespace BurgerShop.UI
             bool tableChoice = table != null && !table.HasChosenSet;
             expectedLevel = grill != null ? grill.Level : offer != null ? growth.Level(offer.Id) : selected.Capture().level;
             expectedInvestment = table != null ? table.Invested : 0;
-            levelText.text = tableChoice ? "Level 1 → 2  ·  +2 stars" : "Level " + expectedLevel;
+            levelText.text = tableChoice ? "Level 1 → 2  ·  " + ShopRanks.StarRewardCopy : "Level " + expectedLevel;
             levelText.rectTransform.anchoredPosition = tableChoice ? new Vector2(0,-96) : new Vector2(170,-110);
             levelText.rectTransform.sizeDelta = tableChoice ? new Vector2(840,48) : new Vector2(440,48);
             if(table != null && table.HasChosenSet) photo.sprite = TableSetThumbnails.Get(selected.Kind,table.SetId);
             bool canUpgrade = grill != null ? !grill.IsMaxLevel : offer != null && expectedLevel <= offer.Costs.Length;
-            int cost = tableChoice ? table.Remaining : canUpgrade ? grill != null ? grill.NextCost : offer.Costs[expectedLevel-1] : 0;
+            int cost = tableChoice ? TableSetCatalog.MinCost : canUpgrade ? grill != null ? grill.NextCost : offer.Costs[expectedLevel-1] : 0;
             long missing = Math.Max(0, cost - layout.Wallet.Coins);
             if (grill != null)
-                benefit.text = $"{grill.CurrentProductionSeconds:0.##}s / {grill.ItemNoun}" + (canUpgrade ? $" → {grill.NextProductionSeconds:0.##}s\nStock {grill.Station.Capacity} → {ProductionStation.CapacityForLevel(expectedLevel+1)}\n+2 stars" : "\nAll available upgrades installed");
+                benefit.text = $"{grill.CurrentProductionSeconds:0.##}s / {grill.ItemNoun}" + (canUpgrade ? $" → {grill.NextProductionSeconds:0.##}s\nStock {grill.Station.Capacity} → {ProductionStation.CapacityForLevel(expectedLevel+1, grill.Product)}\n{ShopRanks.StarRewardCopy}" : "\nAll available upgrades installed");
             else if (table != null)
             {
                 var current = TableSetCatalog.Get(table.SetId);
                 benefit.text = $"{current.Name}\n{current.MealPay} / meal · {current.EatSeconds:0.##}s";
             }
             else if (offer != null)
-                benefit.text = DescribeOffer(expectedLevel) + (canUpgrade ? "\n→ " + DescribeOffer(expectedLevel+1) + "\n+2 stars" : "\nAll available upgrades installed");
+                benefit.text = DescribeOffer(expectedLevel) + (canUpgrade ? "\n→ " + DescribeOffer(expectedLevel+1) + "\n" + ShopRanks.StarRewardCopy : "\nAll available upgrades installed");
             else benefit.text = "Ready for service\nChoose Move to rearrange";
             photo.gameObject.SetActive(!tableChoice); levelText.gameObject.SetActive(true); benefit.gameObject.SetActive(!tableChoice);
-            price.text = tableChoice ? (missing > 0 ? $"Need {missing:N0} more · Balance {layout.Wallet.Coins:N0}" : $"Choose a set · {cost:N0} remaining")
+            price.text = tableChoice ? (table.Invested > 0
+                    ? $"{table.Invested:N0} already paid · each tier charges only the remaining amount"
+                    : "Value 50 · Turnover 80 · Premium 120")
                 : canUpgrade ? $"{cost:N0}   ·   " + (missing > 0 ? $"Need {missing:N0} more" : $"Balance {layout.Wallet.Coins:N0}") : "No further upgrades for this facility";
             price.rectTransform.anchoredPosition = new Vector2(24, tableChoice ? -538 : -375);
             cashIcon.rectTransform.anchoredPosition = new Vector2(58,tableChoice ? -560 : -397);
@@ -190,12 +192,18 @@ namespace BurgerShop.UI
             {
                 choices[i].gameObject.SetActive(tableChoice); if (!tableChoice) continue;
                 var set = TableSetCatalog.Get(TableSetCatalog.Choices[i]);
-                choiceNames[i].text = set.Name;
+                choiceNames[i].text = set.Name + " · " + set.TierLabel;
                 choicePhotos[i].sprite = TableSetThumbnails.Get(selected.Kind, set.Id);
                 var starter = TableSetCatalog.Get(TableSetId.Starter);
-                choiceStats[i].text = $"{starter.MealPay} → {set.MealPay} / meal\n{starter.EatSeconds:0.#} → {set.EatSeconds:0.#}s";
-                choicePrices[i].text = cost == 0 ? "Choose · Paid" : $"Upgrade\n{cost:N0}";
-                choices[i].interactable = missing == 0;
+                int due = TableSetCatalog.Due(set.Id, table.Invested);
+                long setMissing = Math.Max(0, due - layout.Wallet.Coins);
+                choiceStats[i].text = $"{set.TierLabel} · {set.Cost:N0}\n{starter.MealPay} → {set.MealPay} / meal\n{starter.EatSeconds:0.#}s → {set.EatSeconds:0.#}s · {set.SpeedLabel}";
+                choicePrices[i].text = due == 0 ? "Choose · Paid · " + ShopRanks.StarRewardCopy : setMissing == 0 ? $"Upgrade\n{due:N0} · {ShopRanks.StarRewardCopy}" : $"Need {setMissing:N0}";
+                choices[i].interactable = setMissing == 0;
+                choiceStats[i].fontSize = 24;
+                choiceStats[i].rectTransform.sizeDelta = new Vector2(234, 96);
+                var pillImg = choices[i].transform.Find("SelectPrice")?.GetComponent<Image>();
+                if (pillImg != null) pillImg.color = setMissing == 0 ? HudChrome.Green : HudChrome.TrackNavy;
                 ((RectTransform)choices[i].transform).anchoredPosition = new Vector2((i-1)*280,290);
             }
         }

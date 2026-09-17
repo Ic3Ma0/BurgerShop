@@ -149,7 +149,7 @@ namespace BurgerShop.Tests.EditMode
                 Assert.That(wallet.Coins, Is.EqualTo(remaining));
                 Assert.That(board.SpeedTier, Is.EqualTo(level));
                 Assert.That(board.CarryTier, Is.EqualTo(level));
-                Assert.That(worker.WalkSpeed, Is.EqualTo(3.23f * (1 + .15f * Mathf.Min(level,6) + .08f * Mathf.Max(0,level-6))).Within(.001f));
+                Assert.That(worker.WalkSpeed, Is.EqualTo(StaffBoost.WalkSpeed(level, level)).Within(.001f));
                 Assert.That(worker.Inventory.Capacity, Is.EqualTo(2 + Mathf.Min(level,8) + Mathf.Max(0,level-8)/2));
                 hud.RefreshNow();
                 Assert.That(hud.Popup.FirstLabel.text, Does.Contain(level + "/20"));

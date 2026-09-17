@@ -87,13 +87,14 @@ namespace BurgerShop.Restaurant
             else CarryTier++;
             ApplyToPlayer();
             RefreshVisuals();
+            GetComponent<UI.SessionGoalTracker>()?.EvaluateStarGateTasks();
             UI.FeedbackDirector.Current?.Success(player.transform.position,"Level Up!",player.transform);
             return true;
         }
 
         void ApplyToPlayer()
         {
-            motor?.ApplyBoostLevel(SpeedTier);
+            motor?.ApplyBoostTiers(SpeedTier, CarryTier);
             player?.ApplyBoostLevel(CarryTier);
         }
 
@@ -107,7 +108,7 @@ namespace BurgerShop.Restaurant
         void RefreshVisuals()
         {
             if (markerLabel == null) return;
-            markerLabel.text = IsMaxLevel ? $"Boost MAX\n{MaxLevel} / {MaxLevel}" : "Player upgrades";
+            markerLabel.text = IsMaxLevel ? $"Boost MAX\n{MaxLevel} / {MaxLevel}" : $"Player upgrades\n{ShopRanks.StarRewardCopy}";
         }
     }
 }
