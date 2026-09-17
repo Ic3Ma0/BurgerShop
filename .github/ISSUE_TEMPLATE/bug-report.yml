@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a crash, wrong behavior, or editor/build problem.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Burger Shop is a Unity 6.3 Android-first prototype.
+        Include enough detail for someone to reproduce the issue in the Editor or on a device.
+        Do not attach keystores, `key.properties`, signing keys, or other secrets.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps from a known starting state.
+      placeholder: |
+        1. Open SampleScene and enter Play Mode
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where did this happen?
+      options:
+        - Unity Editor (Play Mode)
+        - Android device / APK
+        - Documentation / repository only
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: App version (for example 0.3.0) or git SHA.
+  - type: textarea
+    id: extra
+    attributes:
+      label: Extra context
+      description: Screenshots, logs, or save-related notes.
