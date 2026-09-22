@@ -1,3 +1,4 @@
+using BurgerShop.Core;
 using BurgerShop.Economy;
 using BurgerShop.Restaurant;
 using BurgerShop.UI;
@@ -5,6 +6,14 @@ using UnityEngine;
 
 namespace BurgerShop.Persistence
 {
+    public enum SaveSessionPhase
+    {
+        Running,
+        Quiescing,
+        Hydrating,
+        LoadFailed
+    }
+
     public sealed class RestaurantPersistence : MonoBehaviour
     {
         public const string EditorDirectoryKey = "BurgerShop.Tests.SaveDirectory";
@@ -25,6 +34,8 @@ namespace BurgerShop.Persistence
         float elapsed;
         bool ready;
         bool saveRequested;
+        bool quiesceFlush;
+        SaveSessionPhase phase = SaveSessionPhase.Hydrating;
         public System.Func<long> UtcNowTicks=()=>System.DateTime.UtcNow.Ticks;
         long lastSeen;
         bool appPaused,appUnfocused,away;
@@ -36,6 +47,7 @@ namespace BurgerShop.Persistence
 
 
         public SaveLoadResult LoadResult { get; private set; }
+        public SaveSessionPhase Phase => phase;
         public string Status { get; private set; } = "NEW GAME - AUTOSAVE ON";
         public string FilePath => store?.FilePath;
         public int ActiveSlotId => slots != null ? slots.ActiveSlotId : 1;
@@ -64,6 +76,9 @@ namespace BurgerShop.Persistence
             BoostUpgradeZone playerBoost, ShopExpansion shop, StaffUpgradeBoard upgrades, SessionGoalTracker tracker,
             string directory = null, GrillUpgradeZone cola = null, TableUpgradeBoard tables = null)
         {
+            phase = SaveSessionPhase.Hydrating;
+            ready = false;
+            quiesceFlush = false;
             if(partsWallet!=null)partsWallet.Changed-=RequestSave;
             partsWallet=GetComponent<PartsWallet>();
             if (wallet != null) wallet.CoinsSpent -= OnSpend;
@@ -94,7 +109,7 @@ namespace BurgerShop.Persistence
             saveDirectory = directory;
             slots = new SaveSlotStore(directory);
             store = new LocalSaveStore(directory, slots.ActiveFileName);
-            ApplyLoadedSnapshot(resetIfMissing: false);
+            ApplyLoadedSnapshot();
         }
 
         public bool CanDeleteSlot(int id) => slots != null && slots.CanDelete(id);
@@ -103,26 +118,46 @@ namespace BurgerShop.Persistence
 
         public bool StartNewGame()
         {
-            if (!ready || slots == null) return false;
-            if (!Flush()) return false;
-            RememberActiveSlot();
-            if (slots.TryCreateSlot(out _) != SaveSlotOpResult.Success) return false;
+            if (!ready || slots == null || phase != SaveSessionPhase.Running || !slots.CanStartNewGame) return false;
+            if (!QuiesceAndFlushCurrent()) return false;
+            if (slots.TryCreateSlot(out _) != SaveSlotOpResult.Success)
+            {
+                phase = SaveSessionPhase.Running;
+                return false;
+            }
             BindActiveStore();
-            ApplyNewGame();
-            RememberActiveSlot();
+            phase = SaveSessionPhase.Hydrating;
+            Goal01Bootstrap.RequestInstalledShopRebuild();
             return true;
         }
 
         public bool SwitchToSlot(int id)
         {
-            if (!ready || slots == null || id == ActiveSlotId) return false;
-            if (!Flush()) return false;
-            RememberActiveSlot();
-            if (slots.TryActivate(id) != SaveSlotOpResult.Success) return false;
+            if (!ready || slots == null || phase != SaveSessionPhase.Running || id == ActiveSlotId) return false;
+            if (!QuiesceAndFlushCurrent()) return false;
+            if (slots.TryActivate(id) != SaveSlotOpResult.Success)
+            {
+                phase = SaveSessionPhase.Running;
+                return false;
+            }
             BindActiveStore();
-            ApplyLoadedSnapshot(resetIfMissing: true);
+            phase = SaveSessionPhase.Hydrating;
+            Goal01Bootstrap.RequestInstalledShopRebuild();
+            return true;
+        }
+
+        bool QuiesceAndFlushCurrent()
+        {
+            phase = SaveSessionPhase.Quiescing;
+            quiesceFlush = true;
+            bool saved = store != null && store.CanWrite && Flush();
+            quiesceFlush = false;
+            if (!saved)
+            {
+                phase = SaveSessionPhase.Running;
+                return false;
+            }
             RememberActiveSlot();
-            GetComponent<Core.RestaurantArchitecture>()?.Refresh();
             return true;
         }
 
@@ -141,15 +176,22 @@ namespace BurgerShop.Persistence
             slots.RecordActive(rank < 1 ? ShopRanks.Min : rank, wallet.Coins, UtcNowTicks());
         }
 
-        void ApplyLoadedSnapshot(bool resetIfMissing)
+        void ApplyLoadedSnapshot()
         {
             LoadResult = store.Load(out RestaurantSaveData data);
             if (data != null) ApplySave(data);
-            else if (resetIfMissing) ApplyNewGame();
+            else if (LoadResult == SaveLoadResult.NewGame) ApplyNewGame();
             else ApplyMissingKeepRuntime();
             ready = true;
             if (LoadResult == SaveLoadResult.RecoveredBackup) lastChecksum = null;
-            if (!resetIfMissing || data != null) SettleOffline();
+            if (LoadResult == SaveLoadResult.NewerVersion || LoadResult == SaveLoadResult.Unreadable
+                || LoadResult == SaveLoadResult.Unavailable)
+            {
+                phase = SaveSessionPhase.LoadFailed;
+                return;
+            }
+            if (data != null || LoadResult == SaveLoadResult.NewGame) SettleOffline();
+            phase = SaveSessionPhase.Running;
         }
 
         void ApplyMissingKeepRuntime()
@@ -272,7 +314,7 @@ namespace BurgerShop.Persistence
 
         public void Advance(float seconds)
         {
-            if (!ready || away || seconds <= 0f) return;
+            if (phase != SaveSessionPhase.Running || !ready || away || seconds <= 0f) return;
             elapsed += seconds;
             if (!saveRequested && elapsed < 2f) return;
             elapsed = 0f;
@@ -281,8 +323,13 @@ namespace BurgerShop.Persistence
 
         public bool Flush()
         {
+            if (phase == SaveSessionPhase.Quiescing)
+            {
+                if (!quiesceFlush) return false;
+            }
+            else if (phase != SaveSessionPhase.Running) return false;
             if (GetComponent<Building.FacilityLayout>()?.Committing==true) return false;
-            if (!ready || wallet == null || upgrade == null || hiring == null || !store.CanWrite) return false;
+            if (!ready || wallet == null || upgrade == null || hiring == null || store == null || !store.CanWrite) return false;
             if(settlementPending&&!SettleOffline())return false;
             var data=Capture();
             if(!away)data.lastSeenUtcTicks=UtcNowTicks();
@@ -376,7 +423,10 @@ namespace BurgerShop.Persistence
         }
         public bool SettleOffline()
         {
-            if(!ready||!store.CanWrite)return false;
+            if(phase==SaveSessionPhase.LoadFailed)return false;
+            if(phase==SaveSessionPhase.Quiescing&&!quiesceFlush)return false;
+            if(phase!=SaveSessionPhase.Running&&phase!=SaveSessionPhase.Hydrating&&phase!=SaveSessionPhase.Quiescing)return false;
+            if(!ready||store==null||!store.CanWrite)return false;
             long now=UtcNowTicks();long ticks=OfflineEarnings.ElapsedTicks(lastSeen,now);
             long grant=lastSeen==0?0:OfflineEarnings.Grant(OfflineEarnings.CheapestUpgrade(this),hiring.HiredCount,
                 staffUpgrades?.SpeedTier??0,staffUpgrades?.CarryTier??0,ticks/(decimal)System.TimeSpan.TicksPerMinute);
@@ -402,6 +452,7 @@ namespace BurgerShop.Persistence
         }
         void SetAway(bool value)
         {
+            if(phase!=SaveSessionPhase.Running)return;
             if(value==away)return;
             if(value){Flush();away=true;}
             else{away=false;SettleOffline();}
@@ -418,6 +469,9 @@ namespace BurgerShop.Persistence
         }
         void OnApplicationPause(bool paused) {appPaused=paused;SetAway(appPaused||appUnfocused); }
         void OnApplicationFocus(bool focused) {appUnfocused=!focused;SetAway(appPaused||appUnfocused); }
-        void OnApplicationQuit() => Flush();
+        void OnApplicationQuit()
+        {
+            if (phase == SaveSessionPhase.Running) Flush();
+        }
     }
 }

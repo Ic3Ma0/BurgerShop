@@ -141,7 +141,9 @@ namespace BurgerShop.UI
             int bit=1<<(stage-1);
             if((milestoneMask&bit)!=0)return;
             milestoneMask|=bit;AddUpgradeStars();celebration=.6f;
-            FeedbackDirector.Current?.World(inventory!=null?inventory.transform.position:transform.position,"Milestone "+ShopRanks.StarRewardCopy,.9f);
+            var save=GetComponentInParent<RestaurantPersistence>();
+            if(save==null||save.Phase==SaveSessionPhase.Running)
+                FeedbackDirector.Current?.World(inventory!=null?inventory.transform.position:transform.position,"Milestone "+ShopRanks.StarRewardCopy,.9f);
             ProgressChanged?.Invoke();
             FlushSave();
         }
@@ -186,7 +188,9 @@ namespace BurgerShop.UI
             if(IsCycle) {if(!wallet.TrySpend(CycleCost))return false;}
             else Stars-=StarCap;
             rank++;ApplyUnlocks();celebration=.9f;IsRankingUp=true;
-            FeedbackDirector.Current?.Success(inventory!=null?inventory.transform.position:transform.position,"Rank Up!",inventory!=null?inventory.transform:null);
+            var save=GetComponentInParent<RestaurantPersistence>();
+            if(save==null||save.Phase==SaveSessionPhase.Running)
+                FeedbackDirector.Current?.Success(inventory!=null?inventory.transform.position:transform.position,"Rank Up!",inventory!=null?inventory.transform:null);
             ProgressChanged?.Invoke();FlushSave();return true;
         }
 

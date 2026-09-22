@@ -143,7 +143,6 @@ namespace BurgerShop.UI
             if (persistence == null || !persistence.CanStartNewGame) return;
             if (!persistence.StartNewGame()) return;
             Close();
-            ShopSlotReload.Queue();
         }
 
         void LoadSlot(int id)
@@ -151,7 +150,6 @@ namespace BurgerShop.UI
             if (persistence == null || id == persistence.ActiveSlotId) return;
             if (!persistence.SwitchToSlot(id)) return;
             Close();
-            ShopSlotReload.Queue();
         }
 
         void AskDelete(int id)
@@ -223,24 +221,6 @@ namespace BurgerShop.UI
 
     public static class ShopSlotReload
     {
-        public static void Queue()
-        {
-            if (!Application.isPlaying) return;
-            if (Object.FindFirstObjectByType<PlayerMotor>() == null) return;
-            var host = new GameObject("ShopSlotReload");
-            Object.DontDestroyOnLoad(host);
-            host.AddComponent<ShopSlotReloadRunner>();
-        }
-    }
-
-    sealed class ShopSlotReloadRunner : MonoBehaviour
-    {
-        void Start() => StartCoroutine(Run());
-        System.Collections.IEnumerator Run()
-        {
-            yield return null;
-            Goal01Bootstrap.RebuildInstalledShop();
-            Destroy(gameObject);
-        }
+        public static void Queue() => Goal01Bootstrap.RequestInstalledShopRebuild();
     }
 }

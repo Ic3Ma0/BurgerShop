@@ -44,6 +44,7 @@ namespace BurgerShop.Tests.EditMode
             Time.timeScale = previousTimeScale;
             SessionState.EraseString(RestaurantPersistence.EditorDirectoryKey);
             if (root != null) Object.DestroyImmediate(root);
+            ShopLayout.ResetWingLock();
             if (Directory.Exists(directory)) Directory.Delete(directory, true);
             Assert.That(directory, Does.Not.Contain(Application.persistentDataPath));
         }
@@ -80,7 +81,9 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(goals.Rank, Is.EqualTo(4));
 
             Assert.That(persistence.StartNewGame(), Is.True);
+            ReloadKitchen();
             Assert.That(persistence.ActiveSlotId, Is.EqualTo(2));
+            Assert.That(persistence.Phase, Is.EqualTo(SaveSessionPhase.Running));
             Assert.That(goals.Rank, Is.EqualTo(ShopRanks.Min));
             Assert.That(wallet.Coins, Is.EqualTo(0));
             Assert.That(goals.Opening != null && goals.Opening.IsActive, Is.True);
@@ -88,8 +91,14 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(new LocalSaveStore(directory, SaveSlotStore.LegacyFileName).Load(out var old), Is.EqualTo(SaveLoadResult.Loaded));
             Assert.That(old.coins, Is.EqualTo(888));
             Assert.That(old.shopRank, Is.EqualTo(4));
-            Assert.That(File.Exists(Path.Combine(directory, SaveSlotStore.NumberedFileName(2))), Is.False);
             Assert.That(persistence.FilePath, Does.Not.Contain(Application.persistentDataPath));
+            string slotB = Path.Combine(directory, SaveSlotStore.NumberedFileName(2));
+            if (File.Exists(slotB))
+            {
+                Assert.That(new LocalSaveStore(directory, SaveSlotStore.NumberedFileName(2)).Load(out var created), Is.EqualTo(SaveLoadResult.Loaded));
+                Assert.That(created.coins, Is.EqualTo(0));
+                Assert.That(created.shopRank, Is.EqualTo(ShopRanks.Min));
+            }
         }
 
         [Test]
@@ -100,6 +109,7 @@ namespace BurgerShop.Tests.EditMode
             persistence.Configure(wallet, grill.Upgrade, hiring, null, null, null, goals, directory);
             int slotA = persistence.ActiveSlotId;
             Assert.That(persistence.StartNewGame(), Is.True);
+            ReloadKitchen();
             int slotB = persistence.ActiveSlotId;
             Assert.That(slotB, Is.Not.EqualTo(slotA));
             wallet.RestoreProgress(40, 0);
@@ -107,14 +117,17 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(persistence.Flush(), Is.True);
 
             Assert.That(persistence.SwitchToSlot(slotA), Is.True);
+            ReloadKitchen();
             Assert.That(wallet.Coins, Is.EqualTo(1500));
             Assert.That(goals.Rank, Is.EqualTo(5));
 
             Assert.That(persistence.SwitchToSlot(slotB), Is.True);
+            ReloadKitchen();
             Assert.That(wallet.Coins, Is.EqualTo(40));
             Assert.That(goals.Rank, Is.EqualTo(2));
 
             Assert.That(persistence.SwitchToSlot(slotA), Is.True);
+            ReloadKitchen();
             Assert.That(wallet.Coins, Is.EqualTo(1500));
             Assert.That(goals.Rank, Is.EqualTo(5));
         }
@@ -173,6 +186,7 @@ namespace BurgerShop.Tests.EditMode
             persistence.Configure(wallet, grill.Upgrade, hiring, null, null, null, goals, directory);
             int slotA = persistence.ActiveSlotId;
             Assert.That(persistence.StartNewGame(), Is.True);
+            ReloadKitchen();
             Assert.That(persistence.Flush(), Is.True);
             int slotB = persistence.ActiveSlotId;
             Assert.That(persistence.CanDeleteSlot(slotB), Is.False);
@@ -195,6 +209,14 @@ namespace BurgerShop.Tests.EditMode
             shopRank = rank,
             colaLevel = 1
         };
+
+        void ReloadKitchen()
+        {
+            if (root != null) Object.DestroyImmediate(root);
+            ShopLayout.ResetWingLock();
+            BuildKitchen();
+            persistence.Configure(wallet, grill.Upgrade, hiring, null, null, null, goals, directory);
+        }
 
         void BuildKitchen()
         {

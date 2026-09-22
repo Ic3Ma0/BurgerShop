@@ -111,3 +111,4 @@ Flush 当前 → Load 目标槽 → 按 067 同一条 Restore 恢复钱包/等�
 
 - v1.0：首次规格。067 仍为单槽经营 schema；本 spec 只加本地最多 8 槽与齿轮入口。
 - 2026-09-16：按本 spec 落地。不升 `RestaurantSaveData`（仍 v17），不重写 `LocalSaveStore`。槽 1 沿用 `restaurant-save.json`；槽 2–8 为 `restaurant-save-{id}.json`；清单 `restaurant-slots.json`。齿轮在超市购物车左侧 8px，同 96 尺寸、同高、右侧集群。`Spec068SaveSlotTests` 覆盖 AC-01–06。Unity 6000.3.23f1，隔离工程 `/tmp/bs059-editmode`，隔离临时目录，未写真实经营存档。`Spec068SaveSlotTests` 6/6 通过。未推 GitHub，未做 Android。Play 下切槽/新游戏会重建 Goal01，使 064 房间与设施与读档一致；EditMode 走同一条 Persistence Restore。
+- 2026-09-17：078 起 `SwitchToSlot` / `StartNewGame` 不再对旧世界 ApplySave。`Spec068SaveSlotTests` 切档与新游戏后销毁厨房再 `Configure`，与 Play 重建对齐。

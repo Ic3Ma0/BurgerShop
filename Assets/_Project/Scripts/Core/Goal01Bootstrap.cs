@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -25,11 +26,46 @@ namespace BurgerShop.Core
 
         public static void RebuildInstalledShop()
         {
+            if (Application.isPlaying)
+            {
+                RequestInstalledShopRebuild();
+                return;
+            }
+            TearDownInstalledShopImmediate();
+            InstallShop();
+        }
+
+        public static void RequestInstalledShopRebuild()
+        {
+            if (!Application.isPlaying) return;
+            if (Object.FindFirstObjectByType<PlayerMotor>() == null) return;
+            if (Object.FindFirstObjectByType<ShopRebuildRunner>() != null) return;
+            var host = new GameObject("ShopSlotReload");
+            Object.DontDestroyOnLoad(host);
+            host.AddComponent<ShopRebuildRunner>();
+        }
+
+        static void TearDownInstalledShopImmediate()
+        {
+            var existing = Object.FindFirstObjectByType<PlayerMotor>();
+            if (existing == null) return;
+            Transform root = existing.transform.parent;
+            if (root != null) Object.DestroyImmediate(root.gameObject);
+        }
+
+        internal static IEnumerator RebuildInstalledShopWhenReady()
+        {
             var existing = Object.FindFirstObjectByType<PlayerMotor>();
             if (existing != null)
             {
                 Transform root = existing.transform.parent;
-                if (root != null) Object.DestroyImmediate(root.gameObject);
+                if (root != null)
+                {
+                    var go = root.gameObject;
+                    Object.Destroy(go);
+                    while (go != null)
+                        yield return null;
+                }
             }
             InstallShop();
         }
@@ -391,6 +427,16 @@ namespace BurgerShop.Core
             var renderer = instance.GetComponent<Renderer>();
             if (renderer != null)
                 renderer.sharedMaterial = material;
+        }
+    }
+
+    sealed class ShopRebuildRunner : MonoBehaviour
+    {
+        void Start() => StartCoroutine(Run());
+        IEnumerator Run()
+        {
+            yield return Goal01Bootstrap.RebuildInstalledShopWhenReady();
+            Destroy(gameObject);
         }
     }
 }
