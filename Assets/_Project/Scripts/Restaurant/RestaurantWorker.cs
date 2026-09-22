@@ -346,11 +346,13 @@ namespace BurgerShop.Restaurant
             }
         }
 
+        const float CounterArrivalRadius = .7f;
+
         void TickServing()
         {
             Vector3 servingOffset = transform.position - ServingStand();
             servingOffset.y = 0f;
-            if (servingOffset.sqrMagnitude > 0.7f * 0.7f)
+            if (servingOffset.sqrMagnitude > CounterArrivalRadius * CounterArrivalRadius)
             {
                 WorkerJob travel = CarryingFood ? WorkerJob.Stock
                     : Job == WorkerJob.ServeCola ? WorkerJob.ServeCola
@@ -543,7 +545,8 @@ namespace BurgerShop.Restaurant
             Vector3 dest = DestinationFor(travel);
             Vector3 offset = dest - transform.position;
             offset.y = 0f;
-            if (offset.sqrMagnitude <= 1f)
+            float arrivalRadius = travel == WorkerState.ToCounter ? CounterArrivalRadius : 1f;
+            if (offset.sqrMagnitude <= arrivalRadius * arrivalRadius)
             {
                 State = travel == WorkerState.ToGrill ? WorkerState.Collecting
                     : travel == WorkerState.ToCounter ? WorkerState.Serving

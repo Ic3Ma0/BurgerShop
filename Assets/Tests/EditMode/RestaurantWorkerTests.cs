@@ -111,6 +111,27 @@ namespace BurgerShop.Tests.EditMode
             for (int i = 0; i < 1200; i++) queue.Advance(1f / 60f);
         }
 
+        [TestCase(.71f)]
+        [TestCase(.85f)]
+        [TestCase(.99f)]
+        public void WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace(float distance)
+        {
+            var worker=Hire();
+            typeof(RestaurantWorker).GetProperty("Job").SetValue(worker,WorkerJob.Serve);
+            typeof(RestaurantWorker).GetProperty("State").SetValue(worker,WorkerState.Serving);
+            var stand=(Vector3)typeof(RestaurantWorker).GetMethod("ServingStand",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(worker,null);
+            worker.transform.position=new Vector3(stand.x+distance,1.05f,stand.z);
+            worker.Advance(.02f);
+            Assert.That(worker.State,Is.EqualTo(WorkerState.ToCounter),"Outside serving range must start walking, not re-enter Serving in place");
+            bool reached=false;
+            for(int i=0;i<1500;i++)
+            {
+                worker.Advance(.02f);
+                if(ShopLayout.Horizontal(worker.transform.position,stand)<=.7f){reached=true;break;}
+            }
+            Assert.That(reached,Is.True,"Worker must reach the actual serving radius");
+        }
+
         [Test]
         public void HiringNeedsFundsRangeAndAnUninterruptedHold()
         {
