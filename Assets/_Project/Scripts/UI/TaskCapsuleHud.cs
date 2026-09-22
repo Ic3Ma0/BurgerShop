@@ -98,6 +98,8 @@ namespace BurgerShop.UI
                 if(!goals.ShowsInvestment)return;
                 var offer=goals.Investments?.Current;
                 if(offer?.Facility!=null)FacilityDetailsHud.Current?.Open(offer.Facility);
+                else if(offer?.Actor is Player.PlayerMotor) Object.FindFirstObjectByType<PlayerUpgradeHud>()?.Open();
+                else if(offer?.Actor is Restaurant.RestaurantWorker worker) Object.FindFirstObjectByType<StaffUpgradeHud>()?.Open(worker);
                 else if(offer?.ShopPurchase==true)Object.FindFirstObjectByType<FacilityShopHud>()?.Open();
                 else if(offer?.Id=="main-hall"){var shop=Object.FindFirstObjectByType<FacilityShopHud>();if(shop!=null){shop.Open();shop.ShowExpansions();}}
             });

@@ -11,12 +11,23 @@ namespace BurgerShop.Customer
         readonly float[] distances;
         public float Length => distances[distances.Length-1];
         public static float Pace(int ticket) => 0.94f + ((ticket*37)%13)*.01f;
-        static readonly Collider[] hits = new Collider[32];
+
         public CustomerWalkPath(IReadOnlyList<Vector3> source, int ticket, int fixedFrom = int.MaxValue)
         {
             var knots=new List<Vector3>();
             foreach(var p in source)if(knots.Count==0||Vector3.Distance(knots[knots.Count-1],p)>.01f)knots.Add(p);
             if(knots.Count==0)knots.Add(Vector3.zero);
+            var layout=Building.FacilityLayout.Current;
+            if(layout!=null)
+            {
+                for(int i=1;i<knots.Count;i++)
+                {
+                    if(Clear(knots[i-1],knots[i]))continue;
+                    var detour=layout.Route(knots[i-1],knots[i]);
+                    if(detour==null)break; // The movement guard waits; never author a direct fallback.
+                    knots.RemoveAt(i);knots.InsertRange(i,detour);i+=detour.Length-1;
+                }
+            }
             // Personal walking lane, not a per-frame random wobble. Queue slots and endpoints stay exact.
             float lane=.22f+(ticket*17%7)*.065f;
             var personal=knots.ToArray();
@@ -55,15 +66,7 @@ namespace BurgerShop.Customer
         public Vector3[] Points => (Vector3[])points.Clone();
         public static bool Clear(Vector3 a,Vector3 b)
         {
-            int steps=Mathf.Max(1,Mathf.CeilToInt(Vector3.Distance(a,b)/.22f));
-            for(int step=0;step<=steps;step++)
-            {
-                var p=Vector3.Lerp(a,b,step/(float)steps);
-                int count=Physics.OverlapCapsuleNonAlloc(p+Vector3.up*.5f,p+Vector3.up*1.1f,.28f,hits,~0,QueryTriggerInteraction.Ignore);
-                if(count==hits.Length)return false;
-                for(int i=0;i<count;i++)if(SolidOccupancy.BlocksPlayer(hits[i])&&!(hits[i] is CharacterController))return false;
-            }
-            return true;
+            return ActorObstacles.Clear(a,b);
         }
     }
 }

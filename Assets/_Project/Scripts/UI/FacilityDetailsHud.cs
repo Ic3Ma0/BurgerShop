@@ -1,38 +1,13 @@
 using System;
-using System.Collections.Generic;
 using BurgerShop.Building;
 using BurgerShop.Player;
 using BurgerShop.Restaurant;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace BurgerShop.UI
 {
-    // One pointer gesture owns selection. A rejected drag cannot become a tap again on release.
-    internal sealed class FacilityTapGesture
-    {
-        internal const float MaxSeconds = .4f;
-        internal const float MaxTravel = 14f;
-        FacilityInstance pressed;
-        Vector2 origin;
-        float began;
-        internal void Cancel() => pressed = null;
-        internal void Begin(FacilityInstance item, Vector2 point, float now, bool blocked)
-        { pressed = blocked ? null : item; origin = point; began = now; }
-        internal void Track(Vector2 point, float now, bool blocked, float scale = 1f)
-        {
-            if (blocked || now - began > MaxSeconds || Vector2.Distance(point, origin) > MaxTravel * scale) Cancel();
-        }
-        internal FacilityInstance Release(FacilityInstance item, Vector2 point, float now, bool blocked, float scale = 1f)
-        {
-            Track(point, now, blocked, scale);
-            var result = pressed != null && pressed == item ? pressed : null;
-            Cancel(); return result;
-        }
-    }
-
     public sealed class FacilityDetailsHud : MonoBehaviour
     {
         public static FacilityDetailsHud Current { get; private set; }
@@ -42,8 +17,6 @@ namespace BurgerShop.UI
         FacilityShopHud shop;
         GrowthUpgrades growth;
         VirtualJoystick joystick;
-        readonly FacilityTapGesture gesture = new FacilityTapGesture();
-        readonly List<RaycastResult> uiHits = new List<RaycastResult>();
         FacilityInstance selected;
         GrillUpgradeZone grill;
         TableUpgradeZone table;
@@ -74,7 +47,7 @@ namespace BurgerShop.UI
             foreach (var zone in facilities.GetComponentsInChildren<GrillUpgradeZone>(true)) zone.UseDirectInteraction();
             foreach (var zone in facilities.GetComponentsInChildren<TableUpgradeZone>(true)) zone.UseDirectInteraction();
             upgrades.UseDirectInteraction();
-            hud.BuildUi(); return hud;
+            hud.BuildUi(); WorldDetailsInput.Build(go, hud, facilities, store); return hud;
         }
 
         static Text Label(Transform parent, string name, Vector2 position, Vector2 size, int font = 30, bool bold = false)
@@ -129,6 +102,7 @@ namespace BurgerShop.UI
         public bool Open(FacilityInstance instance)
         {
             if (layout.Editing || !FacilityShopHud.CanSelect(instance)) return false;
+            StatUpgradePopup.Current?.Dismiss();
             if (shop.IsOpen) shop.Close();
             if (!ownsPause)
             {
@@ -136,7 +110,7 @@ namespace BurgerShop.UI
                 follow = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
                 if (follow != null) { followWasEnabled = follow.enabled; follow.enabled = false; }
             }
-            joystick?.OnCancel(null); gesture.Cancel(); selected = instance;
+            joystick?.OnCancel(null); selected = instance;
             grill = instance.GetComponentInChildren<GrillUpgradeZone>(true);
             table = instance.GetComponentInChildren<TableUpgradeZone>(true);
             offer = null;
@@ -247,7 +221,7 @@ namespace BurgerShop.UI
         }
         public void Close()
         {
-            selected = null; gesture.Cancel();
+            selected = null;
             if (sheet != null) sheet.gameObject.SetActive(false);
             if (shade != null) shade.SetActive(false);
             if (!ownsPause) return;
@@ -260,58 +234,14 @@ namespace BurgerShop.UI
             float scale = Mathf.Min(1f, (size.x-40)/sheet.sizeDelta.x, (size.y-80)/sheet.sizeDelta.y);
             sheet.localScale = Vector3.one * Mathf.Max(.1f,scale);
         }
-        internal FacilityInstance FacilityAt(Vector2 point)
-        {
-            if (Camera.main == null) return null;
-            var hits = Physics.RaycastAll(Camera.main.ScreenPointToRay(point), 500, ~0, QueryTriggerInteraction.Ignore);
-            Array.Sort(hits, (a,b) => a.distance.CompareTo(b.distance));
-            foreach (var hit in hits)
-            {
-                if (hit.collider.GetComponentInParent<Customer.CustomerAgent>() != null || hit.collider.GetComponentInParent<RestaurantWorker>() != null
-                    || hit.collider.GetComponentInParent<PlayerMotor>() != null) continue;
-                var instance = hit.collider.GetComponentInParent<FacilityInstance>();
-                return FacilityShopHud.CanSelect(instance) ? instance : null;
-            }
-            return null;
-        }
-        bool OverUi(Vector2 pointer)
-        {
-            if (EventSystem.current == null) return false;
-            uiHits.Clear(); EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = pointer }, uiHits);
-            foreach (var hit in uiHits) if (hit.module is GraphicRaycaster) return true;
-            return false;
-        }
+        internal FacilityInstance FacilityAt(Vector2 point) => GetComponent<WorldDetailsInput>().TargetAt(point) as FacilityInstance;
         void Update()
         {
-            if (IsOpen)
-            {
-                if (!FacilityShopHud.CanSelect(selected)) { Close(); return; }
-                if (Keyboard.current?.escapeKey.wasPressedThisFrame == true) { Close(); return; }
-                if (paintedCoins != layout.Wallet.Coins) Refresh();
-                Fit(); return;
-            }
-            if (shop.IsOpen || layout.Editing || Time.timeScale <= 0) { gesture.Cancel(); return; }
-            var touch = Touchscreen.current?.primaryTouch;
-            bool touchEvent = touch != null && (touch.press.isPressed || touch.press.wasReleasedThisFrame);
-            var mouse = Mouse.current;
-            if (!touchEvent && mouse == null) return;
-            Vector2 point = touchEvent ? touch.position.ReadValue() : mouse.position.ReadValue();
-            bool down = touchEvent ? touch.press.wasPressedThisFrame : mouse.leftButton.wasPressedThisFrame;
-            bool up = touchEvent ? touch.press.wasReleasedThisFrame : mouse.leftButton.wasReleasedThisFrame;
-            int fingers = 0;
-            if (Touchscreen.current != null) foreach (var t in Touchscreen.current.touches) if (t.press.isPressed) fingers++;
-            bool blocked = fingers > 1 || joystick != null && joystick.HasPointer || VirtualJoystick.Value.sqrMagnitude > .001f || OverUi(point);
-            float scale = GetComponentInParent<Canvas>()?.scaleFactor ?? 1;
-            if (down) gesture.Begin(blocked ? null : FacilityAt(point), point, Time.unscaledTime, blocked);
-            gesture.Track(point, Time.unscaledTime, blocked, scale);
-            if (up)
-            {
-                var item = gesture.Release(blocked ? null : FacilityAt(point), point, Time.unscaledTime, blocked, scale);
-                if (item != null) Open(item);
-            }
+            if (!IsOpen) return;
+            if (!FacilityShopHud.CanSelect(selected) || Keyboard.current?.escapeKey.wasPressedThisFrame == true) { Close(); return; }
+            if (paintedCoins != layout.Wallet.Coins) Refresh();
+            Fit();
         }
-        void OnApplicationFocus(bool focused) { if (!focused) gesture.Cancel(); }
-        void OnApplicationPause(bool paused) { if (paused) gesture.Cancel(); }
         void OnDisable() => Close();
         void OnDestroy() { Close(); if (Current == this) Current = null; }
     }

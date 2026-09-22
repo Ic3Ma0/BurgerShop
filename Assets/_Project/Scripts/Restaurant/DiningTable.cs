@@ -135,7 +135,16 @@ namespace BurgerShop.Restaurant
             if (actor == null) return false;
             Vector3 offset = actor.position - Center;
             offset.y = 0f;
-            return offset.sqrMagnitude <= pickupRadius * pickupRadius;
+            return offset.sqrMagnitude <= pickupRadius * pickupRadius || ShopLayout.Horizontal(actor.position,WaitPosition)<=.45f;
+        }
+
+        public Vector3 SeatApproach(int index)
+        {
+            var seat=SeatPosition(index);
+            if(ActorObstacles.Clear(seat,seat))return seat;
+            var outward=seat-Center;outward.y=0;
+            // Mount the chair from its side, never walk through the tabletop.
+            return seat+Vector3.Cross(Vector3.up,outward.normalized)*.8f;
         }
 
         public bool TryAssignSeat(CustomerAgent guest, out Vector3 sitPosition, out int seatIndex)

@@ -176,12 +176,12 @@ namespace BurgerShop.Restaurant
         public static Vector3[] Walk(Vector3 from, Vector3 to)
         {
             var layout = BurgerShop.Building.FacilityLayout.Current;
-            if (layout != null && (SmallFootprint || layout.HasCustomLayout || RestroomExpansion.Current?.Built == true))
-            {
-                Vector3[] routed = CardinalizeFrom(from, layout.Route(from, to));
-                if (UsableWalk(routed, from, to)) return routed;
-            }
-            return IndoorRoute(from, to);
+            if (layout != null)
+                return layout.Route(from,to) ?? System.Array.Empty<Vector3>();
+            var authored=IndoorRoute(from,to);
+            var cursor=from;
+            foreach(var p in authored){if(!ActorObstacles.Clear(cursor,p))return ActorObstacles.Route(from,to)??System.Array.Empty<Vector3>();cursor=p;}
+            return authored;
         }
 
         // Customers never walk a straight line through the south wall: they use the 045/046 door.

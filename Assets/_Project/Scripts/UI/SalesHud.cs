@@ -22,7 +22,7 @@ namespace BurgerShop.UI
 
         public static SalesHud Build(Transform parent, RestaurantWallet earnings)
         {
-            var hud = new GameObject("SalesStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            var hud = new GameObject("SalesStatus", typeof(RectTransform), typeof(CanvasRenderer), typeof(LocalizedText));
             hud.transform.SetParent(parent, false);
             RectTransform rect = hud.GetComponent<RectTransform>();
             rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 1f);

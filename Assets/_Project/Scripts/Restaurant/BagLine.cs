@@ -85,7 +85,7 @@ namespace BurgerShop.Restaurant
             var obj=new GameObject("Buy_"+name);obj.transform.SetParent(area,false);
             var pad=ShopFixtures.CreateActionCircle(obj.transform,"Pad",point+Vector3.up*.02f,HudChrome.Gold);
             var label=ShopFixtures.CreateStationLabel(obj.transform,"BuyLabel",point+Vector3.up*1.3f,name);
-            var zone=obj.AddComponent<FacilityUnlockZone>();zone.Configure(wallet,player,pad,price,name,()=>{unlocked();RefreshPads();GetComponent<RestaurantPersistence>()?.Flush();},label);return zone;
+            var zone=obj.AddComponent<FacilityUnlockZone>();zone.Configure(wallet,player,pad,price,name,()=>{unlocked();RefreshPads();GetComponent<RestaurantPersistence>()?.Flush();},label);zone.SetStoreOnly();return zone;
         }
         void RefreshPads(){MachinePad.SetRankVisible(true);TablePad.SetRankVisible(MachineBuilt);CounterPad.SetRankVisible(TableBuilt);}
         Transform Model(string name,Vector3 point)
@@ -125,11 +125,7 @@ namespace BurgerShop.Restaurant
             growth?.Register(new GrowthUpgrades.Offer{Id=instancePrefix+id,Title=title,Target=target,Position=pos,Costs=new[]{150,300},Benefit=benefit,Apply=n=>
             {
                 apply(n);
-                if(id=="bag-counter"||id=="bag-table")
-                {
-                    CounterTierVisual.Create(target,"CounterAppearance",target.position,1.5f,1.1f,.8f,FoodIcon.Bagged,n);
-                    return;
-                }
+                // Preserve the catalog model; bag preparation is not a checkout counter.
                 var old=target.Find("TierBars");if(old!=null){old.gameObject.SetActive(false);BurgerVisual.Release(old.gameObject);}
                 var bars=new GameObject("TierBars").transform;bars.SetParent(target,false);
                 for(int i=1;i<n;i++)BagVisualFactory.Part(bars,"Trim",PrimitiveType.Cube,new Vector3(.6f,.85f+i*.12f,0),new Vector3(.1f,.08f,.8f),paper);

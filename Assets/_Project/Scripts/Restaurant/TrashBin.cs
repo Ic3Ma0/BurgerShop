@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BurgerShop.Player;
 using UnityEngine;
 
@@ -7,12 +8,16 @@ namespace BurgerShop.Restaurant
     {
         public static Vector3 ShopPosition => ShopLayout.TrashBin;
         public const float VisualScale = 1.7f;
+        // The enlarged bin and player capsule stop their centres about 1.04 m apart.
+        public const float DefaultDropRadius = 1.25f;
         public const float DumpInterval = 0.11f;
         public const float MinDumpInterval = 0.10f;
         public static readonly Vector3 MouthLocal = new Vector3(0f, 0.86f, 0f);
 
         TrashInventory inventory;
-        [SerializeField, Min(0.1f)] float radius = 1f;
+        BurgerInventory food;
+        readonly List<TrashMotion> discarded = new List<TrashMotion>();
+        [SerializeField, Min(0.1f)] float radius = DefaultDropRadius;
         [SerializeField, Min(0.05f)] float dropInterval = DumpInterval;
         float cooldown;
 
@@ -31,9 +36,10 @@ namespace BurgerShop.Restaurant
             }
         }
 
-        public void Configure(TrashInventory carrier, float dropRadius = 1f, float interval = DumpInterval)
+        public void Configure(TrashInventory carrier, float dropRadius = DefaultDropRadius, float interval = DumpInterval)
         {
             inventory = carrier;
+            food = carrier != null ? carrier.GetComponent<BurgerInventory>() : null;
             radius = Mathf.Max(0.1f, dropRadius);
             dropInterval = Mathf.Max(MinDumpInterval, interval);
             cooldown = 0f;
@@ -46,7 +52,13 @@ namespace BurgerShop.Restaurant
 
         public void Advance(float deltaTime)
         {
-            if (deltaTime <= 0f) return;
+            if (deltaTime <= 0f || !isActiveAndEnabled) return;
+            for (int i = discarded.Count - 1; i >= 0; i--)
+            {
+                var flight = discarded[i];
+                if (flight != null) flight.Advance(deltaTime);
+                if (flight == null || flight.IsFinished) discarded.RemoveAt(i);
+            }
             int held = inventory != null ? inventory.Count : 0;
             inventory?.AdvanceDumps(deltaTime);
             bool completed = inventory != null && inventory.Count < held;
@@ -62,12 +74,37 @@ namespace BurgerShop.Restaurant
                 return;
             }
             cooldown = Mathf.Max(0f, cooldown - deltaTime);
+            if (cooldown <= 0f && inventory.Count == 0 && food != null && food.isActiveAndEnabled
+                && (food.LooseCount > 0 || food.ColaCount > 0))
+            {
+                var kind = food.ColaCount > 0 ? CarriedItemKind.Cola : CarriedItemKind.Burger;
+                if (food.TryTake(kind, out Transform item))
+                {
+                    cooldown = dropInterval;
+                    if (item != null)
+                    {
+                        var flight = item.gameObject.AddComponent<TrashMotion>();
+                        flight.Launch(transform, MouthLocal, Vector3.up * .6f, Vector3.zero,
+                            () => BurgerVisual.Release(item.gameObject), TrashInventory.DumpDuration);
+                        discarded.Add(flight);
+                    }
+                    UI.FeedbackDirector.Current?.RequestSound(UI.FeedbackSound.Dump);
+                }
+                return;
+            }
             if (cooldown <= 0f && TryDumpFrom(inventory, out TrashMotion started))
             {
                 cooldown = dropInterval;
                 started.Advance(deltaTime);
                 inventory.AdvanceDumps(0f);
             }
+        }
+
+        void OnDestroy()
+        {
+            foreach (var flight in discarded)
+                if (flight != null) BurgerVisual.Release(flight.gameObject);
+            discarded.Clear();
         }
 
         public bool TryDumpFrom(TrashInventory carrier)

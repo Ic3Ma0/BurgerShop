@@ -7,6 +7,8 @@ namespace BurgerShop.UI
     {
         BoostUpgradeZone board;
         StatUpgradePopup popup;
+        int expectedSpeed, expectedCarry;
+        float nextPurchase;
 
         public StatUpgradePopup Popup => popup;
         public bool IsVisible => popup != null && popup.IsVisible;
@@ -28,11 +30,20 @@ namespace BurgerShop.UI
             Refresh();
         }
 
-        public void ClickSpeed() => board?.TryBuySpeed();
+        public void ClickSpeed() { if (IsVisible && Time.unscaledTime >= nextPurchase) { nextPurchase = Time.unscaledTime + .3f; board.TryBuySpeed(expectedSpeed); Refresh(); } }
 
-        public void ClickCarry() => board?.TryBuyCarry();
+        public void ClickCarry() { if (IsVisible && Time.unscaledTime >= nextPurchase) { nextPurchase = Time.unscaledTime + .3f; board.TryBuyCarry(expectedCarry); Refresh(); } }
 
         public void ClickClose() => popup?.Dismiss();
+
+        public bool CanSelect(Player.PlayerMotor actor) => board != null && actor != null && actor == board.Player;
+        public bool Open()
+        {
+            if (board == null || !popup.Open()) return false;
+            nextPurchase = 0; Refresh(); return true;
+        }
+
+        void OnDisable() => ClickClose();
 
         public void RefreshNow() => Refresh();
 
@@ -41,19 +52,8 @@ namespace BurgerShop.UI
         void Refresh()
         {
             if (popup == null) return;
-            bool inRange = board != null && board.IsPlayerInRange;
-            if (!inRange)
-            {
-                popup.ResetDismissed();
-                popup.SetVisible(false);
-                return;
-            }
-            if (popup.IsDismissed)
-            {
-                popup.SetVisible(false);
-                return;
-            }
-            popup.SetVisible(true);
+            if (!IsVisible || board == null) return;
+            expectedSpeed = board.SpeedTier; expectedCarry = board.CarryTier;
             popup.PaintStat(true, "Speed (u/s)", board.SpeedTier,
                 Player.PlayerBoost.MoveSpeed(board.SpeedTier, board.CarryTier).ToString("0.00"),
                 Player.PlayerBoost.MoveSpeed(board.SpeedTier + 1, board.CarryTier).ToString("0.00"),

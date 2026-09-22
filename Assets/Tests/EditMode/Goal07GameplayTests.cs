@@ -58,7 +58,7 @@ namespace BurgerShop.Tests.EditMode
             yield return WaitSeconds(2f);
             Assert.That(hiring.IsHired, Is.False);
             Assert.That(wallet.Coins, Is.Zero);
-            Assert.That(detail.text, Does.Contain("Need 50 more coins"));
+            Assert.That(detail.text, Does.Contain("还差 50 金币"));
             Assert.That(panel.alpha, Is.EqualTo(1f));
             yield return WalkTo(inventory.transform, ShopLayout.Aisle);
             yield return WaitSeconds(16f);
@@ -97,7 +97,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallet.CompletedSales, Is.EqualTo(5 + worker.CompletedDeliveries));
             Assert.That(wallet.Coins, Is.Zero, "Parked player must not receive worker-dropped cash.");
             yield return null;
-            Assert.That(status.text, Does.Contain("DELIVERED " + worker.CompletedDeliveries));
+            Assert.That(status.text, Does.Contain("已送达 " + worker.CompletedDeliveries));
 
             // Resume manual work while the employee is still using the same stock and cashier.
             yield return WalkTo(inventory.transform, ShopLayout.Aisle);

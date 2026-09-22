@@ -78,7 +78,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void GestureRejectsDragLongPressOtherFacilityUiAndMultitouch()
         {
-            var item=root.AddComponent<FacilityInstance>();var gesture=new FacilityTapGesture();var p=Vector2.one*100;
+            var item=root.AddComponent<FacilityInstance>();var gesture=new WorldTapGesture();var p=Vector2.one*100;
             gesture.Begin(item,p,0,false);Assert.That(gesture.Release(item,p,.2f,false),Is.SameAs(item));
             gesture.Begin(item,p,0,false);gesture.Track(p+Vector2.right*40,.1f,false);
             Assert.That(gesture.Release(item,p,.2f,false),Is.Null,"Returning to the start cannot undo a drag");

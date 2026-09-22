@@ -18,7 +18,7 @@ namespace BurgerShop.Restaurant
         float untilContribution = EntryDelay;
         bool selected;
         bool storeOnly;
-        public void SetStoreOnly(){storeOnly=true;enabled=false;if(pad!=null)pad.gameObject.SetActive(false);if(marker!=null)marker.gameObject.SetActive(false);}
+        public void SetStoreOnly(){storeOnly=true;RankVisible=false;enabled=false;ResetEntry();if(pad!=null)pad.gameObject.SetActive(false);if(marker!=null)marker.gameObject.SetActive(false);}
         bool paused;
         bool unfocused;
         const float Radius = 1f;
@@ -36,7 +36,7 @@ namespace BurgerShop.Restaurant
         public BurgerInventory Player => player;
         public bool IsSelected => selected;
         public bool RankVisible { get; private set; } = true;
-        public bool IsAvailable => isActiveAndEnabled && RankVisible && !IsPurchased && wallet != null && wallet.isActiveAndEnabled
+        public bool IsAvailable => !storeOnly && isActiveAndEnabled && RankVisible && !IsPurchased && wallet != null && wallet.isActiveAndEnabled
             && player != null && player.isActiveAndEnabled && !paused && !unfocused;
         public bool IsInRange => player != null && !IsPurchased && DistanceSquared <= Radius * Radius;
         public float DistanceSquared
@@ -142,7 +142,7 @@ namespace BurgerShop.Restaurant
         void LateUpdate()
         {
             if (marker == null) return;
-            marker.gameObject.SetActive(!IsPurchased && RankVisible);
+            marker.gameObject.SetActive(!storeOnly && !IsPurchased && RankVisible);
             if (Camera.main != null) marker.transform.rotation = Camera.main.transform.rotation;
         }
 
@@ -150,7 +150,7 @@ namespace BurgerShop.Restaurant
         {
             if (marker == null) return;
             marker.text = IsPurchased ? "BUILT!" : $"{Title}\nRemaining {Remaining}\n{ShopRanks.StarRewardCopy}";
-            marker.gameObject.SetActive(!IsPurchased && RankVisible);
+            marker.gameObject.SetActive(!storeOnly && !IsPurchased && RankVisible);
         }
     }
 }

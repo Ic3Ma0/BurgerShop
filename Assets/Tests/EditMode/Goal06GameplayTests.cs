@@ -57,7 +57,7 @@ namespace BurgerShop.Tests.EditMode
             yield return WaitSeconds(2f);
             Assert.That(upgrade.Level, Is.EqualTo(1));
             Assert.That(wallet.Coins, Is.Zero);
-            Assert.That(upgradeText.text, Does.Contain("Need 30 more coins"));
+            Assert.That(upgradeText.text, Does.Contain("还差 30 金币"));
             Assert.That(panel.alpha, Is.EqualTo(1f));
             yield return WalkTo(inventory.transform, new Vector3(2.5f, 0, 12f));
             yield return WalkTo(inventory.transform, ShopLayout.Aisle);
@@ -79,7 +79,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(wallet.CompletedSales, Is.EqualTo(3));
             Assert.That(grill.ProductionSeconds, Is.EqualTo(2f));
             Assert.That(sales.text, Is.EqualTo("0"));
-            Assert.That(upgradeText.text, Does.Contain("Upgraded!").And.Contain("60 COINS"));
+            Assert.That(upgradeText.text, Does.Contain("升级成功！").And.Contain("60 金币"));
             ExpandableGrill visual = grill.GetComponent<ExpandableGrill>();
             Assert.That(visual, Is.Not.Null);
             Assert.That(visual.ActiveLookName, Is.EqualTo("Look_Lv2"));

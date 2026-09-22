@@ -104,8 +104,35 @@ namespace BurgerShop.Customer
             HasReachedSlot = false;
         }
 
+        Vector3[] rejoin;
+        int rejoinStep, rejoinRevision=-1;
+        Vector3 rejoinTarget;
+        float rejoinRetry;
         internal void MoveOnPath(Vector3 position, float distance, bool arrived, Vector3 counter, float deltaTime)
         {
+            // A layout change updates logical progress, never teleports a live guest.
+            if(deltaTime<=0){DistanceAlongPath=distance;HasReachedSlot=false;rejoin=null;return;}
+            float budget=3.5f*deltaTime;
+            if(Vector3.Distance(position,transform.position)>budget+.01f || !ActorObstacles.Clear(transform.position,position) || rejoin!=null)
+            {
+                int revision=Building.FacilityLayout.Current?.Revision??-1;
+                rejoinRetry-=deltaTime;
+                if(rejoin==null||rejoinTarget!=position||rejoinRevision!=revision)
+                {
+                    if(rejoin==null&&rejoinRetry>0)return;
+                    rejoin=ActorObstacles.Route(transform.position,position);
+                    if(rejoin==null&&ActorObstacles.Clear(transform.position,position))rejoin=new[]{position};
+                    rejoinStep=0;rejoinTarget=position;rejoinRevision=revision;rejoinRetry=.5f;
+                }
+                if(rejoin==null)return;
+                while(rejoinStep<rejoin.Length)
+                {
+                    if(!StepDirect(rejoin[rejoinStep],ref budget))return;
+                    rejoinStep++;
+                }
+                rejoin=null;
+                if(Vector3.Distance(transform.position,position)>.05f)return;
+            }
             Vector3 displacement=position-transform.position;displacement.y=0;
             Vector3 direction = displacement.sqrMagnitude>.000001f ? displacement : arrived ? counter-position : Vector3.zero;
             direction.y = 0f;
@@ -244,7 +271,7 @@ namespace BurgerShop.Customer
                 }
                 Vector3 wait = table != null ? table.WaitPosition : (hall != null ? hall.WaitPosition : transform.position);
                 if (seatIndex >= 0 && table != null) seatPosition = table.SeatPosition(seatIndex);
-                Vector3 target = seatIndex >= 0 ? seatPosition : wait;
+                Vector3 target = seatIndex >= 0 ? table.SeatApproach(seatIndex) : wait;
                 if (!StepToward(target, ref remaining)) return;
                 if (seatIndex < 0)
                 {
@@ -254,6 +281,7 @@ namespace BurgerShop.Customer
                 FaceTable();
                 LockMealTip(table.MealTip);
                 PlaceBurgerOnTable();
+                seatedApproach=transform.position;
                 phase = Phase.Eating;
                 eatTime = 0f;
             }
@@ -272,6 +300,7 @@ namespace BurgerShop.Customer
                     finishedTable.LeaveMealTrash(finishedSeat);
                     finishedTable.LeaveMealCash(lockedMealTip);
                 }
+                if(finishedTable!=null)transform.position=seatedApproach; // Dismount the same chair side used to sit.
                 finishedTable?.Release(this);
                 seatIndex = -1;
                 ReleaseMeal();
@@ -293,8 +322,10 @@ namespace BurgerShop.Customer
             if(!exitPathBuilt||exitLayoutRevision!=revision)
             {
                 var path=new System.Collections.Generic.List<Vector3>{transform.position};
-                if(exitPathBuilt)path.AddRange(ShopLayout.Walk(transform.position,exitRoute[exitRoute.Length-1]));
-                else foreach(var stop in exitRoute)ShopLayout.ConcatWalk(path,ShopLayout.Walk(path[path.Count-1],stop));
+                if(exitRoute.Length==0)return;
+                var outgoing=ShopLayout.Walk(transform.position,exitRoute[exitRoute.Length-1]);
+                if(outgoing.Length==0)return;
+                path.AddRange(outgoing);
                 exitRoute=new CustomerWalkPath(path,TicketNumber).Points;exitWaypoint=0;exitPathBuilt=true;exitLayoutRevision=revision;
             }
             while (remaining > 0f && exitWaypoint < exitRoute.Length)
@@ -343,6 +374,7 @@ namespace BurgerShop.Customer
             if(!StepToward(RestroomExpansion.Door+Vector3.forward,ref travel))return true;
             room.Release(this);return false;
         }
+        Vector3 seatedApproach;
         Vector3[] wingWalk;
         Vector3 wingTarget;
         int wingStep;
@@ -354,7 +386,7 @@ namespace BurgerShop.Customer
                 wingTarget = target;
                 layoutRevision=Building.FacilityLayout.Current?.Revision??-1;
                 wingWalk = PlannedWalk(transform.position, target);
-                if (wingWalk == null || wingWalk.Length == 0) wingWalk = new[] { target };
+                if (wingWalk == null || wingWalk.Length == 0) {wingWalk=null;return false;}
                 wingStep = 0;
             }
             while (wingStep < wingWalk.Length)
@@ -367,7 +399,9 @@ namespace BurgerShop.Customer
 
         Vector3[] PlannedWalk(Vector3 from, Vector3 to)
         {
-            var points=new System.Collections.Generic.List<Vector3>{from};points.AddRange(ShopLayout.Walk(from,to));
+            var route=ShopLayout.Walk(from,to);
+            if(route.Length==0)return null;
+            var points=new System.Collections.Generic.List<Vector3>{from};points.AddRange(route);
             return new CustomerWalkPath(points,TicketNumber).Points;
         }
 
@@ -376,6 +410,8 @@ namespace BurgerShop.Customer
             Vector3 offset = target - transform.position;
             offset.y = 0f;
             float distance = offset.magnitude;
+            Vector3 next=Vector3.MoveTowards(transform.position,new Vector3(target.x,transform.position.y,target.z),travel);
+            if(!ActorObstacles.Clear(transform.position,next)){wingWalk=null;exitPathBuilt=false;rejoin=null;travel=0;return false;}
             if (distance <= 0.04f)
             {
                 transform.position = new Vector3(target.x, transform.position.y, target.z);

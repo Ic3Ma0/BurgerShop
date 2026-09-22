@@ -51,7 +51,7 @@ namespace BurgerShop.Restaurant
             var point=new GameObject("BoostPoint");point.transform.SetParent(transform,false);point.transform.position=ShopLayout.BoostPoint;BoostPoint=point.transform;
             BoostLabel=new GameObject("BoostLabel").AddComponent<TextMesh>();BoostLabel.transform.SetParent(transform,false);
             BoostLabel.transform.position=ShopLayout.BoostPoint+Vector3.up;BoostLabel.text="Player upgrades";
-            ShopFixtures.CreateActionCircle(transform,"PlayerUpgradePoint",ShopLayout.BoostPoint,new Color(.3f,.65f,.9f));
+            BoostLabel.gameObject.SetActive(false);
         }
 
         GameObject CreatePart(string name, PrimitiveType type, Vector3 position, Vector3 scale,
