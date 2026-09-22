@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="16" result="Passed" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 13:03:36Z" end-time="2026-09-22 13:03:40Z" duration="4.1901464">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="655" result="Passed" start-time="2026-09-22 13:03:36Z" end-time="2026-09-22 13:03:40Z" duration="4.190146" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1783" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs086-chinese/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="655" result="Passed" start-time="2026-09-22 13:03:36Z" end-time="2026-09-22 13:03:40Z" duration="4.167410" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="9820" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1784" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="655" result="Passed" start-time="2026-09-22 13:03:36Z" end-time="2026-09-22 13:03:40Z" duration="4.164895" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1785" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="655" result="Passed" start-time="2026-09-22 13:03:36Z" end-time="2026-09-22 13:03:40Z" duration="4.162471" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1786" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="655" result="Passed" start-time="2026-09-22 13:03:36Z" end-time="2026-09-22 13:03:40Z" duration="4.160097" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1494" name="Spec051OfflineTests" fullname="BurgerShop.Tests.EditMode.Spec051OfflineTests" classname="BurgerShop.Tests.EditMode.Spec051OfflineTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.176371" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1502" name="ContinueReceivesPointerClickAndDismissesWithoutPayingAgain" fullname="BurgerShop.Tests.EditMode.Spec051OfflineTests.ContinueReceivesPointerClickAndDismissesWithoutPayingAgain" methodname="ContinueReceivesPointerClickAndDismissesWithoutPayingAgain" classname="BurgerShop.Tests.EditMode.Spec051OfflineTests" runstate="Runnable" seed="2020666075" result="Passed" start-time="2026-09-22 13:03:32Z" end-time="2026-09-22 13:03:34Z" duration="2.139708" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1720" name="Spec086ChineseTests" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" testcasecount="15" result="Passed" start-time="2026-09-22 13:03:36Z" end-time="2026-09-22 13:03:40Z" duration="4.148800" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1725" name="CopyPreservesValues" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.CopyPreservesValues" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.005870" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1721" name="CopyPreservesValues(&quot;Continue&quot;,&quot;继续&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.CopyPreservesValues(&quot;Continue&quot;,&quot;继续&quot;)" methodname="CopyPreservesValues" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="509141821" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.004691" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1722" name="CopyPreservesValues(&quot;Lv12&quot;,&quot;12级&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.CopyPreservesValues(&quot;Lv12&quot;,&quot;12级&quot;)" methodname="CopyPreservesValues" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="638627577" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000231" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1723" name="CopyPreservesValues(&quot;Burger machine&quot;,&quot;汉堡机&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.CopyPreservesValues(&quot;Burger machine&quot;,&quot;汉堡机&quot;)" methodname="CopyPreservesValues" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="1122627473" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000192" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1724" name="CopyPreservesValues(&quot;+150&quot;,&quot;+150&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.CopyPreservesValues(&quot;+150&quot;,&quot;+150&quot;)" methodname="CopyPreservesValues" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="188361290" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000201" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1735" name="DynamicMessagesHaveNoEnglish" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.003376" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1726" name="DynamicMessagesHaveNoEnglish(&quot;You were away for 0.9 minutes.\nHire an employee to earn while away.\n+0&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish(&quot;You were away for 0.9 minutes.\nHire an employee to earn while away.\n+0&quot;)" methodname="DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="710667612" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000481" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1727" name="DynamicMessagesHaveNoEnglish(&quot;While you were away for 8.0 hours,\nyour 3 employees minded the shop.\n+123,456 cash added\nUp to 8 hours of after-hours earnings.&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish(&quot;While you were away for 8.0 hours,\nyour 3 employees minded the shop.\n+123,456 cash added\nUp to 8 hours of after-hours earnings.&quot;)" methodname="DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="1005299008" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000326" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1728" name="DynamicMessagesHaveNoEnglish(&quot;Move mouse · Q/E rotate · click to place · Done to finish&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish(&quot;Move mouse · Q/E rotate · click to place · Done to finish&quot;)" methodname="DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="1322630841" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000394" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1729" name="DynamicMessagesHaveNoEnglish(&quot;Delete Shop 2?\nThis shop will be removed.&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish(&quot;Delete Shop 2?\nThis shop will be removed.&quot;)" methodname="DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="293091254" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000257" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1730" name="DynamicMessagesHaveNoEnglish(&quot;Upgrade unavailable — check cash and level&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish(&quot;Upgrade unavailable — check cash and level&quot;)" methodname="DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="1618263747" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000178" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1731" name="DynamicMessagesHaveNoEnglish(&quot;No eligible upgrade found; check land and staff access. This is not a sell-more task.&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish(&quot;No eligible upgrade found; check land and staff access. This is not a sell-more task.&quot;)" methodname="DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="1524491176" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000281" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1732" name="DynamicMessagesHaveNoEnglish(&quot;Choose · Paid · +2 ⭐&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish(&quot;Choose · Paid · +2 ⭐&quot;)" methodname="DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="176413389" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000278" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1733" name="DynamicMessagesHaveNoEnglish(&quot;Speed (u/s)\n20/20\n4.68 → 5.38&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish(&quot;Speed (u/s)\n20/20\n4.68 → 5.38&quot;)" methodname="DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="1513553838" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000334" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1734" name="DynamicMessagesHaveNoEnglish(&quot;SHOP 20\nCash +10%&quot;)" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.DynamicMessagesHaveNoEnglish(&quot;SHOP 20\nCash +10%&quot;)" methodname="DynamicMessagesHaveNoEnglish" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="443042791" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:34Z" duration="0.000162" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1737" name="LivePanelsAreChineseAndBounded" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.LivePanelsAreChineseAndBounded" methodname="LivePanelsAreChineseAndBounded" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="1085204019" result="Passed" start-time="2026-09-22 13:03:34Z" end-time="2026-09-22 13:03:40Z" duration="5.991283" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1736" name="WorldSignTranslatesWithoutRenamingAndFontContainsChineseAndRewardGlyphs" fullname="BurgerShop.Tests.EditMode.Spec086ChineseTests.WorldSignTranslatesWithoutRenamingAndFontContainsChineseAndRewardGlyphs" methodname="WorldSignTranslatesWithoutRenamingAndFontContainsChineseAndRewardGlyphs" classname="BurgerShop.Tests.EditMode.Spec086ChineseTests" runstate="Runnable" seed="2086261540" result="Passed" start-time="2026-09-22 13:03:40Z" end-time="2026-09-22 13:03:40Z" duration="0.003408" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

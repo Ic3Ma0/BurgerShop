@@ -1,0 +1,430 @@
+{
+  "BurgerShop.Tests.EditMode.DiningTrashTests.DirtyTableDoesNotBlockACleanNeighbor": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.DumpClipIsAShortProceduralRustle": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.DumpFliesIntoTheBinThenCountsAfterTheAnimation": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.DumpIsFasterThanTablePickupAndTheBinIsLarger": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.DumpSoundRequestDoesNotThrowAndDumpStillCompletes": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.EachGuestLeavesTwoTrashAndPlayerCanHoldMoreThanFour": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.EnlargedBinCanReceiveTrashOutsideItsPhysicalFootprint": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.FinishedMealLeavesExactlyTwoLargePaperWadsAndLocksTheWholeTable": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.NearbyPickupFliesThenCountsAfterTheAnimation": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.NextCustomerWaitsBesideADirtyTableFacingItUntilTrashIsCleared": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.DiningTrashTests.SeatReopensAfterTableTrashIsPickedUp": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyPacingTests.NewGameToFirstEmployeeWithCollectedIncomeTrace": {
+    "result": "Passed",
+    "run": "j"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomySceneTests.PlacementRefreshesChangedQuoteBeforeChargingAndCancelIsFree": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.DirtyTablesDoNotProduceABuyMoreSeatsRecommendation": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(0)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(49)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(80)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(120)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.LiveObservationDistinguishesSupplyTransportAndServiceIncludingHandoffs": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit(0,200)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit(1,250)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit(4,490)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff(1,0.75f)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff(2,0.65f)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff(3,0.55f)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.RecommendationRequiresPersistentEvidenceAndDoesNotFlap": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.BoxedBurgerStocksThePackageCounter": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.CapsuleAsksToBoxStockAndSellCombo": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.DineInStillUsesLooseBurgersAfterBoxingUnlock": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.EmptyPackageKeepsTheCarStoppedAtTheWindow": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.LockedStationCannotBoxLooseBurgers": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.OldSaveLeavesBoxingAndLaneUnbought": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.StaffBoxesOrSellsAtTheWindow": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.StationLabelsAreBoxPackAndWindow": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.StockedPackageSellsAtTheWindowWithoutHoldingABox": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.UnlockingBoxingConvertsLooseIntoABox": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.DriveThruTests.WindowSaleDropsFifteenThatMustBePickedUp": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent(Burger)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent(Cola)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.EveryTableShapeHasDistinctCachedStylePhotos": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.GestureRejectsDragLongPressOtherFacilityUiAndMultitouch": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.InsufficientTableMoneyDoesNotLosePartialCredit": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(0,Bistro,50)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(25,Diner,80)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(80,Patio,120)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.GrowthEconomyTests.BagRecipeConservesBothIngredientsAndTwoBagOrderSettlesOnce": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.GrowthEconomyTests.DiningTipIsLockedOnSeatingAndBagConstructionRestoresPartially": {
+    "result": "Failed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.GrowthEconomyTests.OldSaveCompensationIsOneTimeAndVersionNineKeepsManualRank": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.GrowthEconomyTests.OneWorkerCanCompleteAllThreeLines": {
+    "result": "Failed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.GrowthEconomyTests.TablePurchaseAwardsOnceAndRankRequiresConfirmation": {
+    "result": "Failed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.GrowthEconomyTests.UpgradePathEarnsEnoughStarsWithoutAutomaticRanks": {
+    "result": "Failed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec051OfflineTests.AC01_03_05_10_12_AtomicCreditClockRollbackAndReceipt": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec051OfflineTests.AC02_04_06_07_ExactFormula": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec051OfflineTests.AC08_AllStaffTiersAndSamplePricesRespectEightUpgradeBound": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec051OfflineTests.AC09_ActiveOnlineReferenceBeatsOfflineAtSampleProgressPoints": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec051OfflineTests.AC09_StrictUniversalClaimHasZeroTimeCounterexample": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec051OfflineTests.AC11_OldChecksumsIgnoreNewFields": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec051OfflineTests.AC11_V14Migration": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec051OfflineTests.AC11_V15Migration": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec051OfflineTests.ContinueReceivesPointerClickAndDismissesWithoutPayingAgain": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.ClockRollbackKeepsUnacknowledgedReceiptAndRebasesTime": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.FirstSessionOnlyInitializesTime": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.LongAbsenceCapsMoneyButKeepsActualReceiptDuration": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.NoWorkersOrNoUpgradeStillProducesZeroIncomeReceipt(0,1000)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.NoWorkersOrNoUpgradeStillProducesZeroIncomeReceipt(3,0)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.PlanIsRepeatableAndOnlyConsumingItsTimestampPreventsAnotherPayment": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.PositiveSettlementReplacesRatherThanAddsToThePreviousReceipt": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.ReceiptShowsOnlyTheCreditThatFitsInTheWallet": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.RulesCompileWithoutTheSceneAssemblyOrUnity": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.SceneQuotesRespectStaffAccessPlayerTiersAndCycleCost": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec079OfflineBoundaryTests.SceneQuoteUsesFullTablePriceAndSkipsHiddenOrChosenTables": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.CleanAndInvestmentWorkInEitherOrder(True)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.CleanAndInvestmentWorkInEitherOrder(False)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.CleanPointsToRealThirtyCoinUpgradeAndExactShortfall": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.CompletedGrillIsNeverRecommended": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.FirstSaleAwardsOnceAndRequiresExplicitClick": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.HydrationCannotAwardFirstOrder": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.OldGrillBitDoesNotReplaceActualFirstSale": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.OldRankOneMigrationDistinguishesSalesFromUpgrade(0,1,False,0)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.OldRankOneMigrationDistinguishesSalesFromUpgrade(1,1,True,2)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.OldRankOneMigrationDistinguishesSalesFromUpgrade(4,2,True,2)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.RetiredThresholdsCannotMintStarsButOldAwardsRemain": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec080OpeningRevisionTests.StarBudgetChangesOnlyFirstGate": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomySceneTests.CatalogQuotesFitPhoneAndLandscapeWithoutCoveringPurchaseControls": {
+    "result": "Passed",
+    "run": "n"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomySceneTests.QuotesWindowUpgradesAndSavedLevelsUseRealSceneOwners": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.ApproachingHrShowsTheStaffUpgradePopup": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.ClickCarryAddsOneToStaffCarry": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.ClickCloseHidesTheStaffPopupWithoutSpending": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.ClickSpeedSpendsFiftyAndMakesTheWorkerFaster": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.LeavingHrClosesThePopup": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.OldSavesKeepStaffTiersAtZeroAndNewSavesRoundTrip": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.PaidUpgradeAppliesToEveryHiredEmployeeAndCannotReenter(1)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.PaidUpgradeAppliesToEveryHiredEmployeeAndCannotReenter(3)": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.PoorButtonsStayGreyAndLaterHiresUseCurrentTiers": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.PopupStaysOffTheJoystickAndOnlyButtonsRaycast": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.TwentyPurchasesApplyToStaffAndRejectTwentyFirst": {
+    "result": "Passed",
+    "run": "k"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.AdjacentUnlockedFloorsCoverOneFacilityWithoutDoubleCounting": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.CorruptGeometryIsNeverAccepted": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.DisconnectedRoomsAndInvalidDestinationsAreRejected": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.FourValidCornersDoNotPermitBridgingLockedLand": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.FurnitureCannotSealAnOtherwiseOpenServiceRoute": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.LocalRasterizationMatchesFullGridForRotatedObstacles": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.LockedProductsStayLockedAndLegacyAccessIsPreserved": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.RepeatPurchasesIncreasePriceAndOverflowSafely": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.RotatedCollisionAndRequiredClearanceAreEnforced": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec043PlacementTests.RotatedCornerCannotEscapeFloorAlthoughCenterIsInside": {
+    "result": "Passed",
+    "run": "l"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.PurchasedTierRestoresWithoutPaymentAndUpgradePublishesCommittedState": {
+    "result": "Passed",
+    "run": "l"
+  }
+}

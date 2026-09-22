@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Failed(Child)" total="3" passed="1" failed="2" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.0598293">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="638" result="Failed" site="Child" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.059829" total="3" passed="1" failed="2" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1762" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs085-arrival/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="638" result="Failed" site="Child" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.049487" total="3" passed="1" failed="2" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="4679" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1763" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="638" result="Failed" site="Child" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.042173" total="3" passed="1" failed="2" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1764" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="638" result="Failed" site="Child" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.034704" total="3" passed="1" failed="2" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1765" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="638" result="Failed" site="Child" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.027488" total="3" passed="1" failed="2" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1712" name="Spec085ArrivalTests" fullname="BurgerShop.Tests.EditMode.Spec085ArrivalTests" classname="BurgerShop.Tests.EditMode.Spec085ArrivalTests" runstate="Runnable" testcasecount="3" result="Failed" site="Child" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.017746" total="3" passed="1" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-suite type="ParameterizedMethod" id="1715" name="EnteringDoesNotOvershootQueueTailThenWalkBack" fullname="BurgerShop.Tests.EditMode.Spec085ArrivalTests.EnteringDoesNotOvershootQueueTailThenWalkBack" classname="BurgerShop.Tests.EditMode.Spec085ArrivalTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.013913" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <failure>
+                  <message><![CDATA[One or more child tests had errors]]></message>
+                </failure>
+                <test-case id="1713" name="EnteringDoesNotOvershootQueueTailThenWalkBack(False)" fullname="BurgerShop.Tests.EditMode.Spec085ArrivalTests.EnteringDoesNotOvershootQueueTailThenWalkBack(False)" methodname="EnteringDoesNotOvershootQueueTailThenWalkBack" classname="BurgerShop.Tests.EditMode.Spec085ArrivalTests" runstate="Runnable" seed="805452567" result="Failed" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.009997" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <failure>
+                    <message><![CDATA[  overshoots then returns: (-12.00, 0.00, -6.00)
+  Expected: less than or equal to -8.39999962f
+  But was:  -6.0f
+]]></message>
+                    <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.Spec085ArrivalTests.EnteringDoesNotOvershootQueueTailThenWalkBack (System.Boolean small) [0x00086] in /private/tmp/bs085-arrival/Assets/Tests/EditMode/Spec085ArrivalTests.cs:30
+]]></stack-trace>
+                  </failure>
+                </test-case>
+                <test-case id="1714" name="EnteringDoesNotOvershootQueueTailThenWalkBack(True)" fullname="BurgerShop.Tests.EditMode.Spec085ArrivalTests.EnteringDoesNotOvershootQueueTailThenWalkBack(True)" methodname="EnteringDoesNotOvershootQueueTailThenWalkBack" classname="BurgerShop.Tests.EditMode.Spec085ArrivalTests" runstate="Runnable" seed="1480501946" result="Passed" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.001060" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1716" name="ObsoleteEntryDoesNotCauseDetourOrBacktracking" fullname="BurgerShop.Tests.EditMode.Spec085ArrivalTests.ObsoleteEntryDoesNotCauseDetourOrBacktracking" methodname="ObsoleteEntryDoesNotCauseDetourOrBacktracking" classname="BurgerShop.Tests.EditMode.Spec085ArrivalTests" runstate="Runnable" seed="544054941" result="Failed" start-time="2026-09-22 12:16:47Z" end-time="2026-09-22 12:16:47Z" duration="0.000520" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: less than or equal to -1.89999998f
+  But was:  9.0f
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.Spec085ArrivalTests.ObsoleteEntryDoesNotCauseDetourOrBacktracking () [0x000cf] in /private/tmp/bs085-arrival/Assets/Tests/EditMode/Spec085ArrivalTests.cs:39
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

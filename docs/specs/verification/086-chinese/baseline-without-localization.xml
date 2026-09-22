@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Failed(Child)" total="7" passed="0" failed="7" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.2450179">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="654" result="Failed" site="Child" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.245018" total="7" passed="0" failed="7" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1782" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs086-chinese/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="654" result="Failed" site="Child" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.223966" total="7" passed="0" failed="7" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="9049" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1783" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="654" result="Failed" site="Child" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.223271" total="7" passed="0" failed="7" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1784" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="654" result="Failed" site="Child" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.222761" total="7" passed="0" failed="7" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1785" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="654" result="Failed" site="Child" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.222061" total="7" passed="0" failed="7" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1073" name="ColaProductTests" fullname="BurgerShop.Tests.EditMode.ColaProductTests" classname="BurgerShop.Tests.EditMode.ColaProductTests" runstate="Runnable" testcasecount="14" result="Failed" site="Child" start-time="2026-09-22 12:56:31Z" end-time="2026-09-22 12:56:31Z" duration="0.138643" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1084" name="EmptyHandsStillAskToPickUpABurgerWhenBothMachinesHaveStock" fullname="BurgerShop.Tests.EditMode.ColaProductTests.EmptyHandsStillAskToPickUpABurgerWhenBothMachinesHaveStock" methodname="EmptyHandsStillAskToPickUpABurgerWhenBothMachinesHaveStock" classname="BurgerShop.Tests.EditMode.ColaProductTests" runstate="Runnable" seed="558269038" result="Failed" start-time="2026-09-22 12:56:31Z" end-time="2026-09-22 12:56:31Z" duration="0.112928" asserts="0">
+                <properties />
+                <failure>
+                  <message><![CDATA[  Expected string length 26 but was 22. Strings differ at index 0.
+  Expected: "Upgrade the burger machine"
+  But was:  "Sell your first burger"
+  -----------^
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.ColaProductTests.EmptyHandsStillAskToPickUpABurgerWhenBothMachinesHaveStock () [0x00094] in /private/tmp/bs086-chinese/Assets/Tests/EditMode/ColaProductTests.cs:337
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1087" name="PersistenceWritesVersion10AndOldSavesKeepGrillProgressAtColaLv1" fullname="BurgerShop.Tests.EditMode.ColaProductTests.PersistenceWritesVersion10AndOldSavesKeepGrillProgressAtColaLv1" methodname="PersistenceWritesVersion10AndOldSavesKeepGrillProgressAtColaLv1" classname="BurgerShop.Tests.EditMode.ColaProductTests" runstate="Runnable" seed="1225416190" result="Failed" start-time="2026-09-22 12:56:31Z" end-time="2026-09-22 12:56:31Z" duration="0.017598" asserts="0">
+                <properties />
+                <failure>
+                  <message><![CDATA[  Expected: 2
+  But was:  1
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.ColaProductTests.PersistenceWritesVersion10AndOldSavesKeepGrillProgressAtColaLv1 () [0x000d9] in /private/tmp/bs086-chinese/Assets/Tests/EditMode/ColaProductTests.cs:400
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1174" name="Goal04GameplayTests" fullname="BurgerShop.Tests.EditMode.Goal04GameplayTests" classname="BurgerShop.Tests.EditMode.Goal04GameplayTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-22 12:56:32Z" end-time="2026-09-22 12:56:33Z" duration="0.168430" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1175" name="SampleSceneSpawnsOrdersAndRefillsQueueThroughUpdate" fullname="BurgerShop.Tests.EditMode.Goal04GameplayTests.SampleSceneSpawnsOrdersAndRefillsQueueThroughUpdate" methodname="SampleSceneSpawnsOrdersAndRefillsQueueThroughUpdate" classname="BurgerShop.Tests.EditMode.Goal04GameplayTests" runstate="Runnable" seed="51189937" result="Failed" start-time="2026-09-22 12:56:31Z" end-time="2026-09-22 12:56:33Z" duration="2.005406" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: 3
+  But was:  2
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.Goal04GameplayTests+<SampleSceneSpawnsOrdersAndRefillsQueueThroughUpdate>d__1.MoveNext () [0x00182] in /private/tmp/bs086-chinese/Assets/Tests/EditMode/Goal04GameplayTests.cs:35
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@bd7f943e9647/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1178" name="Goal06GameplayTests" fullname="BurgerShop.Tests.EditMode.Goal06GameplayTests" classname="BurgerShop.Tests.EditMode.Goal06GameplayTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-22 12:56:35Z" end-time="2026-09-22 12:56:35Z" duration="0.397110" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1179" name="EarnSpendUpgradeAndKeepServingInRealScene" fullname="BurgerShop.Tests.EditMode.Goal06GameplayTests.EarnSpendUpgradeAndKeepServingInRealScene" methodname="EarnSpendUpgradeAndKeepServingInRealScene" classname="BurgerShop.Tests.EditMode.Goal06GameplayTests" runstate="Runnable" seed="1622594967" result="Failed" start-time="2026-09-22 12:56:33Z" end-time="2026-09-22 12:56:35Z" duration="2.253194" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Keyboard route blocked at (-0.60, 1.08, -0.68), target (2.50, 0.00, 12.00)
+  Expected: less than 0.219999999f
+  But was:  13.0541945f
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.Goal06GameplayTests+<WalkTo>d__8.MoveNext () [0x00170] in /private/tmp/bs086-chinese/Assets/Tests/EditMode/Goal06GameplayTests.cs:172
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@bd7f943e9647/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1180" name="Goal07GameplayTests" fullname="BurgerShop.Tests.EditMode.Goal07GameplayTests" classname="BurgerShop.Tests.EditMode.Goal07GameplayTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.165400" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1181" name="EarnHireAndShareWorkWithAnAutonomousEmployeeInRealScene" fullname="BurgerShop.Tests.EditMode.Goal07GameplayTests.EarnHireAndShareWorkWithAnAutonomousEmployeeInRealScene" methodname="EarnHireAndShareWorkWithAnAutonomousEmployeeInRealScene" classname="BurgerShop.Tests.EditMode.Goal07GameplayTests" runstate="Runnable" seed="2092224456" result="Failed" start-time="2026-09-22 12:56:35Z" end-time="2026-09-22 12:56:37Z" duration="1.996399" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.Goal07GameplayTests+<EarnHireAndShareWorkWithAnAutonomousEmployeeInRealScene>d__6.MoveNext () [0x001d4] in /private/tmp/bs086-chinese/Assets/Tests/EditMode/Goal07GameplayTests.cs:51
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@bd7f943e9647/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1760" name="TableUpgradeTests" fullname="BurgerShop.Tests.EditMode.TableUpgradeTests" classname="BurgerShop.Tests.EditMode.TableUpgradeTests" runstate="Runnable" testcasecount="16" result="Failed" site="Child" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.024316" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1774" name="SaveRestoresChosenSetAndPendingChoiceWithoutCharging" fullname="BurgerShop.Tests.EditMode.TableUpgradeTests.SaveRestoresChosenSetAndPendingChoiceWithoutCharging" methodname="SaveRestoresChosenSetAndPendingChoiceWithoutCharging" classname="BurgerShop.Tests.EditMode.TableUpgradeTests" runstate="Runnable" seed="691343964" result="Failed" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.013203" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.TableUpgradeTests.SaveRestoresChosenSetAndPendingChoiceWithoutCharging () [0x000e2] in /private/tmp/bs086-chinese/Assets/Tests/EditMode/TableUpgradeTests.cs:411
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1776" name="SaveRestoresFourSeatPatioWithoutChargingAgain" fullname="BurgerShop.Tests.EditMode.TableUpgradeTests.SaveRestoresFourSeatPatioWithoutChargingAgain" methodname="SaveRestoresFourSeatPatioWithoutChargingAgain" classname="BurgerShop.Tests.EditMode.TableUpgradeTests" runstate="Runnable" seed="681339893" result="Failed" start-time="2026-09-22 12:56:37Z" end-time="2026-09-22 12:56:37Z" duration="0.007980" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.TableUpgradeTests.SaveRestoresFourSeatPatioWithoutChargingAgain () [0x000e1] in /private/tmp/bs086-chinese/Assets/Tests/EditMode/TableUpgradeTests.cs:484
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
