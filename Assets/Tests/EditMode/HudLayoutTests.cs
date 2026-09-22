@@ -73,8 +73,8 @@ namespace BurgerShop.Tests.EditMode
             Text title = capsule.transform.Find("TaskTitle").GetComponent<Text>();
             Text progress = capsule.transform.Find("TaskProgress").GetComponent<Text>();
             Text coins = sales.GetComponent<Text>();
-            Assert.That(starValue.text, Is.EqualTo("⭐ 0/4  Need 4 more stars"));
-            Assert.That(title.text, Is.EqualTo("Upgrade the burger machine"));
+            Assert.That(starValue.text, Is.EqualTo("0/2"));
+            Assert.That(title.text, Is.EqualTo("先取一个汉堡"));
             Assert.That(progress.text, Is.EqualTo("0/1"));
             Assert.That(title.text, Does.Not.Contain("Collect").And.Not.Contain("Stock").And.Not.Contain("Serve"));
             Assert.That(coins.text, Is.EqualTo("0"));
@@ -95,8 +95,8 @@ namespace BurgerShop.Tests.EditMode
             stars.RefreshNow();
             Text title = capsule.transform.Find("TaskTitle").GetComponent<Text>();
             Text progress = capsule.transform.Find("TaskProgress").GetComponent<Text>();
-            Assert.That(tracker.Title, Is.EqualTo("Upgrade the burger machine"));
-            Assert.That(title.text, Is.EqualTo("Upgrade the burger machine"));
+            Assert.That(tracker.Title, Is.EqualTo("Sell your first burger"));
+            Assert.That(title.text, Is.EqualTo("先取一个汉堡"));
             Assert.That(progress.text, Is.EqualTo("0/1"));
             Assert.That(capsule.GetComponent<Image>().color, Is.EqualTo(HudChrome.CapsuleIdle));
             Assert.That(capsule.transform.Find("TaskBadge/TaskCheck").GetComponent<Image>().enabled, Is.False);
@@ -113,15 +113,15 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(task.pivot, Is.EqualTo(TaskCapsuleHud.LayoutAnchor));
             Assert.That(task.anchoredPosition, Is.EqualTo(TaskCapsuleHud.LayoutPosition));
             Assert.That(task.sizeDelta, Is.EqualTo(TaskCapsuleHud.LayoutSize));
-            Assert.That(task.sizeDelta.x, Is.EqualTo(star.sizeDelta.x));
-            Assert.That(task.sizeDelta.y, Is.LessThan(star.sizeDelta.y));
-            Assert.That(task.sizeDelta.y, Is.LessThanOrEqualTo(52f));
+            Assert.That(task.sizeDelta.x, Is.LessThanOrEqualTo(380f));
+            Assert.That(task.sizeDelta.y, Is.LessThanOrEqualTo(180f));
+            Assert.That(capsule.transform.Find("InvestmentDetail").GetComponent<Text>().fontSize, Is.LessThanOrEqualTo(20));
 
             Rect starRect = HudChrome.LocalRect(star, safe);
             Rect taskRect = HudChrome.LocalRect(task, safe);
             Assert.That(taskRect.xMin, Is.EqualTo(starRect.xMin).Within(0.5f));
             Assert.That(taskRect.yMax, Is.LessThanOrEqualTo(starRect.yMin + 0.5f));
-            Assert.That(taskRect.width, Is.LessThanOrEqualTo(starRect.width + 0.5f));
+            Assert.That(taskRect.xMax, Is.LessThan(safe.rect.width));
             Assert.That(HudChrome.LocalRect((RectTransform)sales.transform, safe).Overlaps(taskRect), Is.False);
 
             RectTransform bar = (RectTransform)capsule.transform.Find("TaskBarBack");
@@ -151,7 +151,7 @@ namespace BurgerShop.Tests.EditMode
 
             foreach (Graphic graphic in safe.GetComponentsInChildren<Graphic>(true))
             {
-                if (graphic.gameObject.name == "VirtualJoystick") continue;
+                if (graphic.gameObject.name == "VirtualJoystick" || graphic.GetComponent<Button>() != null) continue;
                 Assert.That(graphic.raycastTarget, Is.False, graphic.name);
             }
         }

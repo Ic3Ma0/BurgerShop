@@ -19,6 +19,11 @@ namespace BurgerShop.Core
         Transform drinkPlot, westPlot, restroomPlot, courierPlot;
         int previousState = -1;
 
+        public void RedressMainFloor(Transform floor)
+        {
+            for(int i=floor.childCount-1;i>=0;i--){var child=floor.GetChild(i);child.gameObject.SetActive(false);BurgerVisual.Release(child.gameObject);}
+            dressed.Remove(floor);previousState=-1;
+        }
         public void Configure()
         {
             cream = RuntimeMaterials.Create(new Color(.94f,.91f,.82f));
@@ -61,8 +66,9 @@ namespace BurgerShop.Core
                 {
                     dressed.Add(child);
                     child.GetComponent<Renderer>().sharedMaterial = warm;
-                    Surface(child,"KitchenTiles",Rect.MinMaxRect(1,-14.6f,14.6f,14.6f),cream,grout);
-                    Surface(child,"DiningTiles",Rect.MinMaxRect(-14.6f,-14.6f,1,14.6f),warm,warm);
+                    float kitchenEdge=ShopLayout.SmallFootprint?-2:1;
+                    Surface(child,"KitchenTiles",Rect.MinMaxRect(kitchenEdge,-14.6f,(MainHallExpansion.Current?.Bounds.xMax??15)-.4f,(MainHallExpansion.Current?.Bounds.yMax??15)-.4f),cream,grout);
+                    Surface(child,"DiningTiles",Rect.MinMaxRect(-14.6f,-14.6f,kitchenEdge,(MainHallExpansion.Current?.Bounds.yMax??15)-.4f),warm,warm);
                 }
                 else if (name == "WingBackFloor")
                 {

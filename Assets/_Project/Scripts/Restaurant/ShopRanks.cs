@@ -85,7 +85,7 @@ namespace BurgerShop.Restaurant
         {
             switch(rank)
             {
-                case 1: return new[]{new ShopGoal(ShopGoalKind.UpgradeGrill,"Upgrade the burger machine",1)};
+                case 1: return new[]{new ShopGoal(ShopGoalKind.ServeCustomers,"Sell your first burger",1)};
                 case 2: return new[]{new ShopGoal(ShopGoalKind.CleanTable,"Clear a used dining table",1)};
                 case 3: return new[]{new ShopGoal(ShopGoalKind.WorkerOrder,"Let staff complete an order",1)};
                 case 4: return new[]{new ShopGoal(ShopGoalKind.ExtraProduction,"Produce on the second grill",1)};
@@ -94,12 +94,7 @@ namespace BurgerShop.Restaurant
                 case 7: return new[]{new ShopGoal(ShopGoalKind.ColaOrder,"Sell a cup of cola",1)};
                 case 8: return new[]{new ShopGoal(ShopGoalKind.CourierOrder,"Complete a courier order",1)};
                 case 9: return new[]{new ShopGoal(ShopGoalKind.AutomatedOrder,"Fulfil an automated courier order",1)};
-                case 10: return new[]{new ShopGoal(ShopGoalKind.StatLinePeakTen,"Get any stat line to Lv.10",1)};
-                case 11: return new[]{new ShopGoal(ShopGoalKind.StatLineBreadthEight,"Get all four stat lines to Lv.8",1)};
-                case 12: return new[]{new ShopGoal(ShopGoalKind.StaffLinePeakTwelve,"Get a staff line to Lv.12",1)};
-                case 13: return new[]{new ShopGoal(ShopGoalKind.FacilityUpgradeAgain,"Upgrade any facility again",1)};
-                case 14: return new[]{new ShopGoal(ShopGoalKind.AllTablesChosen,"Choose a set for all six tables",1)};
-                case 15: return new[]{new ShopGoal(ShopGoalKind.StatLinePeakEighteen,"Get any stat line to Lv.18",1)};
+                // 080: later ranks recommend real investments; no threshold-task awards.
                 default: return Array.Empty<ShopGoal>();
             }
         }
@@ -138,7 +133,7 @@ namespace BurgerShop.Restaurant
         public static int NextIncomePercent(int rank) => 2 * Math.Max(0, rank + 1 - ContentEnd);
         public static string NextUnlock(int rank)
         {
-            string[] labels={"Dining, cleaning & trash bins","Hire staff","Second grill, burger counter & restroom",
+            string[] labels={"Dining, cleaning & trash bins","Expand main hall & hire staff","Second grill, burger counter & restroom",
                 "Blue-box packing","Drive-thru counter","Cola lounge, four-seat & square tables",
                 "Courier tray & red-box packing","Conveyor automation","West bag machines & pickup"};
             return rank >= 1 && rank < ContentEnd
@@ -147,6 +142,7 @@ namespace BurgerShop.Restaurant
         }
         public static int StarCap(int rank)
         {
+            if (rank <= Min) return 2;
             int n = Math.Max(1, rank);
             double logCap = Math.Log(StarCapBase) + (n - 1) * Math.Log(StarCapGrowth);
             if (logCap >= Math.Log(int.MaxValue)) return int.MaxValue;

@@ -12,6 +12,9 @@ namespace BurgerShop.Restaurant
         public const int ComboPrice = 15;
         public const int MaxCars = 3;
         public const float SellInterval = 0.75f;
+        public static float IntervalForLevel(int level) => SellInterval - .1f * (Mathf.Clamp(level, 1, 3) - 1);
+        public int ServiceLevel { get; set; } = 1;
+        public float ServiceInterval => IntervalForLevel(ServiceLevel);
         public const float HandoffDuration = 0.42f;
         static readonly Color CircleColor = new Color(0.24f, 0.77f, 0.46f);
         static readonly Color[] CarColors =
@@ -152,7 +155,7 @@ namespace BurgerShop.Restaurant
             LaneCar car = StoppedWindowCar();
             if (car == null || boxing == null || !boxing.TryIssueCombo(out Transform box))
                 return false;
-            cooldown = SellInterval;
+            cooldown = ServiceInterval;
             Vector3 from = box != null ? box.position : HandoffOrigin;
             car.BeginHandoff(box, from, carrier);
             return true;

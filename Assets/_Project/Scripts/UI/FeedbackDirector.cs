@@ -120,9 +120,12 @@ namespace BurgerShop.UI
                 if(prompts[worst].Priority>priority)return false;
                 Destroy(prompts[worst].Card.gameObject);prompts.RemoveAt(worst);
             }
-            var card=HudChrome.Panel(transform,"Success",Vector2.zero,Vector2.one*.5f,Vector2.zero,new Vector2(text.Length==0?72:248,72),HudChrome.Cream);
-            FoodIcons.Add(card.transform,FoodIcon.Check,new Vector2(text.Length==0?0:-88,0),40);
+            float width=text.Length==0?72:Mathf.Clamp(80+text.Length*14,248,380);
+            var card=HudChrome.Panel(transform,"Success",Vector2.zero,Vector2.one*.5f,Vector2.zero,new Vector2(width,72),HudChrome.Cream);
+            FoodIcons.Add(card.transform,FoodIcon.Check,new Vector2(text.Length==0?0:-width*.5f+30,0),40);
             var label=HudChrome.Label(card.transform,"Message",Vector2.zero,Vector2.one,Vector2.one*.5f,new Vector2(24,0),new Vector2(-56,0),32,HudChrome.Green,TextAnchor.MiddleCenter,true,false);label.text=text;
+            label.rectTransform.offsetMin=new Vector2(58,8);label.rectTransform.offsetMax=new Vector2(-12,-8);
+            OpeningHudCopy.Style(label,22,true);
             prompts.Add(new Prompt{Card=card,Text=label,World=position+Vector3.up*2.8f,Life=seconds,Priority=priority});
             MaxPromptsSeen=Mathf.Max(MaxPromptsSeen,prompts.Count);return true;
         }

@@ -4,13 +4,16 @@ namespace BurgerShop.Customer
 
     public sealed class SpecialCustomerPolicy
     {
+        public const float SpecialThreshold = .85f;
+        public const float BigEaterThreshold = .93f;
+        public const int OrdinaryGap = 3;
         int ordinaryRemaining;
         public CustomerKind Next(bool unlocked, bool specialInQueue, float roll)
         {
             if (ordinaryRemaining > 0) { ordinaryRemaining--; return CustomerKind.Normal; }
-            if (!unlocked || specialInQueue || roll < .85f) return CustomerKind.Normal;
-            ordinaryRemaining = 3;
-            return roll < .93f ? CustomerKind.Calling : CustomerKind.BigEater;
+            if (!unlocked || specialInQueue || roll < SpecialThreshold) return CustomerKind.Normal;
+            ordinaryRemaining = OrdinaryGap;
+            return roll < BigEaterThreshold ? CustomerKind.Calling : CustomerKind.BigEater;
         }
     }
 }

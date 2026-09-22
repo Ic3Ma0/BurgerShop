@@ -231,7 +231,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(goals.TryUpgradeRank(2), Is.True);
             Assert.That(goals.Rank, Is.EqualTo(3));
             Assert.That(goals.Title, Is.EqualTo(ShopRanks.Goals(3)[0].Title));
-            Assert.That(goals.CapsuleTitle, Is.EqualTo(ShopRanks.Goals(3)[0].Title));
+            Assert.That(goals.CapsuleTitle, Does.Contain("Hire your first employee").And.Contain("50"));
             Assert.That(goals.StarLabel, Does.Contain("Need 5 more stars"));
             Assert.That(goals.StarLabel, Does.Not.Contain("Ready"));
         }

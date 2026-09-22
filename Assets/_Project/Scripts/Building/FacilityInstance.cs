@@ -68,9 +68,10 @@ namespace BurgerShop.Building
             var box=GetComponentInChildren<BoxingStation>(true);
             var stock=GetComponentInChildren<CounterStock>(true);
             var bag=GetComponentInChildren<BagLine>(true);
+            var lane=GetComponentInChildren<DriveThruLane>(true);
             int bagLevel=bag!=null?(Kind==FacilityKind.BagMachine?bag.MachineLevel:Kind==FacilityKind.BagTable?bag.TableLevel:bag.CounterLevel):1;
             return new FacilityPlacementRecord {id=Id,kind=(int)Kind,purchased=Purchased,x=transform.position.x,z=transform.position.z,
-                yaw=Mathf.Repeat(transform.eulerAngles.y,360),level=grill!=null?grill.Level:table!=null?table.FurnitureLevel:box!=null?box.WorkLevel:stock!=null?stock.ServiceLevel:bagLevel,
+                yaw=Mathf.Repeat(transform.eulerAngles.y,360),level=lane!=null?lane.ServiceLevel:grill!=null?grill.Level:table!=null?table.FurnitureLevel:box!=null?box.WorkLevel:stock!=null?stock.ServiceLevel:bagLevel,
                 investment=GetComponentInChildren<TableUpgradeZone>(true)?.Invested??0,
                 tableSet=table!=null?(int)table.SetId:0};
         }
@@ -83,6 +84,7 @@ namespace BurgerShop.Building
                 var table=GetComponentInChildren<DiningTable>(true);
                 if(table!=null){table.ApplySet((TableSetId)row.tableSet);table.SetFurnitureLevel(row.level);GetComponentInChildren<TableUpgradeZone>(true)?.Restore(row.tableSet,row.investment);}
                 var stock=GetComponentInChildren<CounterStock>(true);if(stock!=null)stock.ServiceLevel=Mathf.Min(3,row.level);
+                var lane=GetComponentInChildren<DriveThruLane>(true);if(lane!=null)lane.ServiceLevel=Mathf.Clamp(row.level,1,3);
                 var boxing=GetComponentInChildren<BoxingStation>(true);if(boxing!=null)boxing.WorkLevel=Mathf.Min(3,row.level);
                 var bag=GetComponentInChildren<BagLine>(true);if(bag!=null){if(Kind==FacilityKind.BagMachine)bag.MachineLevel=row.level;else if(Kind==FacilityKind.BagTable)bag.TableLevel=row.level;else bag.CounterLevel=row.level;}
             }

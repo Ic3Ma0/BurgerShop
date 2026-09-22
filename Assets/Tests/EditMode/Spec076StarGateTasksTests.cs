@@ -46,24 +46,15 @@ namespace BurgerShop.Tests.EditMode
         public void TearDown() => Object.DestroyImmediate(root);
 
         [Test]
-        public void Ac01GoalsTenThroughFifteenAreUniqueThresholdTasks()
+        public void Ac01RetiredThresholdTasksAreNoLongerScheduled()
         {
-            var kinds = new HashSet<ShopGoalKind>();
-            for (int rank = 10; rank <= 15; rank++)
-            {
-                ShopGoal[] listed = ShopRanks.Goals(rank);
-                Assert.That(listed, Has.Length.EqualTo(1), "rank " + rank);
-                Assert.That(listed[0].Required, Is.EqualTo(1), "rank " + rank);
-                Assert.That(ShopRanks.IsThresholdGoal(listed[0].Kind), Is.True, "rank " + rank);
-                Assert.That(kinds.Add(listed[0].Kind), Is.True, "duplicate kind " + listed[0].Kind);
-                Assert.That(listed[0].Kind, Is.EqualTo(StarGateKinds[rank - 10]));
-            }
+            for(int rank=10;rank<=15;rank++)Assert.That(ShopRanks.Goals(rank),Is.Empty);
         }
 
         [Test]
         public void Ac02FifteenTasksRequireOneAndMatchSection31Thresholds()
         {
-            for (int rank = 1; rank <= 15; rank++)
+            for (int rank = 1; rank <= 9; rank++)
             {
                 ShopGoal[] listed = ShopRanks.Goals(rank);
                 Assert.That(listed, Has.Length.EqualTo(1), "rank " + rank);
@@ -83,14 +74,10 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopRanks.MeetsThreshold(ShopGoalKind.StatLinePeakEighteen, 17, 17, 17, 17, 1, 0), Is.False);
             Assert.That(ShopRanks.MeetsThreshold(ShopGoalKind.StatLinePeakEighteen, 18, 0, 0, 0, 1, 0), Is.True);
 
-            Assert.That(ShopRanks.Goals(10)[0].Title, Does.Contain("Lv.10"));
-            Assert.That(ShopRanks.Goals(11)[0].Title, Does.Contain("Lv.8"));
-            Assert.That(ShopRanks.Goals(12)[0].Title, Does.Contain("Lv.12"));
-            Assert.That(ShopRanks.Goals(15)[0].Title, Does.Contain("Lv.18"));
         }
 
         [Test]
-        public void Ac03CrossingStatTenSetsBitTenAndAwardsExactlyTwoStars()
+        public void Ac03RetiredStatTenDoesNotAwardBonus()
         {
             boost.RestoreTiers(9, 9);
             staff.RestoreTiers(9, 9);
@@ -101,13 +88,13 @@ namespace BurgerShop.Tests.EditMode
 
             boost.RestoreTiers(10, 9);
             goals.EvaluateStarGateTasks();
-            Assert.That(goals.MilestoneMask & (1 << 9), Is.Not.Zero);
-            Assert.That(goals.Stars, Is.EqualTo(8));
+            Assert.That(goals.MilestoneMask & (1 << 9), Is.Zero);
+            Assert.That(goals.Stars, Is.EqualTo(6));
             Assert.That(wallet.Coins, Is.Zero, "D3: no extra coin reward");
         }
 
         [Test]
-        public void Ac04BreadthNeedsEveryLineAtEight()
+        public void Ac04RetiredBreadthDoesNotAwardBonus()
         {
             boost.RestoreTiers(7, 8);
             staff.RestoreTiers(7, 8);
@@ -122,12 +109,12 @@ namespace BurgerShop.Tests.EditMode
 
             staff.RestoreTiers(8, 8);
             goals.EvaluateStarGateTasks();
-            Assert.That(goals.MilestoneMask & (1 << 10), Is.Not.Zero);
-            Assert.That(goals.Stars, Is.EqualTo(6));
+            Assert.That(goals.MilestoneMask & (1 << 10), Is.Zero);
+            Assert.That(goals.Stars, Is.EqualTo(4));
         }
 
         [Test]
-        public void Ac05SixthTableSetCompletesAndAwardsTwoStars()
+        public void Ac05RestoringSixthTableDoesNotCompleteRetiredTask()
         {
             TableUpgradeZone[] zones = BindTables(6);
             for (int i = 0; i < 5; i++)
@@ -140,17 +127,17 @@ namespace BurgerShop.Tests.EditMode
             int before = goals.Stars;
             zones[5].Restore((int)TableSetId.Bistro, TableSetCatalog.CostFor(TableSetId.Bistro));
             goals.EvaluateStarGateTasks();
-            Assert.That(goals.MilestoneComplete, Is.True);
-            Assert.That(goals.MilestoneMask & (1 << 13), Is.Not.Zero);
-            Assert.That(goals.Stars, Is.EqualTo(before + 2));
+            Assert.That(goals.MilestoneComplete, Is.False);
+            Assert.That(goals.MilestoneMask & (1 << 13), Is.Zero);
+            Assert.That(goals.Stars, Is.EqualTo(before));
         }
 
         [Test]
-        public void Ac06UnreachableSixTableTaskFallsBackToLoopCopy()
+        public void Ac06RecommendationReplacesSixTableTask()
         {
             BindTables(3);
             goals.Restore(14, 0, 0);
-            Assert.That(goals.CapsuleTitle, Is.EqualTo(ShopRanks.LoopHintCopy));
+            Assert.That(goals.CapsuleTitle, Does.Contain("Upgrade"));
             Assert.That(goals.CapsuleTitle, Is.Not.Empty);
             Assert.That(goals.CapsuleTitle, Does.Not.Match(@"^Lv\.\d+$"));
         }
@@ -174,7 +161,7 @@ namespace BurgerShop.Tests.EditMode
                 Assert.That(loaded.upgradeStars, Is.EqualTo(9));
                 Assert.That(loaded.ResolvedShopRank, Is.EqualTo(12));
                 Assert.That(loaded.milestoneMask & ~511, Is.Zero);
-                Assert.That(RestaurantSaveData.CurrentVersion, Is.EqualTo(17));
+                Assert.That(RestaurantSaveData.CurrentVersion, Is.EqualTo(19));
 
                 wallet.RestoreProgress(loaded.coins, 0);
                 goals.Restore(loaded.ResolvedShopRank, 0, 0, loaded.ResolvedUpgradeStars,
@@ -254,7 +241,7 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void FacilityAndStaffThresholdsStayDistinct()
+        public void RetiredFacilityAndStaffThresholdsDoNotAward()
         {
             boost.RestoreTiers(20, 20);
             staff.RestoreTiers(11, 11);
@@ -264,14 +251,14 @@ namespace BurgerShop.Tests.EditMode
 
             staff.RestoreTiers(12, 11);
             goals.EvaluateStarGateTasks();
-            Assert.That(goals.MilestoneMask & (1 << 11), Is.Not.Zero);
+            Assert.That(goals.MilestoneMask & (1 << 11), Is.Zero);
 
             goals.Restore(13, 0, 0, 2);
             goals.EvaluateStarGateTasks();
             Assert.That(goals.MilestoneMask & (1 << 12), Is.Zero);
             growth.Restore(new[] { new FacilityLevelRecord { id = "counter-main", level = 2 } }, 1, 0, 1);
             goals.EvaluateStarGateTasks();
-            Assert.That(goals.MilestoneMask & (1 << 12), Is.Not.Zero);
+            Assert.That(goals.MilestoneMask & (1 << 12), Is.Zero);
             Assert.That(wallet.Coins, Is.Zero);
         }
 

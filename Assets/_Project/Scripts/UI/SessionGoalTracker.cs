@@ -11,6 +11,7 @@ namespace BurgerShop.UI
     public sealed class SessionGoalTracker : MonoBehaviour
     {
         RestaurantWallet wallet;
+        CounterStock stockForOpening; ProductionStation stationForOpening; BurgerServingZone cashierForOpening;
         BurgerInventory inventory;
         DiningArea dining;
         ShopExpansion expansion;
@@ -18,6 +19,8 @@ namespace BurgerShop.UI
         [NonSerialized] int rank=ShopRanks.Min;
         int milestoneMask;
         bool legacyAccess;
+        public bool FirstOrderComplete { get; private set; }
+        public InvestmentGuide Investments { get; private set; }
         int incomeRemainder;
         float celebration;
         int appliedRank=-1;
@@ -29,7 +32,7 @@ namespace BurgerShop.UI
         public bool LegacyAccess=>legacyAccess;
         public int IncomeRemainder=>incomeRemainder;
         public bool IsCycle=>ShopRanks.IsCycleRank(rank);
-        public bool MilestoneComplete=>IsCycle||(milestoneMask & (1<<(rank-1)))!=0;
+        public bool MilestoneComplete=>rank==1?FirstOrderComplete:IsCycle||(milestoneMask & (1<<(rank-1)))!=0;
         public int GoalIndex=>MilestoneComplete?1:0;
         public int GoalProgress=>MilestoneComplete?1:0;
         public int Stars {get;private set;}
@@ -38,7 +41,7 @@ namespace BurgerShop.UI
         public bool IsMaxRank=>false;
         public int CycleCost=>ShopRanks.CycleCost(rank);
         public long MissingCoins=>Math.Max(0,(long)CycleCost-(wallet?.Coins??0));
-        public bool CanUpgrade=>rank<int.MaxValue && (IsCycle?wallet!=null&&wallet.Coins>=CycleCost:Stars>=StarCap);
+        public bool CanUpgrade=>rank<int.MaxValue && (IsCycle?wallet!=null&&wallet.Coins>=CycleCost:Stars>=StarCap&&(rank!=1||FirstOrderComplete));
         public string Title
         {
             get
@@ -55,8 +58,8 @@ namespace BurgerShop.UI
         public string StarLabel=>CanUpgrade?$"Lv.{rank} Ready":IsCycle?$"Lv.{rank} · Need {MissingCoins:N0}":$"⭐ {Stars}/{StarCap}  Need {MissingStars} more stars";
         public float ProgressFraction=>IsCycle?(float)Math.Min(1,(wallet?.Coins??0)/(double)Math.Max(1,CycleCost)):Mathf.Clamp01(Stars/(float)Math.Max(1,StarCap));
         public string BlockReason=>CanUpgrade?"Upgrade":IsCycle?$"Need {MissingCoins:N0} coins":$"Need {MissingStars} more stars";
-        public string NextRankPreview=>ShopRanks.NextRankPreview(rank,Stars,MissingCoins);
-        public string GuideCopy=>CanUpgrade?(rank==ShopRanks.Min?"Unlock dining":"Upgrade"):rank==ShopRanks.Min&&!MilestoneComplete?"Upgrade grill":"";
+        public string NextRankPreview=>MainHallExpansion.HasAccess?ShopRanks.NextRankPreview(rank,Stars,MissingCoins).Replace("Expand main hall & hire staff","Hire staff"):ShopRanks.NextRankPreview(rank,Stars,MissingCoins);
+        public string GuideCopy=>CanUpgrade?(rank==ShopRanks.Min?"Unlock dining":"Upgrade"):rank==ShopRanks.Min&&!FirstOrderComplete?"Sell your first burger":"";
         public OpeningGuide Opening {get;private set;}
         public string LoopCopy
         {
@@ -77,12 +80,33 @@ namespace BurgerShop.UI
                 return CurrentTaskReachable(listed[0].Kind);
             }
         }
+        public bool ShowsInvestment => !CanUpgrade && rank>=2 && !IsCycle && !CurrentTaskVisible && TeachingPrerequisite==null;
+        public string TeachingPrerequisite
+        {
+            get
+            {
+                var hall=GetComponent<MainHallExpansion>();
+                if(rank>=3&&hall!=null&&!hall.Built)return $"Expand main hall · {hall.Remaining} coins · then hire staff {WorkerHiringZone.HireCosts[0]}";
+                if(rank==3&&(hiring?.HiredCount??0)==0)return $"Hire your first employee · {hiring?.HireCost??50} coins";
+                if(rank==4&&expansion!=null&&!expansion.HasExtraGrill)return $"Second burger machine · {GetComponent<Building.FacilityLayout>()?.Price(Building.FacilityKind.BurgerMachine)??ShopExpansion.GrillCost} coins · supermarket";
+                if(rank==5&&expansion!=null&&!expansion.HasBoxing)return $"Blue-box packing · {GetComponent<Building.FacilityLayout>()?.Price(Building.FacilityKind.BlueBoxTable)??ShopExpansion.BoxingCost} coins · supermarket";
+                if(rank==6&&expansion!=null&&!expansion.HasBoxing)return "Car orders need blue boxes · build packing";
+                var layout=GetComponent<Building.FacilityLayout>();
+                if(rank==7&&layout!=null)
+                {
+                    var quote=new Economy.BusinessOpeningQuote(layout);
+                    if(quote.Cola>0)return quote.ColaCopy;
+                }
+                return null;
+            }
+        }
         public string CapsuleTitle=>Opening!=null&&Opening.IsActive?Opening.Title
             :CanUpgrade?ShopRanks.RankUpCapsule(rank)
+            :TeachingPrerequisite!=null?TeachingPrerequisite
             :CurrentTaskVisible||IsCycle?Title
-            :LoopCopy;
-        public int CapsuleProgress=>Opening!=null&&Opening.IsActive?Opening.Progress:CanUpgrade?1:Progress;
-        public int CapsuleRequired=>Opening!=null&&Opening.IsActive?Opening.Required:CanUpgrade?1:Required;
+            :Investments?.Title??"Choose an investment";
+        public int CapsuleProgress=>Opening!=null&&Opening.IsActive?Opening.Progress:CanUpgrade?1:ShowsInvestment?Stars:Progress;
+        public int CapsuleRequired=>Opening!=null&&Opening.IsActive?Opening.Required:CanUpgrade?1:ShowsInvestment?StarCap:Required;
 
         public void Configure(BurgerInventory carrier,ProductionStation station,CounterStock stock,CustomerQueue customers,
             RestaurantWallet earnings,BurgerServingZone cashier,DiningArea hall=null,TrashInventory trashBag=null,
@@ -90,8 +114,10 @@ namespace BurgerShop.UI
             BurgerServingZone colaCashier=null,ProductionStation cola=null)
         {
             inventory=carrier;wallet=earnings;dining=hall;hiring=staff;expansion=shop;
+            stockForOpening=stock;stationForOpening=station;cashierForOpening=cashier;
+            Investments=new InvestmentGuide(this,earnings);
             if(Opening==null)Opening=new OpeningGuide();
-            Opening.Bind(wallet,MainGrill(),this);
+            Opening.Bind(wallet,MainGrill(),this,inventory,stockForOpening,stationForOpening,cashierForOpening);
             ApplyUnlocks();
         }
 
@@ -108,16 +134,25 @@ namespace BurgerShop.UI
             return best;
         }
         public void Restore(int nextRank,int nextGoalIndex,int nextGoalProgress,int savedStars=0,
-            int savedMilestones=0,bool keepLegacyAccess=false,int savedRemainder=0)
+            int savedMilestones=0,bool keepLegacyAccess=false,int savedRemainder=0,bool firstOrder=false)
         {
-            rank=Math.Max(ShopRanks.Min,nextRank);Stars=Math.Max(0,savedStars);
+            rank=Math.Max(ShopRanks.Min,nextRank);Stars=Math.Max(0,savedStars);FirstOrderComplete=firstOrder;
             milestoneMask=savedMilestones & ShopRanks.MilestoneMask;
             legacyAccess=keepLegacyAccess;incomeRemainder=Mathf.Clamp(savedRemainder,0,ShopRanks.IncomeDenominator-1);
             celebration=0;IsRankingUp=false;appliedRank=-1;ApplyUnlocks();
         }
-        public bool Allows(int requiredRank)=>legacyAccess||rank>=requiredRank;
+        public bool Allows(int requiredRank)=>(requiredRank<3||MainHallExpansion.HasAccess)&&(legacyAccess||rank>=requiredRank);
         public void RecordMilestone(ShopGoalKind kind)
         {
+            var persistence=GetComponentInParent<RestaurantPersistence>();
+            if(persistence!=null&&persistence.Phase!=SaveSessionPhase.Running)return;
+            if(kind==ShopGoalKind.ServeCustomers)
+            {
+                if(FirstOrderComplete)return;
+                FirstOrderComplete=true;
+                if(rank==1){AddUpgradeStars();celebration=.6f;ProgressChanged?.Invoke();FlushSave();}
+                return;
+            }
             for(int stage=1;stage<=ShopRanks.StarGateEnd;stage++)
             {
                 ShopGoal[] listed=ShopRanks.Goals(stage);
@@ -143,7 +178,7 @@ namespace BurgerShop.UI
             milestoneMask|=bit;AddUpgradeStars();celebration=.6f;
             var save=GetComponentInParent<RestaurantPersistence>();
             if(save==null||save.Phase==SaveSessionPhase.Running)
-                FeedbackDirector.Current?.World(inventory!=null?inventory.transform.position:transform.position,"Milestone "+ShopRanks.StarRewardCopy,.9f);
+                FeedbackDirector.Current?.World(inventory!=null?inventory.transform.position:transform.position,"完成目标 +2 星",.9f);
             ProgressChanged?.Invoke();
             FlushSave();
         }
@@ -176,7 +211,10 @@ namespace BurgerShop.UI
             kind!=ShopGoalKind.AllTablesChosen||UnlockedTableZones()>=ShopRanks.RequiredTableSets;
         public void NotifyCleanTable()
         {
+            bool already=(milestoneMask&2)!=0;
             RecordMilestone(ShopGoalKind.CleanTable);
+            if(!already&&(milestoneMask&2)!=0)
+                FeedbackDirector.Current?.World(inventory!=null?inventory.transform.position:transform.position,$"清桌 +2 星\n还差 {MissingStars} 星可升级",2f);
         }
         public void AddUpgradeStars()
         {
@@ -190,7 +228,7 @@ namespace BurgerShop.UI
             rank++;ApplyUnlocks();celebration=.9f;IsRankingUp=true;
             var save=GetComponentInParent<RestaurantPersistence>();
             if(save==null||save.Phase==SaveSessionPhase.Running)
-                FeedbackDirector.Current?.Success(inventory!=null?inventory.transform.position:transform.position,"Rank Up!",inventory!=null?inventory.transform:null);
+                FeedbackDirector.Current?.Success(inventory!=null?inventory.transform.position:transform.position,"店铺升级！",inventory!=null?inventory.transform:null);
             ProgressChanged?.Invoke();FlushSave();return true;
         }
 
@@ -215,7 +253,7 @@ namespace BurgerShop.UI
         }
         public void ApplyUnlocks()
         {
-            expansion?.ApplyRank(rank);
+            expansion?.ApplyRank(MainHallExpansion.HasAccess?rank:Math.Min(rank,2));
             if(dining!=null)
                 foreach(var table in dining.Tables)if(table!=null)table.gameObject.SetActive(Allows(ShopRanks.DiningRank));
             foreach(var zone in GetComponentsInChildren<TableUpgradeZone>(true))
@@ -232,7 +270,7 @@ namespace BurgerShop.UI
             GetComponent<BurgerShop.Core.RestaurantArchitecture>()?.Refresh();
             appliedRank=courier!=null?rank:-1;
             if(Opening==null)Opening=new OpeningGuide();
-            Opening.Bind(wallet,MainGrill(),this);
+            Opening.Bind(wallet,MainGrill(),this,inventory,stockForOpening,stationForOpening,cashierForOpening);
             ReconcileStarterUpgrade();
             EvaluateStarGateTasks();
             RefreshSign();
@@ -275,6 +313,9 @@ namespace BurgerShop.UI
                     star.GetComponent<Renderer>().sharedMaterial=starMat;star.AddComponent<BurgerVisual>().OwnMaterials(starMat);
                 }
             }
+            var bounds=MainHallExpansion.Current?.Bounds??MainHallExpansion.FullBounds;
+            // Keep the sign attached to the current building, including before the first expansion.
+            sign.position=new Vector3(bounds.center.x,1.55f,bounds.yMax-.24f);
             float t=Mathf.Clamp01((rank-1)/14f);
             sign.localScale=Vector3.one*(.72f+.28f*t);
             signMaterial.color=Color.HSVToRGB(((rank-1)%12)/12f,.4f+.25f*t,.42f+.38f*t);

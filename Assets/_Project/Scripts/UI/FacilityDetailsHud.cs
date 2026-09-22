@@ -218,7 +218,7 @@ namespace BurgerShop.UI
                 case FacilityKind.BagMachine: return $"Bag every {BagLine.ProductionForLevel(level):0.0}s";
                 case FacilityKind.BagTable: return $"Packing {BagLine.ProcessingForLevel(level):0.00}s";
                 case FacilityKind.BagCounter: return $"Item every {BurgerServingZone.HandoffDuration + BagLine.CooldownForLevel(level):0.00}s";
-                case FacilityKind.CarCounter: return $"Counter style {level}";
+                case FacilityKind.CarCounter: return FacilityUpgradeBenefit.Describe(selected.Kind,level);
                 default: return offer.Benefit(level);
             }
         }

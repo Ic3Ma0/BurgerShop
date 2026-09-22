@@ -72,6 +72,9 @@ namespace BurgerShop.Core
 
         static void InstallShop()
         {
+            var saved=RestaurantPersistence.PeekActiveSnapshot();
+            ShopLayout.CompactStart=saved==null||(saved.version>=18&&saved.compactStart);
+            ShopLayout.SmallFootprint=saved==null||saved.ResolvedSmallFootprint;
             Transform root = new GameObject("Goal01").transform;
             Material floorMat = CreateLit(new Color(0.80f, 0.68f, 0.50f));
             Material wallMat = CreateLit(new Color(0.40f, 0.29f, 0.17f));
@@ -82,6 +85,7 @@ namespace BurgerShop.Core
             StreetEnvironment.Build(root);
             ShopLayout.CreateFloor(root, floorMat);
             ShopLayout.CreateWalls(root, wallMat);
+            root.gameObject.AddComponent<MainHallExpansion>().Initialize(ShopLayout.CompactStart,saved!=null&&saved.ResolvedMainHallBuilt,saved!=null&&saved.version>=18?saved.mainHallInvestment:0,ShopLayout.SmallFootprint);
             HrOffice office = HrOffice.Create(root, wallMat, hrFloor);
             office.SetOpen(false);
             BoostRoom boostRoom = BoostRoom.Create(root, wallMat, boostFloor);
@@ -269,15 +273,7 @@ namespace BurgerShop.Core
             controller.center = new Vector3(0f, 0f, 0f);
 
             player.GetComponent<Renderer>().enabled=false;
-            var white=CreateLit(new Color(.95f,.94f,.88f));var skin=CreateLit(new Color(.72f,.45f,.29f));var dark=CreateLit(new Color(.18f,.13f,.11f));
-            BurgerShop.Restaurant.BagVisualFactory.Part(player.transform,"ChefJacket",PrimitiveType.Capsule,new Vector3(0,-.02f,0),new Vector3(.65f,.325f,.42f),white);
-            BurgerShop.Restaurant.BagVisualFactory.Part(player.transform,"Head",PrimitiveType.Sphere,new Vector3(0,.53f,0),Vector3.one*.52f,skin);
-            BurgerShop.Restaurant.BagVisualFactory.Part(player.transform,"ChefHat",PrimitiveType.Cylinder,new Vector3(0,.85f,0),new Vector3(.64f,.17f,.64f),white);
-            BurgerShop.Restaurant.CourierVisuals.Part(player.transform,"Facing",new Vector3(0,.52f,.26f),Vector3.one*.12f,skin);
-            BurgerShop.Restaurant.CourierVisuals.Part(player.transform,"Apron",new Vector3(0,-.23f,.235f),new Vector3(.48f,.6f,.045f),white);
-            for(int i=0;i<3;i++)BurgerShop.Restaurant.CourierVisuals.Part(player.transform,"JacketButton",new Vector3(.12f,.16f-i*.13f,.225f),Vector3.one*.045f,dark);
-            for(int i=-1;i<=1;i++)BurgerShop.Restaurant.BagVisualFactory.Part(player.transform,"HatPuff",PrimitiveType.Sphere,new Vector3(i*.18f,.99f,0),new Vector3(.36f,.3f,.48f),white);
-            HumanoidVisual.Add(player.transform,-1f,white,skin,dark);
+            CharacterVisualFactory.Player(player.transform);
 
             player.AddComponent<PlayerMotor>();
             return player.transform;

@@ -19,6 +19,7 @@ namespace BurgerShop.Building
         ShopExpansion expansion;
         Transform staging;
         float scan;
+        public FacilityPurchaseQuote PendingQuote {get;private set;}
         LayoutNavigation navigation;
         Vector3[][] plannedConveyors;
         int navigationRevision=-1;
@@ -123,10 +124,11 @@ namespace BurgerShop.Building
             }
             return best;
         }
-        public bool Unlocked(FacilityKind kind)=>FacilityCatalog.IsUnlocked(kind,goals?.Rank??1,goals?.LegacyAccess??false);
+        public bool Unlocked(FacilityKind kind)=>(MainHallExpansion.HasAccess||kind==FacilityKind.PairTable||kind==FacilityKind.TrashBin||kind==FacilityKind.BurgerMachine||kind==FacilityKind.BurgerCounter)&&FacilityCatalog.IsUnlocked(kind,goals?.Rank??1,goals?.LegacyAccess??false);
         public int Owned(FacilityKind kind){int count=0;foreach(var f in instances.Values)if(f!=null&&f.Kind==kind&&f.Available)count++;return count;}
         FacilityUnlockZone OriginalPad(FacilityKind kind)
         {
+            if(expansion==null)return null;
             FacilityUnlockZone pad=null;
             switch(kind)
             {
@@ -157,10 +159,17 @@ namespace BurgerShop.Building
                 default:return "";
             }
         }
-        public int Price(FacilityKind kind)=>Mathf.Max(1,FacilityCatalog.Price(kind,Owned(kind))-(OriginalPad(kind)?.Invested??0));
+        int PurchaseCredit(FacilityKind kind)
+        {
+            var pad=OriginalPad(kind);if(pad!=null)return pad.Invested;
+            return expansion!=null?expansion.UnbuiltStoreCredit(kind):0;
+        }
+        public FacilityPurchaseQuote Quote(FacilityKind kind)=>new FacilityPurchaseQuote(kind,Owned(kind),PurchaseCredit(kind));
+        public int Price(FacilityKind kind)=>Quote(kind).Due;
         public FacilityInstance BeginPurchase(FacilityKind kind)
         {
             Cancel();Discover();if(!Unlocked(kind)){LastError="Not unlocked";return null;}
+            PendingQuote=Quote(kind);
             Candidate=FacilityFactory.Create(staging,kind,"custom:"+Guid.NewGuid().ToString("N"),player,wallet,parts,cash,dining);
             return Candidate;
         }
@@ -170,7 +179,7 @@ namespace BurgerShop.Building
         {if(Candidate!=null){Candidate.gameObject.SetActive(false);BurgerVisual.Release(Candidate.gameObject);}Candidate=null;Moving=null;LastError="";}
         public List<Rect> Floors()
         {
-            var floors=new List<Rect>{Rect.MinMaxRect(-14.8f,-14.8f,14.8f,14.8f)};
+            var floors=new List<Rect>{MainHallExpansion.Current!=null?MainHallExpansion.Current.UsableBounds:Rect.MinMaxRect(-14.8f,-14.8f,14.8f,14.8f)};
             if(expansion!=null&&expansion.HasWing)
             {floors.Add(Rect.MinMaxRect(14,-8,23.4f,-4.3f));floors.Add(Rect.MinMaxRect(23.4f,-8,37.8f,11.3f));}
             if(CourierLine.Current!=null&&CourierLine.Current.AreaOpen){floors.Add(Rect.MinMaxRect(-14.8f,14,14.8f,39.8f));floors.Add(Rect.MinMaxRect(-30,39,30,44));}
@@ -308,16 +317,19 @@ namespace BurgerShop.Building
         }
         public bool Confirm(Vector3 position,float yaw)
         {
+            if(Committing)return false;
             var chosen=Candidate!=null?Candidate:Moving;
             if(!CanPlace(chosen,position,yaw,true))return false;
             bool buying=Candidate!=null;
             bool spentOnPurchase=buying;
             var original=buying?OriginalPad(chosen.Kind):null;
             if(buying&&!Unlocked(chosen.Kind))return Fail("Not unlocked");
-            if(buying&&wallet.Coins<Price(chosen.Kind))return Fail("Not enough coins");
+            if(buying&&!PendingQuote.Equals(Quote(chosen.Kind)))
+            {PendingQuote=Quote(chosen.Kind);return Fail($"Price updated: {PendingQuote.Due} coins · tap Done to confirm");}
+            if(buying&&wallet.Coins<PendingQuote.Due)return Fail("Not enough coins");
             Committing=true;
             try {
-            if(buying&&!wallet.TrySpend(Price(chosen.Kind)))return Fail("Not enough coins");
+            if(buying&&PendingQuote.Due>0&&!wallet.TrySpend(PendingQuote.Due))return Fail("Not enough coins");
             if(original!=null)
             {
                 var kind=chosen.Kind;
@@ -334,6 +346,7 @@ namespace BurgerShop.Building
             {
                 chosen.transform.SetParent(transform,true);chosen.gameObject.SetActive(true);
                 instances.Add(chosen.Id,chosen);Activate(chosen);
+                expansion?.ConsumeUnbuiltStoreCredit(chosen.Kind);
             }
             chosen.Moved?.Invoke();if(plannedConveyors!=null)GetComponent<CourierLine>()?.ApplyConveyors(plannedConveyors);Candidate=null;Moving=null;HasCustomLayout=true;Revision++;
             } finally { Committing=false; }
@@ -348,9 +361,11 @@ namespace BurgerShop.Building
             if(growth!=null&&costs.Length>0)
             {
                 var stock=f.GetComponentInChildren<CounterStock>();var boxing=f.GetComponentInChildren<BoxingStation>();var bag=f.GetComponentInChildren<BagLine>();
+                var lane=f.GetComponentInChildren<DriveThruLane>();
                 growth.Register(new GrowthUpgrades.Offer {Id=f.Id,Title=FacilityCatalog.Get(f.Kind).Name,Target=f.transform,Position=f.transform.TransformPoint(new Vector3(-2,.02f,0)),Costs=costs,
-                    Benefit=n=>"Facility level "+n,Apply=n=>
+                    Benefit=n=>FacilityUpgradeBenefit.Describe(f.Kind,n),Apply=n=>
                     {
+                        if(lane!=null)lane.ServiceLevel=n;
                         if(stock!=null)stock.ServiceLevel=n;
                         if(boxing!=null)boxing.WorkLevel=n;
                         if(bag!=null){if(f.Kind==FacilityKind.BagMachine)bag.MachineLevel=n;else if(f.Kind==FacilityKind.BagTable)bag.TableLevel=n;else bag.CounterLevel=n;}
@@ -463,6 +478,7 @@ namespace BurgerShop.Building
                     if(instances.ContainsKey(row.id))continue;
                     var instance=FacilityFactory.Create(staging,(FacilityKind)row.kind,row.id,player,wallet,parts,cash,dining);
                     instance.transform.SetParent(transform,true);instance.Apply(row);instance.gameObject.SetActive(true);instances.Add(row.id,instance);Activate(instance);instance.Apply(row);
+                    GetComponent<GrowthUpgrades>()?.RestorePurchasedLevel(row.id,row.level);
                 }
                 else if(instances.TryGetValue(row.id,out var existing))
                 {if(Vector3.Distance(existing.transform.position,new Vector3(row.x,0,row.z))>.01f||Mathf.Abs(Mathf.DeltaAngle(existing.transform.eulerAngles.y,row.yaw))>.01f)HasCustomLayout=true;existing.Apply(row);}

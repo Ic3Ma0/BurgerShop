@@ -80,63 +80,34 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void NewSessionPointsAtGrillUpgradeEvenWithZeroCoins()
+        public void NewSessionGuidesFirstSaleInsteadOfPaidUpgrade()
         {
             Refresh();
-            Assert.That(wallet.Coins, Is.Zero);
-            Assert.That(upgrade.NextCost, Is.EqualTo(30));
-            Assert.That(tracker.Title, Is.EqualTo("Upgrade the burger machine"));
-            Assert.That(tracker.CapsuleTitle, Is.EqualTo(ShopRanks.Opening.GrillUpgrade(30)));
-            Assert.That(CapsuleCopy, Is.EqualTo(ShopRanks.Opening.GrillUpgrade(30)));
-            Assert.That(tracker.Opening.Current, Is.EqualTo(OpeningGuide.Step.Upgrade));
-            Assert.That(tracker.CapsuleProgress, Is.Zero);
-            Assert.That(tracker.CapsuleRequired, Is.EqualTo(30));
-            Assert.That(guide.HighlightsGrill, Is.True);
-            Assert.That(RankAction, Is.EqualTo("Upgrade grill"));
-            upgrade.UseDirectInteraction();
-            guide.Refresh();
-            Assert.That(upgrade.Pad.gameObject.activeSelf, Is.True);
-            AssertNotMoneyLoop(CapsuleCopy);
-            Assert.That(InteractionFocus.Build(capsule.transform.parent, inventory), Is.Null);
+            Assert.That(wallet.Coins,Is.Zero);
+            Assert.That(tracker.Opening.Current,Is.EqualTo(OpeningGuide.Step.Pickup));
+            Assert.That(CapsuleCopy,Does.Contain("Pick up"));
+            Assert.That(guide.HighlightsGrill,Is.False);
+            Assert.That(tracker.CanUpgrade,Is.False);
         }
 
         [Test]
-        public void CollectStockAndCashDoNotSwitchTheUpgradeCopy()
+        public void PickupAndStockAdvanceFirstOrderGuidanceWithoutReward()
         {
-            grill.Advance(12f);
-            Assert.That(inventory.TryCollectFrom(grill), Is.True);
-            Refresh();
-            Assert.That(tracker.CapsuleTitle, Is.EqualTo(ShopRanks.Opening.GrillUpgrade(30)));
-            Assert.That(stock.TryPlaceFrom(inventory), Is.True);
-            cash.DropAtCounter(CashFloor.CounterDrop);
-            Refresh();
-            Assert.That(tracker.CapsuleTitle, Is.EqualTo(ShopRanks.Opening.GrillUpgrade(30)));
-            Assert.That(tracker.Opening.Current, Is.EqualTo(OpeningGuide.Step.Upgrade));
-            AssertNotMoneyLoop(CapsuleCopy);
+            grill.Advance(12f);Assert.That(inventory.TryCollectFrom(grill),Is.True);Refresh();
+            Assert.That(tracker.Opening.Current,Is.EqualTo(OpeningGuide.Step.Stock));
+            Assert.That(stock.TryPlaceFrom(inventory),Is.True);Refresh();
+            Assert.That(tracker.Opening.Current,Is.EqualTo(OpeningGuide.Step.Serve));
+            Assert.That(tracker.Stars,Is.Zero);
         }
 
         [Test]
-        public void CompletingTheFirstGrillUpgradeRecordsProgressAndPointsAtRankUnlock()
+        public void CompletingFirstOrderPointsAtRankUnlock()
         {
-            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);
-            Assert.That(tracker.MilestoneComplete, Is.False);
-            wallet.CollectCoins(30);
-            Assert.That(upgrade.TryUpgrade(1), Is.True);
-            Refresh();
-            Assert.That(upgrade.Level, Is.EqualTo(2));
-            Assert.That(tracker.MilestoneComplete, Is.True);
-            Assert.That(tracker.Progress, Is.EqualTo(1));
-            Assert.That(tracker.CanUpgrade, Is.True);
-            Assert.That(tracker.CapsuleTitle, Is.EqualTo(ShopRanks.Opening.RankUp));
-            Assert.That(CapsuleCopy, Is.EqualTo(ShopRanks.Opening.RankUp));
-            Assert.That(guide.HighlightsGrill, Is.False);
-            Assert.That(guide.HighlightsRankHud, Is.True);
-            Assert.That(RankAction, Is.EqualTo("Unlock dining"));
-            AssertNotMoneyLoop(CapsuleCopy);
-            Assert.That(tracker.TryUpgradeRank(1), Is.True);
-            Refresh();
-            Assert.That(tracker.Opening.IsActive, Is.False);
-            Assert.That(tracker.CapsuleTitle, Is.EqualTo("Clear a used dining table"));
+            tracker.RecordMilestone(ShopGoalKind.ServeCustomers);Refresh();
+            Assert.That(upgrade.Level,Is.EqualTo(1));Assert.That(tracker.Stars,Is.EqualTo(2));
+            Assert.That(guide.HighlightsRankHud,Is.True);Assert.That(RankAction,Is.EqualTo("Unlock dining"));
+            Assert.That(tracker.TryUpgradeRank(1),Is.True);Refresh();
+            Assert.That(CapsuleCopy,Is.EqualTo("Clear a used dining table"));
         }
 
         [Test]
@@ -153,39 +124,18 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void RestoredReadyRankOneStillPointsAtDiningUnlock()
         {
-            upgrade.RestoreLevel(2);
-            tracker.Restore(1, 1, 1, savedStars: 4, savedMilestones: 1);
-            Refresh();
-            Assert.That(tracker.Opening.IsActive, Is.True);
-            Assert.That(tracker.CapsuleTitle, Is.EqualTo(ShopRanks.Opening.RankUp));
-            Assert.That(CapsuleCopy, Is.EqualTo(ShopRanks.Opening.RankUp));
-            Assert.That(guide.HighlightsGrill, Is.False);
-            Assert.That(guide.HighlightsRankHud, Is.True);
-            Assert.That(RankAction, Is.EqualTo("Unlock dining"));
-            AssertNotMoneyLoop(CapsuleCopy);
+            tracker.Restore(1,0,0,2,0,firstOrder:true);Refresh();
+            Assert.That(tracker.Opening.Current,Is.EqualTo(OpeningGuide.Step.RankUp));
+            Assert.That(CapsuleCopy,Does.Contain("Upgrade").And.Contain("dining"));
+            Assert.That(guide.HighlightsRankHud,Is.True);
         }
 
         [Test]
-        public void GrillAlreadyUpgradedSkipsOpeningUnlessRankIsReady()
+        public void OldUpgradeBitCannotCompleteFirstOrder()
         {
-            upgrade.RestoreLevel(2);
-            tracker.Restore(1, 0, 0, ShopRanks.StarCap(1), 1);
-            Refresh();
-            Assert.That(tracker.MilestoneComplete, Is.True);
-            Assert.That(tracker.CanUpgrade, Is.True);
-            Assert.That(tracker.Rank, Is.EqualTo(1));
-            Assert.That(tracker.Opening.IsActive, Is.True);
-            Assert.That(tracker.Opening.Current, Is.EqualTo(OpeningGuide.Step.RankUp));
-            Assert.That(tracker.CapsuleTitle, Is.EqualTo(ShopRanks.Opening.RankUp));
-            Assert.That(CapsuleCopy, Is.EqualTo(ShopRanks.Opening.RankUp));
-            Assert.That(guide.HighlightsGrill, Is.False);
-            Assert.That(guide.HighlightsRankHud, Is.True);
-            Assert.That(RankAction, Is.EqualTo("Unlock dining"));
-            AssertNotMoneyLoop(CapsuleCopy);
-            Assert.That(tracker.TryUpgradeRank(1), Is.True);
-            Refresh();
-            Assert.That(tracker.Rank, Is.EqualTo(2));
-            Assert.That(tracker.Opening.IsActive, Is.False);
+            upgrade.RestoreLevel(2);tracker.Restore(1,0,0,4,1);Refresh();
+            Assert.That(tracker.FirstOrderComplete,Is.False);Assert.That(tracker.CanUpgrade,Is.False);
+            Assert.That(tracker.Opening.Current,Is.EqualTo(OpeningGuide.Step.Pickup));
         }
 
         [Test]
@@ -196,8 +146,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(task.anchorMin, Is.EqualTo(TaskCapsuleHud.LayoutAnchor));
             Assert.That(task.anchoredPosition, Is.EqualTo(TaskCapsuleHud.LayoutPosition));
             Assert.That(task.sizeDelta, Is.EqualTo(TaskCapsuleHud.LayoutSize));
-            Assert.That(task.sizeDelta.x, Is.EqualTo(star.sizeDelta.x));
-            Assert.That(task.sizeDelta.y, Is.LessThan(star.sizeDelta.y));
+            Assert.That(task.sizeDelta.x, Is.LessThanOrEqualTo(390));
+            Assert.That(capsule.transform.Find("InvestmentDetail"), Is.Not.Null);
             Assert.That(((RectTransform)capsule.transform.Find("TaskBarBack")).sizeDelta.y, Is.EqualTo(TaskCapsuleHud.ProgressHairline));
         }
     }

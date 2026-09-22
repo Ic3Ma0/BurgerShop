@@ -8,9 +8,17 @@ namespace BurgerShop.Persistence
     [Serializable]
     public sealed class RestaurantSaveData
     {
-        public const int CurrentVersion = 17;
+        public const int CurrentVersion = 19;
 
         public int version;
+        public bool firstOrderComplete;
+        public bool compactStart, mainHallBuilt, smallFootprint;
+        public bool ResolvedSmallFootprint => version>=19&&compactStart&&smallFootprint;
+        public int mainHallInvestment;
+        public bool ResolvedFirstOrder => version>=18 ? firstOrderComplete : ResolvedShopRank>1||completedSales>0;
+        public int OpeningStars => version<18&&ResolvedShopRank==1&&completedSales>0 ? Math.Max(2,ResolvedUpgradeStars) : ResolvedUpgradeStars;
+        public bool ResolvedMainHallBuilt => version<18||!compactStart||mainHallBuilt;
+
         public bool restroomBuilt;
         public int restroomInvestment,restroomDirtyMask;
         public long lastSeenUtcTicks;
@@ -144,6 +152,7 @@ namespace BurgerShop.Persistence
         {
             get
             {
+                if(version>=18&&(mainHallInvestment<0||mainHallInvestment>Restaurant.MainHallExpansion.Cost||(compactStart&&!mainHallBuilt&&mainHallInvestment==Restaurant.MainHallExpansion.Cost)))return false;
                 if(version>=17&&(restroomInvestment<0||restroomInvestment>Restaurant.RestroomExpansion.Cost||restroomDirtyMask<0||restroomDirtyMask>3||(!restroomBuilt&&restroomDirtyMask!=0)))return false;
                 if(version>=16&&(lastSeenUtcTicks<0||lastSeenUtcTicks>DateTime.MaxValue.Ticks||offlineReceiptGrant<0||offlineReceiptTicks<0||offlineReceiptTicks>DateTime.MaxValue.Ticks||offlineReceiptStaffCount<0||offlineReceiptStaffCount>3))return false;
 
@@ -362,6 +371,8 @@ namespace BurgerShop.Persistence
                         row.yaw.ToString("R",CultureInfo.InvariantCulture)+":"+row.level.ToString(CultureInfo.InvariantCulture)+":"+row.tableSet.ToString(CultureInfo.InvariantCulture)+":"+row.investment.ToString(CultureInfo.InvariantCulture);
             }
             if(version>=16)value+="|offline:"+lastSeenUtcTicks.ToString(CultureInfo.InvariantCulture)+":"+offlineReceiptGrant.ToString(CultureInfo.InvariantCulture)+":"+offlineReceiptTicks.ToString(CultureInfo.InvariantCulture)+":"+offlineReceiptStaffCount.ToString(CultureInfo.InvariantCulture)+":"+(offlineReceiptVisible?"1":"0");
+            if(version>=19)value+="|small:"+(smallFootprint?"1":"0");
+            if(version>=18)value+="|opening:"+(firstOrderComplete?"1":"0")+":"+(compactStart?"1":"0")+":"+(mainHallBuilt?"1":"0")+":"+mainHallInvestment.ToString(CultureInfo.InvariantCulture);
             if(version>=17)value+="|restroom:"+(restroomBuilt?"1":"0")+":"+restroomInvestment.ToString(CultureInfo.InvariantCulture)+":"+restroomDirtyMask.ToString(CultureInfo.InvariantCulture);
             using (SHA256 hash = SHA256.Create())
                 return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(value)));

@@ -10,6 +10,12 @@ namespace BurgerShop.UI
         public static readonly Vector2 JoystickSize = new Vector2(280f, 280f);
 
         static Font font;
+        static Font chineseFont;
+        public static Font ChineseFont()
+        {
+            if(chineseFont==null)chineseFont=Resources.Load<Font>("Fonts/NotoSansCJKsc-Regular");
+            return chineseFont!=null?chineseFont:Font();
+        }
         static Sprite circle;
         static Sprite rounded;
         static Sprite star;

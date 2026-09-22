@@ -84,7 +84,7 @@ namespace BurgerShop.Player
 
         public bool IsValidPoint(Vector3 p)
         {
-            if (Mathf.Abs(p.x)>13 || Mathf.Abs(p.z)>13) return false;
+            if (!ShopLayout.ContainsHall(p) || Mathf.Abs(p.x)>13 || Mathf.Abs(p.z)>13) return false;
             if (Physics.CheckCapsule(p+Vector3.up*.6f,p+Vector3.up*1.5f,.45f,~0,QueryTriggerInteraction.Ignore)) return false;
             foreach (var c in FindObjectsByType<Customer.CustomerAgent>(FindObjectsSortMode.None))
                 if (ShopLayout.Horizontal(c.transform.position,p)<1.5f) return false;

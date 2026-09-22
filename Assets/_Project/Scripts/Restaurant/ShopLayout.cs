@@ -22,13 +22,15 @@ namespace BurgerShop.Restaurant
         public static readonly Vector3 GrillPickupLocal = new Vector3(1.15f, 0.015f, -2.2f);
         public static readonly Vector3 StaffCircleOffset = new Vector3(3.6f, 0.02f, 0f);
 
+        public static bool CompactStart {get;set;}
+        public static bool SmallFootprint {get;set;}
         public static bool WingUnlocked { get; private set; }
 
         public static void ResetWingLock() => WingUnlocked = false;
 
         // Kitchen: +X, north. Trays / green pickups face the south aisle. Purple upgrades sit north of each grill.
-        public static readonly Vector3 Grill = new Vector3(5f, 0f, 9f);
-        public static readonly Vector3 UpgradeSpot = Grill + new Vector3(0f, 0.02f, GrillUpgradeNorth);
+        public static Vector3 Grill => SmallFootprint ? new Vector3(1,0,-3.5f) : CompactStart ? new Vector3(4,0,1.5f) : new Vector3(5f,0f,9f);
+        public static Vector3 UpgradeSpot => Grill + new Vector3(0f, 0.02f, GrillUpgradeNorth);
         public static readonly Vector3 ExtraGrill = new Vector3(12f, 0f, 9f);
         public static readonly Vector3 GrillUnlock = Pad(ExtraGrill);
         public static readonly Vector3 ExtraGrillUpgradeOffset = new Vector3(0f, 0.02f, GrillUpgradeNorth);
@@ -54,21 +56,17 @@ namespace BurgerShop.Restaurant
 
         // Dine-in counters on the center axis, facing customers to the south. White circles on the kitchen (+X) staff side.
         // Second counter stacks north so the kitchen pickup lane stays clear.
-        public static readonly Vector3 Counter = new Vector3(-3f, 0f, 4f);
-        public static readonly Vector3 CounterTop = new Vector3(Counter.x, 1.05f, Counter.z);
-        public static readonly Vector3 ServingCircle = new Vector3(0.6f, 0.02f, 4f);
-        public static readonly Vector3 CounterCash = ServingCircle + CashFloor.CounterOffsetFromServing;
+        public static Vector3 Counter => SmallFootprint ? new Vector3(-5,0,-3) : new Vector3(-3,0,CompactStart?0:4);
+        public static Vector3 CounterTop => new Vector3(Counter.x, 1.05f, Counter.z);
+        public static Vector3 ServingCircle => Counter + StaffCircleOffset;
+        public static Vector3 CounterCash => ServingCircle + CashFloor.CounterOffsetFromServing;
         public static readonly Vector3 ExtraCounter = new Vector3(-3f, 0f, 8f);
         public static readonly Vector3 CounterUnlock = Pad(ExtraCounter);
         public static readonly Vector3 ExtraCounterTop = new Vector3(ExtraCounter.x, 1.05f, ExtraCounter.z);
         public static readonly Vector3 ExtraServingCircle = new Vector3(0.6f, 0.02f, 8f);
 
         // Dining: −X, two Rank-2 starter pair tables (BS-SPEC-069). Extra / 031 pads stay in the back wing.
-        public static readonly Vector3[] Tables =
-        {
-            new Vector3(-8f, 0f, 7f),
-            new Vector3(-8f, 0f, 3f)
-        };
+        public static Vector3[] Tables => SmallFootprint ? new[]{new Vector3(-11,0,-3),new Vector3(-11,0,-7.5f)} : CompactStart ? new[]{new Vector3(-8,0,2),new Vector3(-8,0,-2)} : new[]{new Vector3(-8,0,7),new Vector3(-8,0,3)};
         public static readonly Vector3 ExtraTable = new Vector3(26f, 0f, -6f);
         public static readonly Vector3 TableUnlock = Pad(ExtraTable);
         public static readonly Vector3 FourSeatTable = new Vector3(30.5f, 0f, -6f);
@@ -77,7 +75,7 @@ namespace BurgerShop.Restaurant
         public static readonly Vector3 SquareUnlock = Pad(SquareTable);
         public static readonly Vector3 TableUpgradeOffset = new Vector3(1.55f, 0.02f, 0f);
         public static Vector3 TableUpgradePad(Vector3 table) => table + TableUpgradeOffset;
-        public static readonly Vector3 TrashBin = new Vector3(-13f, 0f, 0f);
+        public static Vector3 TrashBin => SmallFootprint ? new Vector3(-13,0,-10) : new Vector3(-13f, 0f, 0f);
 
         // Boxing / drive-thru: south wall. BOX → PACK → WINDOW. Cars run on
         // StreetEnvironment.SouthStreet (z = −30, 8 m wide), just outside the window.
@@ -133,22 +131,17 @@ namespace BurgerShop.Restaurant
         public const float BoostRoomDepth = 13f;
         public static readonly Vector3 BoostDoor = new Vector3(BoostDoorX, 0f, -WallHalf);
         public static readonly Vector3 BoostRoomCenter = new Vector3(BoostDoorX, 0f, -WallHalf - BoostRoomDepth * 0.5f);
-        public static readonly Vector3 BoostStation = new Vector3(13f, 0f, -11f);
-        public static readonly Vector3 BoostPoint = new Vector3(13f, 0.02f, -11f);
+        public static Vector3 BoostStation => SmallFootprint?new Vector3(2,0,-11):CompactStart?new Vector3(5,0,-9):new Vector3(13,0,-11);
+        public static Vector3 BoostPoint => BoostStation+Vector3.up*.02f;
 
         // Circulation. HiringSpot is a hall point only (hire happens at the HR desk).
-        public static readonly Vector3 Aisle = new Vector3(2f, 0f, 0f);
+        public static Vector3 Aisle => SmallFootprint ? new Vector3(-.5f,0,-8) : new Vector3(2f, 0f, CompactStart ? -3.5f : 0f);
         public static readonly Vector3 HiringSpot = new Vector3(2f, 0.02f, 0f);
-        public static readonly Vector3 PlayerSpawn = new Vector3(Aisle.x, 1.05f, Aisle.z);
-        public static readonly Vector3 Entrance = new Vector3(-12f, 0f, -6f);
-        public static readonly Vector3 QueueEntry = new Vector3(-3f, 0f, -6f);
-        public static readonly Vector3[] QueueSlots =
-        {
-            new Vector3(-3f, 0f, 1.5f),
-            new Vector3(-3f, 0f, -1.5f),
-            new Vector3(-3f, 0f, -4.5f)
-        };
-        public static readonly Vector3[] Exit =
+        public static Vector3 PlayerSpawn => new Vector3(Aisle.x, 1.05f, Aisle.z);
+        public static Vector3 Entrance => new Vector3(-12f, 0f, SmallFootprint ? -12f : -6f);
+        public static Vector3 QueueEntry => SmallFootprint ? new Vector3(-5,0,-12f) : new Vector3(-3,0,CompactStart?-10.5f:-6);
+        public static Vector3[] QueueSlots => new[]{new Vector3(Counter.x,0,Counter.z-2.5f),new Vector3(Counter.x,0,Counter.z-5.5f),new Vector3(Counter.x,0,Counter.z-8.5f)};
+        public static Vector3[] Exit => new[]
         {
             Entrance,
             BurgerShop.Core.RestaurantEntrance.Door,
@@ -183,7 +176,7 @@ namespace BurgerShop.Restaurant
         public static Vector3[] Walk(Vector3 from, Vector3 to)
         {
             var layout = BurgerShop.Building.FacilityLayout.Current;
-            if (layout != null && (layout.HasCustomLayout || RestroomExpansion.Current?.Built == true))
+            if (layout != null && (SmallFootprint || layout.HasCustomLayout || RestroomExpansion.Current?.Built == true))
             {
                 Vector3[] routed = CardinalizeFrom(from, layout.Route(from, to));
                 if (UsableWalk(routed, from, to)) return routed;
@@ -347,7 +340,7 @@ namespace BurgerShop.Restaurant
 
         static bool CrossesCounter(Vector3 from, Vector3 to)
         {
-            return SegmentHitsRect(from, to, -4.8f, -1.2f, 3.2f, 4.8f)
+            return SegmentHitsRect(from, to, Counter.x-1.8f, Counter.x+1.8f, Counter.z-.8f, Counter.z+.8f)
                 || SegmentHitsRect(from, to, -4.8f, -1.2f, 7.2f, 8.8f);
         }
 
@@ -431,6 +424,7 @@ namespace BurgerShop.Restaurant
                     ? sample.GetComponent<Renderer>().sharedMaterial
                     : BurgerShop.Core.RuntimeMaterials.Create(new Color(0.40f, 0.29f, 0.17f));
                 CreateWall(parent, name, door + Vector3.up * (scale.y * 0.5f), scale, material);
+                if(!MainHallExpansion.HasAccess)parent.Find(name).gameObject.SetActive(false);
                 return;
             }
             if (plug == null) return;
@@ -456,13 +450,13 @@ namespace BurgerShop.Restaurant
         }
 
         public static bool ContainsPlayable(Vector3 point) =>
-            (CourierLine.Current!=null && Mathf.Abs(point.x)<=14.5f && point.z>=14.5f && point.z<=25.5f) || ContainsHall(point) || ContainsHrOffice(point) || ContainsBoostRoom(point) || (BagLine.Current!=null && BagLine.Current.Expanded && point.x>=-26.5f && point.x<=-14.5f && Mathf.Abs(point.z)<=8.5f)
+            (MainHallExpansion.HasAccess && CourierLine.Current!=null && Mathf.Abs(point.x)<=14.5f && point.z>=14.5f && point.z<=25.5f) || ContainsHall(point) || (MainHallExpansion.HasAccess && (ContainsHrOffice(point) || ContainsBoostRoom(point))) || (BagLine.Current!=null && BagLine.Current.Expanded && point.x>=-26.5f && point.x<=-14.5f && Mathf.Abs(point.z)<=8.5f)
             || (WingUnlocked && (ContainsWing(point) || ContainsSideDoorway(point)));
 
         public static bool ContainsHall(Vector3 point)
         {
             float limit = WallHalf + 0.2f;
-            return Mathf.Abs(point.x) <= limit && Mathf.Abs(point.z) <= limit;
+            return MainHallExpansion.Current!=null?MainHallExpansion.Current.Bounds.Contains(new Vector2(point.x,point.z)):Mathf.Abs(point.x) <= limit && Mathf.Abs(point.z) <= limit;
         }
 
         public static bool ContainsWing(Vector3 point)

@@ -15,6 +15,8 @@ namespace BurgerShop.Customer
         Vector3 burgerStart;
         Vector3[] exitRoute;
         int exitWaypoint;
+        bool exitPathBuilt;
+        int exitLayoutRevision=-1;
         float departureTime;
         DiningArea hall;
         DiningTable table;
@@ -65,23 +67,10 @@ namespace BurgerShop.Customer
             agent.Product = product;
             if (kind == CustomerKind.BigEater) quantity = 10;
             agent.Order = new CustomerOrder(quantity, kind == CustomerKind.BigEater ? 10 : 4);
-            Color[] shirts = { new Color(0.23f, 0.52f, 0.91f), new Color(0.70f, 0.35f, 0.69f), new Color(0.28f, 0.70f, 0.69f) };
-            Material shirt = MaterialFor(shirts[(ticket - 1) % shirts.Length]);
-            Material skin = MaterialFor(new Color(0.93f, 0.71f, 0.49f));
-            Material hair = MaterialFor(new Color(0.19f, 0.14f, 0.12f));
             Material bubble = MaterialFor(new Color(1f, 0.98f, 0.90f), true);
-            agent.ownedMaterials = new[] { shirt, skin, hair, bubble };
-
-            Part(root.transform, "Body", PrimitiveType.Capsule, new Vector3(0f, .98f, 0f), new Vector3(.64f,.325f,.4f), shirt);
-            Part(root.transform, "Head", PrimitiveType.Sphere, new Vector3(0f, 1.48f, 0f), Vector3.one * 0.55f, skin);
-            Part(root.transform, "Hair", PrimitiveType.Sphere, new Vector3(0f, 1.69f, -0.03f), new Vector3(0.55f, 0.23f, 0.48f), hair);
-            Part(root.transform, "Nose", PrimitiveType.Sphere, new Vector3(0f, 1.47f, 0.28f), new Vector3(0.14f, 0.12f, 0.15f), skin);
-
-            BurgerShop.Core.HumanoidVisual.Add(root.transform,0,shirt,skin,hair);
-            if (kind == CustomerKind.BigEater)
-                root.transform.Find("Body").localScale = new Vector3(1.05f, .35f, .9f);
-            if (kind == CustomerKind.Calling)
-                Part(root.transform, "Phone", PrimitiveType.Cube, new Vector3(.31f,1.4f,.16f), new Vector3(.09f,.32f,.17f), hair);
+            agent.ownedMaterials = new[] { bubble };
+            BurgerShop.Core.CharacterVisualFactory.Customer(root.transform, ticket,
+                kind == CustomerKind.BigEater, kind == CustomerKind.Calling);
             agent.orderBubble = new GameObject("OrderBubble").transform;
             agent.orderBubble.SetParent(root.transform, false);
             agent.orderBubble.localPosition = new Vector3(0f, 2.25f, 0f);
@@ -117,10 +106,11 @@ namespace BurgerShop.Customer
 
         internal void MoveOnPath(Vector3 position, float distance, bool arrived, Vector3 counter, float deltaTime)
         {
-            Vector3 direction = arrived ? counter - position : position - transform.position;
+            Vector3 displacement=position-transform.position;displacement.y=0;
+            Vector3 direction = displacement.sqrMagnitude>.000001f ? displacement : arrived ? counter-position : Vector3.zero;
             direction.y = 0f;
             if (direction.sqrMagnitude > 0.00001f)
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 1f - Mathf.Exp(-12f * deltaTime));
+                transform.rotation = displacement.sqrMagnitude>.000001f ? Quaternion.LookRotation(direction) : Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 1f - Mathf.Exp(-8f * deltaTime));
             transform.position = position;
             DistanceAlongPath = distance;
             HasReachedSlot = arrived;
@@ -170,7 +160,7 @@ namespace BurgerShop.Customer
         internal void BeginDeparture(Transform burger, Vector3[] waypoints, int payment, DiningArea dining = null,
             bool alreadyReceived = false)
         {
-            IsDeparting = true;
+            IsDeparting = true;exitWaypoint=0;exitPathBuilt=false;
             departureTime = alreadyReceived ? HandoffSeconds : 0f;
             if (burger != null && !received.Contains(burger)) received.Add(burger);
             PaidAmount = payment;
@@ -209,6 +199,17 @@ namespace BurgerShop.Customer
         }
 
         public void AdvanceDeparture(float deltaTime)
+        {
+            Vector3 before=transform.position;
+            AdvanceDepartureMotion(deltaTime);
+            if(this==null||phase==Phase.Eating)return;
+            Vector3 displacement=transform.position-before;displacement.y=0;
+            // A frame may cross several short curve segments: face the displacement of the
+            // entire frame, never a future waypoint that has not been walked toward yet.
+            if(displacement.sqrMagnitude>.000001f)transform.rotation=Quaternion.LookRotation(displacement);
+        }
+
+        void AdvanceDepartureMotion(float deltaTime)
         {
             if (!IsDeparting || DepartureComplete || deltaTime <= 0f) return;
             float previousTime = departureTime;
@@ -288,9 +289,17 @@ namespace BurgerShop.Customer
                 phase=Phase.Exiting;wingWalk=null;
             }
 
+            int revision=Building.FacilityLayout.Current?.Revision??-1;
+            if(!exitPathBuilt||exitLayoutRevision!=revision)
+            {
+                var path=new System.Collections.Generic.List<Vector3>{transform.position};
+                if(exitPathBuilt)path.AddRange(ShopLayout.Walk(transform.position,exitRoute[exitRoute.Length-1]));
+                else foreach(var stop in exitRoute)ShopLayout.ConcatWalk(path,ShopLayout.Walk(path[path.Count-1],stop));
+                exitRoute=new CustomerWalkPath(path,TicketNumber).Points;exitWaypoint=0;exitPathBuilt=true;exitLayoutRevision=revision;
+            }
             while (remaining > 0f && exitWaypoint < exitRoute.Length)
             {
-                if(!StepToward(exitRoute[exitWaypoint],ref remaining))break;
+                if(!StepDirect(exitRoute[exitWaypoint],ref remaining))break;
                 exitWaypoint++;
             }
             if (exitWaypoint == exitRoute.Length)
@@ -356,7 +365,11 @@ namespace BurgerShop.Customer
             return true;
         }
 
-        static Vector3[] PlannedWalk(Vector3 from, Vector3 to) => ShopLayout.Walk(from, to);
+        Vector3[] PlannedWalk(Vector3 from, Vector3 to)
+        {
+            var points=new System.Collections.Generic.List<Vector3>{from};points.AddRange(ShopLayout.Walk(from,to));
+            return new CustomerWalkPath(points,TicketNumber).Points;
+        }
 
         bool StepDirect(Vector3 target, ref float travel)
         {

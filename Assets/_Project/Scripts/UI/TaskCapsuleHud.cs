@@ -1,4 +1,5 @@
 using BurgerShop.Core;
+using BurgerShop.Building;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,6 +10,8 @@ namespace BurgerShop.UI
         const int SparkCount = 6;
         SessionGoalTracker tracker;
         Text title;
+        Text detail;
+        GameObject otherInvestments;
         Text progress;
         Image background;
         Image iconBadge;
@@ -28,8 +31,8 @@ namespace BurgerShop.UI
         public float ProgressPunchScale => progressPunch.Scale;
 
         public static readonly Vector2 LayoutAnchor = new Vector2(0f, 1f);
-        public static readonly Vector2 LayoutPosition = new Vector2(32f, -128f);
-        public static readonly Vector2 LayoutSize = new Vector2(320f, 52f);
+        public static readonly Vector2 LayoutPosition = new Vector2(32f, -106f);
+        public static readonly Vector2 LayoutSize = new Vector2(350f, 180f);
         public const float ProgressHairline = 3f;
 
         struct Spark
@@ -75,6 +78,34 @@ namespace BurgerShop.UI
             progress.fontSize = 18;
 
             var hud = back.gameObject.AddComponent<TaskCapsuleHud>();
+            back.rectTransform.sizeDelta=LayoutSize;
+            badge.rectTransform.anchorMin=badge.rectTransform.anchorMax=new Vector2(0,1);
+            badge.rectTransform.anchoredPosition=new Vector2(16,-24);
+            progress.rectTransform.anchorMin=progress.rectTransform.anchorMax=new Vector2(1,0);
+            progress.rectTransform.anchoredPosition=new Vector2(-10,15);
+            title.rectTransform.offsetMin=new Vector2(32,139);
+            title.rectTransform.offsetMax=new Vector2(-12,-4);
+            title.horizontalOverflow=HorizontalWrapMode.Wrap;
+            hud.detail=HudChrome.Label(back.transform,"InvestmentDetail",Vector2.zero,Vector2.one,new Vector2(0,.5f),Vector2.zero,Vector2.zero,17,HudChrome.Ink,TextAnchor.UpperLeft,false,false);
+            hud.detail.rectTransform.offsetMin=new Vector2(16,38);hud.detail.rectTransform.offsetMax=new Vector2(-16,-44);
+            OpeningHudCopy.Style(title,20,true);OpeningHudCopy.Style(hud.detail,19,true);
+            back.gameObject.AddComponent<RectMask2D>();
+            back.raycastTarget=true;
+            var click=back.gameObject.AddComponent<Button>();click.targetGraphic=back;
+            click.onClick.AddListener(()=>{
+                if(goals.CanUpgrade)return;
+                if(goals.TeachingPrerequisite!=null){if(goals.Rank==3&&BurgerShop.Restaurant.MainHallExpansion.HasAccess)return;var shop=Object.FindFirstObjectByType<FacilityShopHud>();if(shop!=null){if(!shop.IsOpen)shop.Open();if(!BurgerShop.Restaurant.MainHallExpansion.HasAccess)shop.ShowExpansions();}return;}
+                if(!goals.ShowsInvestment)return;
+                var offer=goals.Investments?.Current;
+                if(offer?.Facility!=null)FacilityDetailsHud.Current?.Open(offer.Facility);
+                else if(offer?.ShopPurchase==true)Object.FindFirstObjectByType<FacilityShopHud>()?.Open();
+                else if(offer?.Id=="main-hall"){var shop=Object.FindFirstObjectByType<FacilityShopHud>();if(shop!=null){shop.Open();shop.ShowExpansions();}}
+            });
+            var other=HudChrome.Panel(back.transform,"OtherInvestments",new Vector2(1,0),new Vector2(1,0),new Vector2(-72,7),new Vector2(130,24),HudChrome.Cream);
+            hud.otherInvestments=other.gameObject;
+            other.raycastTarget=true;var otherButton=other.gameObject.AddComponent<Button>();otherButton.targetGraphic=other;
+            var otherLabel=HudChrome.Label(other.transform,"Text",Vector2.zero,Vector2.one,new Vector2(.5f,.5f),Vector2.zero,Vector2.zero,16,HudChrome.Ink,TextAnchor.MiddleCenter,false,false);otherLabel.text="换个投资";OpeningHudCopy.Style(otherLabel,16);
+            otherButton.onClick.AddListener(()=>goals.Investments?.Next());
             hud.BuildSparks(back.transform);
             hud.Configure(goals, title, progress, fill, back, null, badge, check, glyph);
             return hud;
@@ -113,7 +144,7 @@ namespace BurgerShop.UI
             fillRect = bar != null ? bar.rectTransform : null;
             self = (RectTransform)transform;
             HudChrome.Mute(bar);
-            HudChrome.Mute(back);
+            // The capsule opens the existing facility detail sheet.
             shownTitle = null;
             shownProgress = int.MinValue;
             Refresh(true);
@@ -136,7 +167,9 @@ namespace BurgerShop.UI
         void Refresh(bool force)
         {
             if (tracker == null || title == null) return;
-            string copy = tracker.CapsuleTitle;
+            if(otherInvestments!=null)otherInvestments.SetActive(tracker.ShowsInvestment);
+            if(detail!=null)detail.text=OpeningHudCopy.Detail(tracker);
+            string copy = OpeningHudCopy.Title(tracker);
             int prog = tracker.CapsuleProgress;
             int need = tracker.CapsuleRequired;
             bool celebrating = tracker.IsCelebrating && (tracker.Opening == null || !tracker.Opening.IsActive);
@@ -160,6 +193,7 @@ namespace BurgerShop.UI
             if(fillRect!=null)HudChrome.SetHorizontalFill(fillRect,displayedFill);
 
             bool done = celebrating;
+            if(detail!=null)detail.color=done?Color.white:HudChrome.Ink;
             if (background != null) background.color = done ? HudChrome.CapsuleDone : HudChrome.CapsuleIdle;
             if (title != null)
             {

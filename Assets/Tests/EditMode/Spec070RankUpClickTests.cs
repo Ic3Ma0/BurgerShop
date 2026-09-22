@@ -50,7 +50,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void RankOneStillNeedsTheUpgradeClick()
         {
-            goals.Restore(1, 0, 0, ShopRanks.StarCap(1), 1);
+            goals.Restore(1, 0, 0, ShopRanks.StarCap(1), 1, firstOrder:true);
             Refresh();
             Assert.That(goals.CanUpgrade, Is.True);
             Assert.That(goals.Rank, Is.EqualTo(1));
@@ -96,8 +96,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(goals.Allows(3), Is.True);
             Assert.That(goals.CanUpgrade, Is.False);
             Assert.That(goals.Title, Is.EqualTo("Let staff complete an order"));
-            Assert.That(goals.CapsuleTitle, Is.EqualTo("Let staff complete an order"));
-            Assert.That(CapsuleCopy, Is.EqualTo("Let staff complete an order"));
+            Assert.That(goals.CapsuleTitle, Does.Contain("Hire your first employee").And.Contain("50"));
+            Assert.That(CapsuleCopy, Does.Contain("Hire your first employee"));
             Assert.That(goals.Opening.IsActive, Is.False);
         }
 
@@ -162,9 +162,9 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void ContentRankGoalsAreUnchangedThisPass()
+        public void ContentGoalsFollow080FirstSaleRevision()
         {
-            Assert.That(ShopRanks.Goals(1)[0].Kind, Is.EqualTo(ShopGoalKind.UpgradeGrill));
+            Assert.That(ShopRanks.Goals(1)[0].Kind, Is.EqualTo(ShopGoalKind.ServeCustomers));
             Assert.That(ShopRanks.Goals(2)[0].Kind, Is.EqualTo(ShopGoalKind.CleanTable));
             Assert.That(ShopRanks.Goals(3)[0].Kind, Is.EqualTo(ShopGoalKind.WorkerOrder));
             Assert.That(ShopRanks.Goals(4)[0].Title, Is.EqualTo("Produce on the second grill"));

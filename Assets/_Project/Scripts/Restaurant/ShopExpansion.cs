@@ -88,6 +88,30 @@ namespace BurgerShop.Restaurant
         public int SquareInvested => SquarePad != null ? SquarePad.Invested : pendingSquareInvestment;
         public int ColaInvested => ColaPad != null ? ColaPad.Invested : pendingColaInvestment;
         public int ColaBarInvested => ColaBarPad != null ? ColaBarPad.Invested : pendingColaBarInvestment;
+        // Old paid credit can precede wing construction. A shop purchase in owned space consumes it once.
+        public int UnbuiltStoreCredit(Building.FacilityKind kind)
+        {
+            switch(kind)
+            {
+                case Building.FacilityKind.ColaMachine:return !HasColaMachine&&ColaPad==null?pendingColaInvestment:0;
+                case Building.FacilityKind.ColaCounter:return !HasColaBar&&ColaBarPad==null?pendingColaBarInvestment:0;
+                case Building.FacilityKind.PairTable:return !HasExtraTable&&TablePad==null?pendingTableInvestment:0;
+                case Building.FacilityKind.FourSeatTable:return !HasFourSeatTable&&FourSeatPad==null?pendingFourSeatInvestment:0;
+                case Building.FacilityKind.SquareTable:return !HasSquareTable&&SquarePad==null?pendingSquareInvestment:0;
+                default:return 0;
+            }
+        }
+        public void ConsumeUnbuiltStoreCredit(Building.FacilityKind kind)
+        {
+            switch(kind)
+            {
+                case Building.FacilityKind.ColaMachine:pendingColaInvestment=0;break;
+                case Building.FacilityKind.ColaCounter:pendingColaBarInvestment=0;break;
+                case Building.FacilityKind.PairTable:pendingTableInvestment=0;break;
+                case Building.FacilityKind.FourSeatTable:pendingFourSeatInvestment=0;break;
+                case Building.FacilityKind.SquareTable:pendingSquareInvestment=0;break;
+            }
+        }
         public FacilityUnlockZone NextWingPad
         {
             get { var pad=!HasWing?WingPad:!HasColaMachine?ColaPad:!HasColaBar?ColaBarPad:!HasExtraTable?TablePad:null;

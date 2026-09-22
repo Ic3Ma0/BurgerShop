@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="88" result="Passed" total="88" passed="88" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 09:15:38Z" end-time="2026-09-22 09:15:39Z" duration="0.4877054">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="610" result="Passed" start-time="2026-09-22 09:15:38Z" end-time="2026-09-22 09:15:39Z" duration="0.487705" total="88" passed="88" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1724" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs079-boundaries-ARsrW2/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="610" result="Passed" start-time="2026-09-22 09:15:39Z" end-time="2026-09-22 09:15:39Z" duration="0.461582" total="88" passed="88" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="75176" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1725" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="610" result="Passed" start-time="2026-09-22 09:15:39Z" end-time="2026-09-22 09:15:39Z" duration="0.458342" total="88" passed="88" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1726" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="610" result="Passed" start-time="2026-09-22 09:15:39Z" end-time="2026-09-22 09:15:39Z" duration="0.455554" total="88" passed="88" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1727" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="610" result="Passed" start-time="2026-09-22 09:15:39Z" end-time="2026-09-22 09:15:39Z" duration="0.452063" total="88" passed="88" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1219" name="HudLayoutTests" fullname="BurgerShop.Tests.EditMode.HudLayoutTests" classname="BurgerShop.Tests.EditMode.HudLayoutTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.185674" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1221" name="CapsuleCopyFollowsTheSessionGoal" fullname="BurgerShop.Tests.EditMode.HudLayoutTests.CapsuleCopyFollowsTheSessionGoal" methodname="CapsuleCopyFollowsTheSessionGoal" classname="BurgerShop.Tests.EditMode.HudLayoutTests" runstate="Runnable" seed="303184754" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.147038" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1224" name="CarryAndCustomerStatusStayHiddenOnTheDefaultScreen" fullname="BurgerShop.Tests.EditMode.HudLayoutTests.CarryAndCustomerStatusStayHiddenOnTheDefaultScreen" methodname="CarryAndCustomerStatusStayHiddenOnTheDefaultScreen" classname="BurgerShop.Tests.EditMode.HudLayoutTests" runstate="Runnable" seed="1401900503" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.013368" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1226" name="CarryHudTrashIconMatchesFoodSize" fullname="BurgerShop.Tests.EditMode.HudLayoutTests.CarryHudTrashIconMatchesFoodSize" methodname="CarryHudTrashIconMatchesFoodSize" classname="BurgerShop.Tests.EditMode.HudLayoutTests" runstate="Runnable" seed="1686312130" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.003596" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1227" name="CoinHudHasNoIapPlus" fullname="BurgerShop.Tests.EditMode.HudLayoutTests.CoinHudHasNoIapPlus" methodname="CoinHudHasNoIapPlus" classname="BurgerShop.Tests.EditMode.HudLayoutTests" runstate="Runnable" seed="502071174" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002315" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1223" name="NewHudStaysOutOfTheJoystickKeepoutAndDoesNotRaycast" fullname="BurgerShop.Tests.EditMode.HudLayoutTests.NewHudStaysOutOfTheJoystickKeepoutAndDoesNotRaycast" methodname="NewHudStaysOutOfTheJoystickKeepoutAndDoesNotRaycast" classname="BurgerShop.Tests.EditMode.HudLayoutTests" runstate="Runnable" seed="369003786" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002774" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1220" name="OpeningHudShowsProgressWithoutFalseCelebration" fullname="BurgerShop.Tests.EditMode.HudLayoutTests.OpeningHudShowsProgressWithoutFalseCelebration" methodname="OpeningHudShowsProgressWithoutFalseCelebration" classname="BurgerShop.Tests.EditMode.HudLayoutTests" runstate="Runnable" seed="1498100494" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002598" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1225" name="ServeWaitingHintCardIsNotCreated" fullname="BurgerShop.Tests.EditMode.HudLayoutTests.ServeWaitingHintCardIsNotCreated" methodname="ServeWaitingHintCardIsNotCreated" classname="BurgerShop.Tests.EditMode.HudLayoutTests" runstate="Runnable" seed="1551001287" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002662" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1222" name="TaskCapsuleSitsCompactUnderTheRankChip" fullname="BurgerShop.Tests.EditMode.HudLayoutTests.TaskCapsuleSitsCompactUnderTheRankChip" methodname="TaskCapsuleSitsCompactUnderTheRankChip" classname="BurgerShop.Tests.EditMode.HudLayoutTests" runstate="Runnable" seed="1646791313" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.003768" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1228" name="LocalSaveTests" fullname="BurgerShop.Tests.EditMode.LocalSaveTests" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" testcasecount="50" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.061945" total="50" passed="50" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1231" name="AllTwentyTiersRoundTripThroughFreshStore" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.AllTwentyTiersRoundTripThroughFreshStore" methodname="AllTwentyTiersRoundTripThroughFreshStore" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1631768226" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.016165" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1265" name="ChangedPayloadWithoutMatchingChecksumFallsBackToBackup" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.ChangedPayloadWithoutMatchingChecksumFallsBackToBackup" methodname="ChangedPayloadWithoutMatchingChecksumFallsBackToBackup" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1720556992" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002090" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1268" name="DiskFailureReturnsFailureAndCanRetryAfterRecovery" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.DiskFailureReturnsFailureAndCanRetryAfterRecovery" methodname="DiskFailureReturnsFailureAndCanRetryAfterRecovery" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="168986339" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001430" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1230" name="EveryIndependentTierRejectsNegativeAndTwentyOne" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.EveryIndependentTierRejectsNegativeAndTwentyOne" methodname="EveryIndependentTierRejectsNegativeAndTwentyOne" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1825310905" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000128" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1232" name="FirstRunDoesNotCreateOrLoadPhantomProgress" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.FirstRunDoesNotCreateOrLoadPhantomProgress" methodname="FirstRunDoesNotCreateOrLoadPhantomProgress" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="132508972" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000121" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1267" name="InvalidValuesAreRejectedBeforeAnyFileIsWritten" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.InvalidValuesAreRejectedBeforeAnyFileIsWritten" methodname="InvalidValuesAreRejectedBeforeAnyFileIsWritten" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="109350403" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000114" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1229" name="LegacyZeroThroughFivePreserveCoinsAndTierFallbacks" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.LegacyZeroThroughFivePreserveCoinsAndTierFallbacks" methodname="LegacyZeroThroughFivePreserveCoinsAndTierFallbacks" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1167253357" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.003130" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1260" name="MissingPrimaryRecoversBackupAndIgnoresUncommittedTemporaryFile" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.MissingPrimaryRecoversBackupAndIgnoresUncommittedTemporaryFile" methodname="MissingPrimaryRecoversBackupAndIgnoresUncommittedTemporaryFile" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="298855989" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001124" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1259" name="RepeatedSavesKeepPreviousValidSnapshotAsBackup" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.RepeatedSavesKeepPreviousValidSnapshotAsBackup" methodname="RepeatedSavesKeepPreviousValidSnapshotAsBackup" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="725960918" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001959" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1233" name="RoundTripRestoresEveryPermanentFieldAndLargeCoinBalance" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.RoundTripRestoresEveryPermanentFieldAndLargeCoinBalance" methodname="RoundTripRestoresEveryPermanentFieldAndLargeCoinBalance" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1780004330" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000812" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1266" name="SaveFromNewerVersionIsNotDowngradedToOldBackup" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.SaveFromNewerVersionIsNotDowngradedToOldBackup" methodname="SaveFromNewerVersionIsNotDowngradedToOldBackup" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="756015335" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001043" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1264" name="UnreadableFilesArePreservedAndCannotBeOverwritten" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.UnreadableFilesArePreservedAndCannotBeOverwritten" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002247" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1261" name="UnreadableFilesArePreservedAndCannotBeOverwritten(&quot;{}&quot;)" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.UnreadableFilesArePreservedAndCannotBeOverwritten(&quot;{}&quot;)" methodname="UnreadableFilesArePreservedAndCannotBeOverwritten" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="2045069504" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000576" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1262" name="UnreadableFilesArePreservedAndCannotBeOverwritten(&quot;not json&quot;)" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.UnreadableFilesArePreservedAndCannotBeOverwritten(&quot;not json&quot;)" methodname="UnreadableFilesArePreservedAndCannotBeOverwritten" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="2088179437" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000350" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1263" name="UnreadableFilesArePreservedAndCannotBeOverwritten(&quot;{\&quot;data\&quot;:{\&quot;version\&quot;:1}}&quot;)" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.UnreadableFilesArePreservedAndCannotBeOverwritten(&quot;{\&quot;data\&quot;:{\&quot;version\&quot;:1}}&quot;)" methodname="UnreadableFilesArePreservedAndCannotBeOverwritten" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="996107842" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000311" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1248" name="V6FixtureWithOriginalChecksumLoadsMixedPurchasesWithoutLosingRights" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.V6FixtureWithOriginalChecksumLoadsMixedPurchasesWithoutLosingRights" methodname="V6FixtureWithOriginalChecksumLoadsMixedPurchasesWithoutLosingRights" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="799639693" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000585" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1252" name="V7FiveInvestmentsAreChecksummedAndCorruptionRecoversPreviousWholeSnapshot" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.V7FiveInvestmentsAreChecksummedAndCorruptionRecoversPreviousWholeSnapshot" methodname="V7FiveInvestmentsAreChecksummedAndCorruptionRecoversPreviousWholeSnapshot" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="240078485" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001089" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1272" name="V7FixtureWithOriginalChecksumStillLoadsAfterColaSchema" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.V7FixtureWithOriginalChecksumStillLoadsAfterColaSchema" methodname="V7FixtureWithOriginalChecksumStillLoadsAfterColaSchema" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="437652190" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000451" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1251" name="V7InvalidInvestmentDoesNotGrantCoinsOrOverwriteSave" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.V7InvalidInvestmentDoesNotGrantCoinsOrOverwriteSave" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000792" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1249" name="V7InvalidInvestmentDoesNotGrantCoinsOrOverwriteSave(-1)" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.V7InvalidInvestmentDoesNotGrantCoinsOrOverwriteSave(-1)" methodname="V7InvalidInvestmentDoesNotGrantCoinsOrOverwriteSave" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1358986961" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000157" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1250" name="V7InvalidInvestmentDoesNotGrantCoinsOrOverwriteSave(201)" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.V7InvalidInvestmentDoesNotGrantCoinsOrOverwriteSave(201)" methodname="V7InvalidInvestmentDoesNotGrantCoinsOrOverwriteSave" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="2053364078" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000058" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1275" name="Version10RejectsColaLevelOutsideOneToThree" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version10RejectsColaLevelOutsideOneToThree" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000727" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1273" name="Version10RejectsColaLevelOutsideOneToThree(0)" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version10RejectsColaLevelOutsideOneToThree(0)" methodname="Version10RejectsColaLevelOutsideOneToThree" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1216394403" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000135" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1274" name="Version10RejectsColaLevelOutsideOneToThree(4)" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version10RejectsColaLevelOutsideOneToThree(4)" methodname="Version10RejectsColaLevelOutsideOneToThree" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="289666208" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000054" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1270" name="Version10RoundTripRestoresColaLevelAndKeepsCoins" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version10RoundTripRestoresColaLevelAndKeepsCoins" methodname="Version10RoundTripRestoresColaLevelAndKeepsCoins" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="647555298" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000839" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1278" name="Version12RejectsChosenSetWithoutFullInvestmentOrUnboughtExtra" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version12RejectsChosenSetWithoutFullInvestmentOrUnboughtExtra" methodname="Version12RejectsChosenSetWithoutFullInvestmentOrUnboughtExtra" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1088337484" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000283" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1281" name="Version12RejectsUnboughtSquareWithUpgradeInvestment" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version12RejectsUnboughtSquareWithUpgradeInvestment" methodname="Version12RejectsUnboughtSquareWithUpgradeInvestment" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="364942970" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000096" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1279" name="Version12RoundTripRestoresFourSeatAndSquarePurchases" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version12RoundTripRestoresFourSeatAndSquarePurchases" methodname="Version12RoundTripRestoresFourSeatAndSquarePurchases" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="807113284" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000551" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1276" name="Version12RoundTripRestoresTableSetsAndInvestments" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version12RoundTripRestoresTableSetsAndInvestments" methodname="Version12RoundTripRestoresTableSetsAndInvestments" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="340224788" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000493" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1257" name="Version13RejectsColaWithoutWingAndBadColaLevel" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version13RejectsColaWithoutWingAndBadColaLevel" methodname="Version13RejectsColaWithoutWingAndBadColaLevel" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1953859015" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000119" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1255" name="Version13RoundTripRestoresWingAndColaPurchases" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version13RoundTripRestoresWingAndColaPurchases" methodname="Version13RoundTripRestoresWingAndColaPurchases" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1273027184" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000659" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1239" name="Version1And2ResolveBoostToZeroAndKeepCoins" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version1And2ResolveBoostToZeroAndKeepCoins" methodname="Version1And2ResolveBoostToZeroAndKeepCoins" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1414283268" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001027" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1235" name="Version1HiredFlagResolvesToOneWorkerWithoutNewFields" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version1HiredFlagResolvesToOneWorkerWithoutNewFields" methodname="Version1HiredFlagResolvesToOneWorkerWithoutNewFields" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="2126759119" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000435" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1242" name="Version1Through3ResolveStaffTiersToZero" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version1Through3ResolveStaffTiersToZero" methodname="Version1Through3ResolveStaffTiersToZero" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="2037620242" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001417" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1238" name="Version2LoadLeavesExtrasUnboughtAndKeepsCoins" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version2LoadLeavesExtrasUnboughtAndKeepsCoins" methodname="Version2LoadLeavesExtrasUnboughtAndKeepsCoins" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="773887613" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000860" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1258" name="Version2RejectsHiredCountOutsideZeroToThree" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version2RejectsHiredCountOutsideZeroToThree" methodname="Version2RejectsHiredCountOutsideZeroToThree" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1414828935" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000122" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1234" name="Version2RoundTripRestoresHiredCountAndClears" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version2RoundTripRestoresHiredCountAndClears" methodname="Version2RoundTripRestoresHiredCountAndClears" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1379452129" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000590" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1240" name="Version3RejectsBoostLevelOutsideSupportedRange" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version3RejectsBoostLevelOutsideSupportedRange" methodname="Version3RejectsBoostLevelOutsideSupportedRange" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="136823454" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000100" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1236" name="Version3RoundTripRestoresBoostLevelAndKeepsCoins" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version3RoundTripRestoresBoostLevelAndKeepsCoins" methodname="Version3RoundTripRestoresBoostLevelAndKeepsCoins" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="591255859" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000591" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1237" name="Version3RoundTripRestoresPaidFacilitiesAndKeepsCoins" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version3RoundTripRestoresPaidFacilitiesAndKeepsCoins" methodname="Version3RoundTripRestoresPaidFacilitiesAndKeepsCoins" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1880993995" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000523" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1243" name="Version4RejectsStaffTiersOutsideSupportedRange" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version4RejectsStaffTiersOutsideSupportedRange" methodname="Version4RejectsStaffTiersOutsideSupportedRange" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1927179279" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000095" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1241" name="Version4RoundTripRestoresStaffTiers" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version4RoundTripRestoresStaffTiers" methodname="Version4RoundTripRestoresStaffTiers" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1488630082" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000509" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1247" name="Version5AndOlderResolveBoxingAndDriveThruUnbought" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version5AndOlderResolveBoxingAndDriveThruUnbought" methodname="Version5AndOlderResolveBoxingAndDriveThruUnbought" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="935138369" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002097" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1245" name="Version5RejectsPlayerTiersOutsideSupportedRange" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version5RejectsPlayerTiersOutsideSupportedRange" methodname="Version5RejectsPlayerTiersOutsideSupportedRange" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1095369839" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000133" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1244" name="Version5RoundTripRestoresIndependentPlayerTiers" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version5RoundTripRestoresIndependentPlayerTiers" methodname="Version5RoundTripRestoresIndependentPlayerTiers" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="792624521" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000696" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1246" name="Version6RoundTripRestoresBoxingAndDriveThruFlags" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version6RoundTripRestoresBoxingAndDriveThruFlags" methodname="Version6RoundTripRestoresBoxingAndDriveThruFlags" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1950141427" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000607" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1271" name="Version7AndOlderResolveColaToLevelOneWithoutLosingProgress" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version7AndOlderResolveColaToLevelOneWithoutLosingProgress" methodname="Version7AndOlderResolveColaToLevelOneWithoutLosingProgress" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1624034677" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001114" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1277" name="Version7AndOlderResolveTableSetsToStarter" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version7AndOlderResolveTableSetsToStarter" methodname="Version7AndOlderResolveTableSetsToStarter" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="281944395" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000486" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1280" name="Version8AndOlderResolveNewTablesUnbought" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version8AndOlderResolveNewTablesUnbought" methodname="Version8AndOlderResolveNewTablesUnbought" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1777704592" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000458" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1254" name="Version8RejectsRankOutsideOneToSix" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version8RejectsRankOutsideOneToSix" methodname="Version8RejectsRankOutsideOneToSix" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1204617588" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000092" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1253" name="Version8RoundTripRestoresShopRankAndDoesNotBreakV7Checksums" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version8RoundTripRestoresShopRankAndDoesNotBreakV7Checksums" methodname="Version8RoundTripRestoresShopRankAndDoesNotBreakV7Checksums" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="35365677" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001198" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1256" name="Version9AndOlderLeaveWingAndColaUnbought" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.Version9AndOlderLeaveWingAndColaUnbought" methodname="Version9AndOlderLeaveWingAndColaUnbought" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="1970303884" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000466" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1269" name="WalletRestoreIsSilentAndRejectsNegativeProgress" fullname="BurgerShop.Tests.EditMode.LocalSaveTests.WalletRestoreIsSilentAndRejectsNegativeProgress" methodname="WalletRestoreIsSilentAndRejectsNegativeProgress" classname="BurgerShop.Tests.EditMode.LocalSaveTests" runstate="Runnable" seed="2089922205" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000728" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1519" name="Spec064StartingShopTests" fullname="BurgerShop.Tests.EditMode.Spec064StartingShopTests" classname="BurgerShop.Tests.EditMode.Spec064StartingShopTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.020710" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1520" name="RankOneHasNoHrCarBayLandmarksOrOpenAnnexDoors" fullname="BurgerShop.Tests.EditMode.Spec064StartingShopTests.RankOneHasNoHrCarBayLandmarksOrOpenAnnexDoors" methodname="RankOneHasNoHrCarBayLandmarksOrOpenAnnexDoors" classname="BurgerShop.Tests.EditMode.Spec064StartingShopTests" runstate="Runnable" seed="1250490981" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.007781" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1523" name="RankOneHidesDrinksPlotUntilRankSeven" fullname="BurgerShop.Tests.EditMode.Spec064StartingShopTests.RankOneHidesDrinksPlotUntilRankSeven" methodname="RankOneHidesDrinksPlotUntilRankSeven" classname="BurgerShop.Tests.EditMode.Spec064StartingShopTests" runstate="Runnable" seed="1237118711" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.007900" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1522" name="RankThreeOpensHrAndRankFiveOpensTheCarBay" fullname="BurgerShop.Tests.EditMode.Spec064StartingShopTests.RankThreeOpensHrAndRankFiveOpensTheCarBay" methodname="RankThreeOpensHrAndRankFiveOpensTheCarBay" classname="BurgerShop.Tests.EditMode.Spec064StartingShopTests" runstate="Runnable" seed="1143782402" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002317" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1521" name="RankTwoDiningStillHasNoHrOrCarBay" fullname="BurgerShop.Tests.EditMode.Spec064StartingShopTests.RankTwoDiningStillHasNoHrOrCarBay" methodname="RankTwoDiningStillHasNoHrOrCarBay" classname="BurgerShop.Tests.EditMode.Spec064StartingShopTests" runstate="Runnable" seed="1466463380" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001735" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1593" name="Spec076StarGateTasksTests" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.030548" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1594" name="Ac01RetiredThresholdTasksAreNoLongerScheduled" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac01RetiredThresholdTasksAreNoLongerScheduled" methodname="Ac01RetiredThresholdTasksAreNoLongerScheduled" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="2033042365" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001763" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1595" name="Ac02FifteenTasksRequireOneAndMatchSection31Thresholds" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac02FifteenTasksRequireOneAndMatchSection31Thresholds" methodname="Ac02FifteenTasksRequireOneAndMatchSection31Thresholds" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="814020169" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001541" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1596" name="Ac03RetiredStatTenDoesNotAwardBonus" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac03RetiredStatTenDoesNotAwardBonus" methodname="Ac03RetiredStatTenDoesNotAwardBonus" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="2015069322" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000984" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1597" name="Ac04RetiredBreadthDoesNotAwardBonus" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac04RetiredBreadthDoesNotAwardBonus" methodname="Ac04RetiredBreadthDoesNotAwardBonus" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="480316960" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000759" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1598" name="Ac05RestoringSixthTableDoesNotCompleteRetiredTask" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac05RestoringSixthTableDoesNotCompleteRetiredTask" methodname="Ac05RestoringSixthTableDoesNotCompleteRetiredTask" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="1875083274" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.009168" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1599" name="Ac06RecommendationReplacesSixTableTask" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac06RecommendationReplacesSixTableTask" methodname="Ac06RecommendationReplacesSixTableTask" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="2099008873" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.007126" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1600" name="Ac07V14SaveKeepsProgressAndLeavesNewBitsClear" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac07V14SaveKeepsProgressAndLeavesNewBitsClear" methodname="Ac07V14SaveKeepsProgressAndLeavesNewBitsClear" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="317432363" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001986" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1601" name="Ac08RepeatingACompletedThresholdDoesNotGrantAgain" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac08RepeatingACompletedThresholdDoesNotGrantAgain" methodname="Ac08RepeatingACompletedThresholdDoesNotGrantAgain" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="1257299576" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000693" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1602" name="Ac09RanksOneThroughFifteenAlwaysShowCapsuleCopy" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac09RanksOneThroughFifteenAlwaysShowCapsuleCopy" methodname="Ac09RanksOneThroughFifteenAlwaysShowCapsuleCopy" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="746734581" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001216" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1603" name="Ac10NextUnlockPercentsRiseFromTenThroughFifteen" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac10NextUnlockPercentsRiseFromTenThroughFifteen" methodname="Ac10NextUnlockPercentsRiseFromTenThroughFifteen" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="328580366" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000674" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1604" name="Ac11StarGatePricesAndCycleStayUntouched" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.Ac11StarGatePricesAndCycleStayUntouched" methodname="Ac11StarGatePricesAndCycleStayUntouched" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="1283825241" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000913" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1605" name="RetiredFacilityAndStaffThresholdsDoNotAward" fullname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests.RetiredFacilityAndStaffThresholdsDoNotAward" methodname="RetiredFacilityAndStaffThresholdsDoNotAward" classname="BurgerShop.Tests.EditMode.Spec076StarGateTasksTests" runstate="Runnable" seed="1944446185" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.000915" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1606" name="Spec077SaveContractTests" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:34Z" duration="0.156998" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1610" name="BackupOnlyNumberedSlotIsDiscovered" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.BackupOnlyNumberedSlotIsDiscovered" methodname="BackupOnlyNumberedSlotIsDiscovered" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" seed="1397540223" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.003302" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1617" name="DeleteLeavesIndexAloneWhenFilesCannotBeRemoved" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.DeleteLeavesIndexAloneWhenFilesCannotBeRemoved" methodname="DeleteLeavesIndexAloneWhenFilesCannotBeRemoved" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" seed="354355501" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002475" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1611" name="FutureManifestIsNotRewritten" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.FutureManifestIsNotRewritten" methodname="FutureManifestIsNotRewritten" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" seed="1197519698" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001022" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1612" name="ManifestCommitFailureDoesNotActivateOrAllocate" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.ManifestCommitFailureDoesNotActivateOrAllocate" methodname="ManifestCommitFailureDoesNotActivateOrAllocate" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" seed="1854635741" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001874" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1609" name="MissingOrCorruptManifestDiscoversOccupiedSlots" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.MissingOrCorruptManifestDiscoversOccupiedSlots" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.004864" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1607" name="MissingOrCorruptManifestDiscoversOccupiedSlots(False)" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.MissingOrCorruptManifestDiscoversOccupiedSlots(False)" methodname="MissingOrCorruptManifestDiscoversOccupiedSlots" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" seed="668661029" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.002820" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1608" name="MissingOrCorruptManifestDiscoversOccupiedSlots(True)" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.MissingOrCorruptManifestDiscoversOccupiedSlots(True)" methodname="MissingOrCorruptManifestDiscoversOccupiedSlots" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" seed="1357279108" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:33Z" duration="0.001509" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1616" name="OversizeSnapshotIsRejectedBeforeReplacingTheGoodFile" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.OversizeSnapshotIsRejectedBeforeReplacingTheGoodFile" methodname="OversizeSnapshotIsRejectedBeforeReplacingTheGoodFile" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" seed="484612788" result="Passed" start-time="2026-09-22 09:15:33Z" end-time="2026-09-22 09:15:34Z" duration="0.136475" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1615" name="SuccessfulSaveIsReadableWithoutBackupRollback" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.SuccessfulSaveIsReadableWithoutBackupRollback" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 09:15:34Z" end-time="2026-09-22 09:15:34Z" duration="0.005502" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1613" name="SuccessfulSaveIsReadableWithoutBackupRollback(64)" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.SuccessfulSaveIsReadableWithoutBackupRollback(64)" methodname="SuccessfulSaveIsReadableWithoutBackupRollback" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" seed="579759008" result="Passed" start-time="2026-09-22 09:15:34Z" end-time="2026-09-22 09:15:34Z" duration="0.001945" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1614" name="SuccessfulSaveIsReadableWithoutBackupRollback(256)" fullname="BurgerShop.Tests.EditMode.Spec077SaveContractTests.SuccessfulSaveIsReadableWithoutBackupRollback(256)" methodname="SuccessfulSaveIsReadableWithoutBackupRollback" classname="BurgerShop.Tests.EditMode.Spec077SaveContractTests" runstate="Runnable" seed="27459312" result="Passed" start-time="2026-09-22 09:15:34Z" end-time="2026-09-22 09:15:34Z" duration="0.002950" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="1618" name="Spec078SlotSwitchIsolationTests" fullname="BurgerShop.Tests.EditMode.Spec078SlotSwitchIsolationTests" classname="BurgerShop.Tests.EditMode.Spec078SlotSwitchIsolationTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 09:15:34Z" end-time="2026-09-22 09:15:34Z" duration="0.107017" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1620" name="ExtraGrillOnADoesNotFollowSwitchIntoB" fullname="BurgerShop.Tests.EditMode.Spec078SlotSwitchIsolationTests.ExtraGrillOnADoesNotFollowSwitchIntoB" methodname="ExtraGrillOnADoesNotFollowSwitchIntoB" classname="BurgerShop.Tests.EditMode.Spec078SlotSwitchIsolationTests" runstate="Runnable" seed="1040017340" result="Passed" start-time="2026-09-22 09:15:34Z" end-time="2026-09-22 09:15:34Z" duration="0.054993" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1621" name="FailedFlushAbortsSwitchAndKeepsWorldA" fullname="BurgerShop.Tests.EditMode.Spec078SlotSwitchIsolationTests.FailedFlushAbortsSwitchAndKeepsWorldA" methodname="FailedFlushAbortsSwitchAndKeepsWorldA" classname="BurgerShop.Tests.EditMode.Spec078SlotSwitchIsolationTests" runstate="Runnable" seed="1628769578" result="Passed" start-time="2026-09-22 09:15:34Z" end-time="2026-09-22 09:15:34Z" duration="0.027427" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1619" name="SwitchToSlotDoesNotApplyTargetOntoTheLiveWorld" fullname="BurgerShop.Tests.EditMode.Spec078SlotSwitchIsolationTests.SwitchToSlotDoesNotApplyTargetOntoTheLiveWorld" methodname="SwitchToSlotDoesNotApplyTargetOntoTheLiveWorld" classname="BurgerShop.Tests.EditMode.Spec078SlotSwitchIsolationTests" runstate="Runnable" seed="438966609" result="Passed" start-time="2026-09-22 09:15:34Z" end-time="2026-09-22 09:15:34Z" duration="0.023476" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1679" name="Spec083SceneTests" fullname="BurgerShop.Tests.EditMode.Spec083SceneTests" classname="BurgerShop.Tests.EditMode.Spec083SceneTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 09:15:39Z" end-time="2026-09-22 09:15:39Z" duration="0.409231" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1680" name="SmallStoreChineseHudTradeAndExpansionRenderInPlay" fullname="BurgerShop.Tests.EditMode.Spec083SceneTests.SmallStoreChineseHudTradeAndExpansionRenderInPlay" methodname="SmallStoreChineseHudTradeAndExpansionRenderInPlay" classname="BurgerShop.Tests.EditMode.Spec083SceneTests" runstate="Runnable" seed="2056189974" result="Passed" start-time="2026-09-22 09:15:34Z" end-time="2026-09-22 09:15:37Z" duration="2.815012" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                </properties>
+              </test-case>
+              <test-case id="1681" name="Version18KeepsItsLayoutWhenSwitchingWithANewSlot" fullname="BurgerShop.Tests.EditMode.Spec083SceneTests.Version18KeepsItsLayoutWhenSwitchingWithANewSlot" methodname="Version18KeepsItsLayoutWhenSwitchingWithANewSlot" classname="BurgerShop.Tests.EditMode.Spec083SceneTests" runstate="Runnable" seed="230980028" result="Passed" start-time="2026-09-22 09:15:37Z" end-time="2026-09-22 09:15:39Z" duration="2.469219" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

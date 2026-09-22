@@ -54,6 +54,13 @@ namespace BurgerShop.UI
                 return;
             }
             popup.SetVisible(true);
+            if (!board.CanUpgradeStaff)
+            {
+                string reason = !board.HasStaff ? "Hire staff first" : "Expand main hall first";
+                popup.SetOption(true, "Speed\n" + reason, false, StatUpgradePopup.Disabled);
+                popup.SetOption(false, "Carry\n" + reason, false, StatUpgradePopup.Disabled);
+                return;
+            }
             popup.PaintStat(true, "Speed (u/s)", board.SpeedTier,
                 Restaurant.StaffBoost.WalkSpeed(board.SpeedTier, board.CarryTier).ToString("0.00"),
                 Restaurant.StaffBoost.WalkSpeed(board.SpeedTier + 1, board.CarryTier).ToString("0.00"),

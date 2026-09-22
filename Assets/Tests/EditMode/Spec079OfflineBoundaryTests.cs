@@ -115,7 +115,7 @@ namespace BurgerShop.Tests.EditMode
                 Assert.That(OfflineUpgradeCostSource.CheapestUpgrade(root.transform),
                     Is.EqualTo(PlayerBoost.CostForNextTier(19)), "locked staff is not an available offer");
                 goals.Restore(ShopRanks.HireRank, 0, 0);
-                Assert.That(OfflineUpgradeCostSource.CheapestUpgrade(root.transform), Is.EqualTo(50));
+                Assert.That(OfflineUpgradeCostSource.CheapestUpgrade(root.transform), Is.EqualTo(PlayerBoost.CostForNextTier(19)), "083: no staff means staff upgrades are ineligible");
                 player.RestoreTiers(20, 20);
                 staff.RestoreTiers(20, 20);
                 Assert.That(OfflineUpgradeCostSource.CheapestUpgrade(root.transform), Is.Zero);
@@ -128,7 +128,7 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void SceneQuoteUsesUnpaidTableDifferenceAndSkipsHiddenOrChosenTables()
+        public void SceneQuoteUsesFullTablePriceAndSkipsHiddenOrChosenTables()
         {
             var root = new GameObject("OfflineTableQuote");
             try
@@ -137,7 +137,7 @@ namespace BurgerShop.Tests.EditMode
                 var zone = table.gameObject.AddComponent<TableUpgradeZone>();
                 zone.Configure(table, 0, null, null, table.transform, null, null);
                 zone.Restore(0, 30);
-                Assert.That(OfflineUpgradeCostSource.CheapestUpgrade(root.transform), Is.EqualTo(20));
+                Assert.That(OfflineUpgradeCostSource.CheapestUpgrade(root.transform), Is.EqualTo(50), "083: investment credit must not shrink offline valuation");
                 table.gameObject.SetActive(false);
                 Assert.That(OfflineUpgradeCostSource.CheapestUpgrade(root.transform), Is.Zero);
                 table.gameObject.SetActive(true);

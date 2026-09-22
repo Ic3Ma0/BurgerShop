@@ -1,0 +1,176 @@
+{
+  "kind": "static arithmetic witness, NOT gameplay validation or recommended grind path",
+  "total_to_rank15": 127,
+  "total_to_rank16": 147,
+  "available_attribute_purchases": 80,
+  "used_attribute_purchases": 71,
+  "rows": [
+    {
+      "from_rank": 1,
+      "to_rank": 2,
+      "star_cost": 2,
+      "example_actions": [
+        "first completed burger order"
+      ],
+      "stars_granted": 2,
+      "remaining_stars": 0,
+      "attribute_purchases_cumulative": 0
+    },
+    {
+      "from_rank": 2,
+      "to_rank": 3,
+      "star_cost": 4,
+      "example_actions": [
+        "first cleaned table: +2",
+        "main grill first upgrade: +2 (30 coins)"
+      ],
+      "stars_granted": 4,
+      "remaining_stars": 0,
+      "attribute_purchases_cumulative": 0
+    },
+    {
+      "from_rank": 3,
+      "to_rank": 4,
+      "star_cost": 5,
+      "example_actions": [
+        "If following staff path: main-hall expansion 150 + first hire 50; expansion stars conservatively omitted",
+        "3 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 6,
+      "remaining_stars": 1,
+      "attribute_purchases_cumulative": 3
+    },
+    {
+      "from_rank": 4,
+      "to_rank": 5,
+      "star_cost": 6,
+      "example_actions": [
+        "3 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 6,
+      "remaining_stars": 1,
+      "attribute_purchases_cumulative": 6
+    },
+    {
+      "from_rank": 5,
+      "to_rank": 6,
+      "star_cost": 6,
+      "example_actions": [
+        "3 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 6,
+      "remaining_stars": 1,
+      "attribute_purchases_cumulative": 9
+    },
+    {
+      "from_rank": 6,
+      "to_rank": 7,
+      "star_cost": 7,
+      "example_actions": [
+        "3 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 6,
+      "remaining_stars": 0,
+      "attribute_purchases_cumulative": 12
+    },
+    {
+      "from_rank": 7,
+      "to_rank": 8,
+      "star_cost": 8,
+      "example_actions": [
+        "4 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 8,
+      "remaining_stars": 0,
+      "attribute_purchases_cumulative": 16
+    },
+    {
+      "from_rank": 8,
+      "to_rank": 9,
+      "star_cost": 9,
+      "example_actions": [
+        "5 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 10,
+      "remaining_stars": 1,
+      "attribute_purchases_cumulative": 21
+    },
+    {
+      "from_rank": 9,
+      "to_rank": 10,
+      "star_cost": 10,
+      "example_actions": [
+        "5 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 10,
+      "remaining_stars": 1,
+      "attribute_purchases_cumulative": 26
+    },
+    {
+      "from_rank": 10,
+      "to_rank": 11,
+      "star_cost": 11,
+      "example_actions": [
+        "5 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 10,
+      "remaining_stars": 0,
+      "attribute_purchases_cumulative": 31
+    },
+    {
+      "from_rank": 11,
+      "to_rank": 12,
+      "star_cost": 12,
+      "example_actions": [
+        "6 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 12,
+      "remaining_stars": 0,
+      "attribute_purchases_cumulative": 37
+    },
+    {
+      "from_rank": 12,
+      "to_rank": 13,
+      "star_cost": 14,
+      "example_actions": [
+        "7 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 14,
+      "remaining_stars": 0,
+      "attribute_purchases_cumulative": 44
+    },
+    {
+      "from_rank": 13,
+      "to_rank": 14,
+      "star_cost": 16,
+      "example_actions": [
+        "8 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 16,
+      "remaining_stars": 0,
+      "attribute_purchases_cumulative": 52
+    },
+    {
+      "from_rank": 14,
+      "to_rank": 15,
+      "star_cost": 17,
+      "example_actions": [
+        "9 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 18,
+      "remaining_stars": 1,
+      "attribute_purchases_cumulative": 61
+    },
+    {
+      "from_rank": 15,
+      "to_rank": 16,
+      "star_cost": 20,
+      "example_actions": [
+        "10 purchases among existing player/staff attribute lines; +2 each"
+      ],
+      "stars_granted": 20,
+      "remaining_stars": 1,
+      "attribute_purchases_cumulative": 71
+    }
+  ]
+}

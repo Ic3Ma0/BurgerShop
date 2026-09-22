@@ -6,6 +6,12 @@ namespace BurgerShop.Core
     public sealed class HumanoidVisual : MonoBehaviour
     {
         Transform[] arms=new Transform[2],legs=new Transform[2];Vector3 previous;float phase;
+        bool phonePose;
+        public void SetPhonePose()
+        {
+            phonePose=true;
+            arms[1].localRotation=Quaternion.Euler(-150,0,0);
+        }
         public static void Add(Transform root,float feet,Material shirt,Material skin,Material trousers)
         {
             var rig=root.gameObject.AddComponent<HumanoidVisual>();rig.previous=root.position;
@@ -22,7 +28,7 @@ namespace BurgerShop.Core
         }
         static void Part(Transform parent,string name,Vector3 p,Vector3 size,Material mat)
         {
-            var type=name=="Hand"?PrimitiveType.Sphere:name=="Shoe"?PrimitiveType.Cube:PrimitiveType.Capsule;
+            var type=name=="Hand" || name=="Shoe"?PrimitiveType.Sphere:PrimitiveType.Capsule;
             if(type==PrimitiveType.Capsule)size.y*=.5f;
             BagVisualFactory.Part(parent,name,type,p,size,mat);
         }
@@ -36,7 +42,7 @@ namespace BurgerShop.Core
             {
                 float a=i==0?angle:-angle;
                 legs[i].localRotation=Quaternion.Slerp(legs[i].localRotation,Quaternion.Euler(a,0,0),1-Mathf.Exp(-20*Time.deltaTime));
-                arms[i].localRotation=Quaternion.Slerp(arms[i].localRotation,Quaternion.Euler(-a*.65f,0,0),1-Mathf.Exp(-20*Time.deltaTime));
+                arms[i].localRotation=Quaternion.Slerp(arms[i].localRotation,Quaternion.Euler(phonePose && i==1?-150:-a*.65f,0,0),1-Mathf.Exp(-20*Time.deltaTime));
             }
         }
     }

@@ -13,7 +13,7 @@ namespace BurgerShop.Tests.EditMode
     {
         static readonly int[] Caps =
         {
-            4, 4, 5, 6, 6, 7, 8, 9, 10, 11, 12, 14, 16, 17, 20
+            2, 4, 5, 6, 6, 7, 8, 9, 10, 11, 12, 14, 16, 17, 20
         };
 
         GameObject root;
@@ -47,7 +47,7 @@ namespace BurgerShop.Tests.EditMode
             int total = 0;
             for (int rank = 1; rank <= 16; rank++)
                 total += ShopRanks.StarCap(rank);
-            Assert.That(total, Is.EqualTo(171));
+            Assert.That(total, Is.EqualTo(169));
             Assert.That(total, Is.LessThanOrEqualTo((int)(ShopRanks.StarSupplyCap * 0.8)));
         }
 
@@ -67,7 +67,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void Ac04ExactStarsUpgradeWithoutMilestoneAndKeepRemainder()
         {
-            for (int rank = 1; rank <= ShopRanks.StarGateEnd; rank++)
+            for (int rank = 2; rank <= ShopRanks.StarGateEnd; rank++)
             {
                 int cap = ShopRanks.StarCap(rank);
                 goals.Restore(rank, 0, 0, cap + 3);
@@ -159,16 +159,16 @@ namespace BurgerShop.Tests.EditMode
         public void Ac08UpgradeCopyShowsStarRewardAndShortage()
         {
             goals.Restore(1, 0, 0);
-            Assert.That(goals.StarLabel, Does.Contain("⭐").And.Contain("0/4").And.Contain("Need 4 more stars"));
-            Assert.That(goals.NextRankPreview, Does.Contain(ShopRanks.NextUnlock(1)).And.Contain("Need 4 more stars"));
-            Assert.That(goals.BlockReason, Does.Contain("Need 4 more stars"));
+            Assert.That(goals.StarLabel, Does.Contain("⭐").And.Contain("0/2").And.Contain("Need 2 more stars"));
+            Assert.That(goals.NextRankPreview, Does.Contain(ShopRanks.NextUnlock(1)).And.Contain("Need 2 more stars"));
+            Assert.That(goals.BlockReason, Does.Contain("Need 2 more stars"));
 
             var canvas = new GameObject("Hud", typeof(RectTransform), typeof(Canvas));
             canvas.transform.SetParent(root.transform, false);
             var stars = StarProgressHud.Build(canvas.transform, goals);
             stars.RefreshNow();
             Assert.That(stars.transform.Find("StarBarBack/StarValue").GetComponent<Text>().text,
-                Does.Contain("Need 4 more stars"));
+                Does.Contain("Need 2 more stars"));
 
             var player = new GameObject("HudPlayer").AddComponent<BurgerInventory>();
             player.transform.SetParent(root.transform, false);

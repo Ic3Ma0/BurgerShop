@@ -112,6 +112,19 @@ namespace BurgerShop.Persistence
             ApplyLoadedSnapshot();
         }
 
+        public static string RuntimeDirectory()
+        {
+#if UNITY_EDITOR
+            string isolated=UnityEditor.SessionState.GetString(EditorDirectoryKey, "");
+            if(!string.IsNullOrEmpty(isolated))return isolated;
+#endif
+            return Application.persistentDataPath;
+        }
+        public static RestaurantSaveData PeekActiveSnapshot()
+        {
+            string directory=RuntimeDirectory();var slots=new SaveSlotStore(directory);
+            new LocalSaveStore(directory,slots.ActiveFileName).Load(out var data);return data;
+        }
         public bool CanDeleteSlot(int id) => slots != null && slots.CanDelete(id);
 
         public bool SaveNow() => Flush();
@@ -290,7 +303,8 @@ namespace BurgerShop.Persistence
                 partsWallet.Changed -= RequestSave;
                 partsWallet.Changed += RequestSave;
             }
-            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, data.ResolvedUpgradeStars, data.ResolvedMilestones, data.ResolvedLegacyAccess, data.ResolvedIncomeRemainder);
+            GetComponent<MainHallExpansion>()?.Restore(data.version>=18&&data.compactStart,data.ResolvedMainHallBuilt,data.version>=18?data.mainHallInvestment:0,data.ResolvedSmallFootprint);
+            goals?.Restore(RestoredRank, RestoredGoalIndex, RestoredGoalProgress, data.OpeningStars, data.ResolvedMilestones, data.ResolvedLegacyAccess, data.ResolvedIncomeRemainder,data.ResolvedFirstOrder);
             GetComponent<BagLine>()?.Restore(data);
             GetComponent<GrowthUpgrades>()?.Restore(data.facilityLevels, data.grillLevel, data.ResolvedExtraGrillLevel, data.ResolvedColaLevel);
             if (goals != null)
@@ -382,6 +396,11 @@ namespace BurgerShop.Persistence
                 driveThruInvestment = expansion?.DriveThruPad?.Invested ?? 0,
                 shopRank = goals != null ? goals.Rank : RestoredRank,
                 milestoneMask = goals?.MilestoneMask ?? 0,
+                firstOrderComplete = goals?.FirstOrderComplete ?? false,
+                compactStart = GetComponent<MainHallExpansion>()?.CompactStart ?? false,
+                smallFootprint = GetComponent<MainHallExpansion>()?.SmallFootprint ?? false,
+                mainHallBuilt = GetComponent<MainHallExpansion>()?.Built ?? true,
+                mainHallInvestment = GetComponent<MainHallExpansion>()?.Invested ?? 0,
                 legacyAccess = goals?.LegacyAccess ?? false,
                 incomeRemainder = goals?.IncomeRemainder ?? 0,
                 goalIndex = goals != null ? goals.GoalIndex : RestoredGoalIndex,

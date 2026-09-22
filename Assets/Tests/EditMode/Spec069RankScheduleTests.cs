@@ -14,7 +14,7 @@ namespace BurgerShop.Tests.EditMode
     {
         static readonly ShopGoalKind[] MilestoneKinds =
         {
-            ShopGoalKind.UpgradeGrill, ShopGoalKind.CleanTable, ShopGoalKind.WorkerOrder,
+            ShopGoalKind.ServeCustomers, ShopGoalKind.CleanTable, ShopGoalKind.WorkerOrder,
             ShopGoalKind.ExtraProduction, ShopGoalKind.BoxBurger, ShopGoalKind.CarOrder,
             ShopGoalKind.ColaOrder, ShopGoalKind.CourierOrder, ShopGoalKind.AutomatedOrder
         };
@@ -90,9 +90,9 @@ namespace BurgerShop.Tests.EditMode
                 Assert.That(listed, Is.Not.Empty, "rank " + rank);
                 Assert.That(listed[0].Kind, Is.EqualTo(MilestoneKinds[rank - 1]), "rank " + rank);
             }
-            Assert.That(ShopRanks.Goals(10), Is.Not.Empty);
-            Assert.That(ShopRanks.Goals(10)[0].Kind, Is.EqualTo(ShopGoalKind.StatLinePeakTen));
-            Assert.That(ShopRanks.Goals(15)[0].Kind, Is.EqualTo(ShopGoalKind.StatLinePeakEighteen));
+            Assert.That(ShopRanks.Goals(10), Is.Empty);
+            Assert.That(ShopRanks.Goals(11), Is.Empty);
+            Assert.That(ShopRanks.Goals(15), Is.Empty);
             Assert.That(ShopRanks.NextUnlock(1), Does.Contain("Dining").IgnoreCase);
             Assert.That(ShopRanks.NextUnlock(2), Does.Contain("Hire").IgnoreCase);
             Assert.That(ShopRanks.NextUnlock(3).ToLowerInvariant(), Does.Contain("grill"));
@@ -198,7 +198,7 @@ namespace BurgerShop.Tests.EditMode
 
         void FillAndClick(int rank)
         {
-            goals.Restore(rank, 0, 0, ShopRanks.StarCap(rank));
+            goals.Restore(rank, 0, 0, ShopRanks.StarCap(rank), firstOrder:rank==1);
             Assert.That(goals.TryUpgradeRank(rank), Is.True, "click rank " + rank);
         }
     }

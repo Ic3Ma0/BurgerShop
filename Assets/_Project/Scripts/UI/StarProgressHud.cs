@@ -8,7 +8,7 @@ namespace BurgerShop.UI
     {
         SessionGoalTracker tracker;
         Text label;
-        Text upgradeLabel;
+        Text rankLabel;
         RectTransform fillRect;
         readonly NumberPunch punch = new NumberPunch();
         int shown = int.MinValue;
@@ -19,14 +19,14 @@ namespace BurgerShop.UI
         public static StarProgressHud Build(Transform parent, SessionGoalTracker goals)
         {
             Image root = HudChrome.Panel(parent, "StarProgress", new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(32f, -24f), new Vector2(320f, 96f), new Color(0.08f, 0.18f, 0.32f, 0.22f), 0.85f);
+                new Vector2(32f, -24f), new Vector2(300f, 72f), new Color(0.08f, 0.18f, 0.32f, 0.22f), 0.85f);
             root.color = HudChrome.Cream;
 
             HudChrome.Icon(root.transform, "StarIcon", HudChrome.Star(), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(40f, 0f), new Vector2(48f, 48f), new Color(1f, 0.84f, 0.16f, 1f));
+                new Vector2(40f, 0f), new Vector2(34f, 34f), new Color(1f, 0.84f, 0.16f, 1f));
 
             Image track = HudChrome.Panel(root.transform, "StarBarBack", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-                new Vector2(76f, 0f), new Vector2(220f, 40f), HudChrome.TrackNavy, 0.55f);
+                new Vector2(76f, 0f), new Vector2(200f, 36f), HudChrome.TrackNavy, 0.55f);
 
             Image fill = HudChrome.Panel(track.transform, "StarBarFill", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
                 Vector2.zero, new Vector2(80f, 28f), HudChrome.FillGreen, 0.55f);
@@ -41,7 +41,8 @@ namespace BurgerShop.UI
             valueRect.offsetMax = new Vector2(-10f, 0f);
 
             var hud = root.gameObject.AddComponent<StarProgressHud>();
-            hud.upgradeLabel=HudChrome.Label(root.transform,"RankAction",new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(0,2),new Vector2(260,26),24,HudChrome.Tomato,TextAnchor.MiddleCenter,true,false);
+            hud.rankLabel=HudChrome.Label(root.transform,"RankNumber",new Vector2(0,.5f),new Vector2(0,.5f),new Vector2(.5f,.5f),new Vector2(40,0),new Vector2(34,28),18,HudChrome.Ink,TextAnchor.MiddleCenter,true,false);
+            OpeningHudCopy.Style(hud.rankLabel,18);OpeningHudCopy.Style(value,22);
             hud.Configure(goals, value, fill);
             return hud;
         }
@@ -71,8 +72,9 @@ namespace BurgerShop.UI
                 if (tracker.Stars > shown) punch.Play();
                 shown = tracker.Stars;
             }
-            label.text = tracker.StarLabel;
-            if(upgradeLabel!=null)upgradeLabel.text=tracker.GuideCopy;
+            label.text = tracker.IsCycle ? $"{tracker.ProgressFraction:P0}" : $"{tracker.Stars}/{tracker.StarCap}";
+            if(tracker.CanUpgrade)label.text+="   升级";
+            if(rankLabel!=null)rankLabel.text=tracker.Rank.ToString();
             punch.Advance(deltaTime);
             label.rectTransform.localScale = new Vector3(punch.Scale, punch.Scale, 1f);
             if (fillRect != null)

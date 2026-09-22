@@ -14,16 +14,6 @@ namespace BurgerShop.Restaurant
     [ExecuteAlways]
     public sealed class RestaurantWorker : MonoBehaviour
     {
-        static readonly WorkerLook[] Looks =
-        {
-            new WorkerLook('A', new Color(0.13f, 0.58f, 0.64f), new Color(0.98f, 0.96f, 0.89f),
-                true, false, true, false, false, 1f, 0.94f, new Vector3(0.62f, 0.1f, 0.62f)),
-            new WorkerLook('B', new Color(0.86f, 0.42f, 0.16f), new Color(0.28f, 0.16f, 0.10f),
-                false, true, false, true, false, 0.88f, 0.82f, new Vector3(0.52f, 0.28f, 0.52f)),
-            new WorkerLook('C', new Color(0.42f, 0.28f, 0.62f), new Color(0.93f, 0.86f, 0.62f),
-                true, false, false, false, true, 1.14f, 1.08f, new Vector3(0.48f, 0.22f, 0.48f))
-        };
-
         ProductionStation grill;
         BurgerServingZone serving;
         CounterDropZone drop;
@@ -36,7 +26,6 @@ namespace BurgerShop.Restaurant
         DiningTable cleaningTable;
         int waypoint;
         float pickupCooldown;
-        Material[] ownedMaterials;
         TextMesh label;
         float walkSpeed = StaffBoost.WalkSpeed(0);
         BurgerShop.Customer.CustomerOrder serviceOrder;
@@ -147,7 +136,7 @@ namespace BurgerShop.Restaurant
             bin = trashBin;
             Trash = trashBag;
             crew = hiring;
-            Slot = Mathf.Clamp(slot, 0, Looks.Length - 1);
+            Slot = Mathf.Clamp(slot, 0, BurgerShop.Core.CharacterAppearance.StaffCount - 1);
             ChooseJob();
         }
 
@@ -730,23 +719,14 @@ namespace BurgerShop.Restaurant
         void OnDestroy()
         {
             RestroomExpansion.Current?.ReleaseCleaner(this);
-            if (ownedMaterials == null) return;
-            for (int i = 0; i < ownedMaterials.Length; i++)
-            {
-                Material material = ownedMaterials[i];
-                ownedMaterials[i] = null;
-                if (material == null) continue;
-                if (Application.isPlaying) Object.Destroy(material);
-                else Object.DestroyImmediate(material);
-            }
         }
 
         internal static RestaurantWorker Create(Transform parent, Vector3 position, ProductionStation grill,
             BurgerServingZone cashier, Transform pickup, Vector3 aisle, CounterDropZone dropZone,
             DiningArea dining = null, TrashBin trashBin = null, WorkerHiringZone crew = null, int slot = 0)
         {
-            slot = Mathf.Clamp(slot, 0, Looks.Length - 1);
-            WorkerLook look = Looks[slot];
+            slot = Mathf.Clamp(slot, 0, BurgerShop.Core.CharacterAppearance.StaffCount - 1);
+            var look = BurgerShop.Core.CharacterAppearance.Staff(slot);
             GameObject root = new GameObject("RestaurantWorker" + look.Letter);
             root.transform.SetParent(parent, false);
             root.transform.position = new Vector3(position.x, 1.05f, position.z);
@@ -754,29 +734,12 @@ namespace BurgerShop.Restaurant
             Vector3 facing = slot == 0 ? Vector3.left : slot == 1 ? Vector3.forward : Vector3.back;
             root.transform.rotation = Quaternion.LookRotation(facing);
             RestaurantWorker worker = root.AddComponent<RestaurantWorker>();
-            Material uniform = MaterialFor(look.Uniform);
-            Material accent = MaterialFor(look.Accent);
-            Material skin = MaterialFor(new Color(0.93f, 0.71f, 0.49f));
-            worker.ownedMaterials = new[] { uniform, accent, skin };
             worker.StyleLetter = look.Letter;
             worker.UniformColor = look.Uniform;
             worker.HeightScale = look.Height;
             worker.WearsHat = look.HasHat;
             worker.Slot = slot;
-            Part(root.transform, "Uniform", PrimitiveType.Capsule, new Vector3(0f, -.07f, 0f), new Vector3(.64f,.325f,.4f), uniform);
-            Part(root.transform, "Head", PrimitiveType.Sphere, new Vector3(0f, 0.65f, 0f), Vector3.one * 0.5f, skin);
-            if (look.HasHat)
-                Part(root.transform, "Hat", PrimitiveType.Cylinder, new Vector3(0f, look.HatY, 0f), look.HatScale, accent);
-            if (look.HasHair)
-                Part(root.transform, "Hair", PrimitiveType.Sphere, new Vector3(0f, 0.82f, 0f), look.HatScale, accent);
-            if (look.HasApron)
-                Part(root.transform, "Apron", PrimitiveType.Cube, new Vector3(0f, -0.13f, 0.32f), new Vector3(0.48f, 0.55f, 0.08f), accent);
-            if (look.HasBow)
-                Part(root.transform, "Bow", PrimitiveType.Cube, new Vector3(0f, 0.15f, 0.34f), new Vector3(0.28f, 0.12f, 0.08f), accent);
-            if (look.HasScarf)
-                Part(root.transform, "Scarf", PrimitiveType.Cube, new Vector3(0f, 0.22f, 0.28f), new Vector3(0.55f, 0.12f, 0.18f), accent);
-            Part(root.transform, "Nose", PrimitiveType.Sphere, new Vector3(0f, 0.64f, 0.25f), Vector3.one * 0.12f, skin);
-            BurgerShop.Core.HumanoidVisual.Add(root.transform,-1.05f,uniform,skin,accent);
+            BurgerShop.Core.CharacterVisualFactory.Staff(root.transform, slot);
             worker.label = new GameObject("WorkerLabel").AddComponent<TextMesh>();
             worker.label.transform.SetParent(root.transform, false);
             worker.label.transform.localPosition = new Vector3(0f, 1.95f, 0f);
@@ -792,50 +755,5 @@ namespace BurgerShop.Restaurant
             return worker;
         }
 
-        static Material MaterialFor(Color color) => BurgerShop.Core.RuntimeMaterials.Create(color);
-
-        static void Part(Transform parent, string name, PrimitiveType type, Vector3 position, Vector3 scale, Material material)
-        {
-            GameObject part = GameObject.CreatePrimitive(type);
-            part.name = name;
-            part.transform.SetParent(parent, false);
-            part.transform.localPosition = position;
-            part.transform.localScale = scale;
-            part.GetComponent<Renderer>().sharedMaterial = material;
-            Collider collider = part.GetComponent<Collider>();
-            collider.enabled = false;
-            BurgerVisual.Release(collider);
-        }
-
-        readonly struct WorkerLook
-        {
-            public readonly char Letter;
-            public readonly Color Uniform;
-            public readonly Color Accent;
-            public readonly bool HasHat;
-            public readonly bool HasHair;
-            public readonly bool HasApron;
-            public readonly bool HasBow;
-            public readonly bool HasScarf;
-            public readonly float Height;
-            public readonly float HatY;
-            public readonly Vector3 HatScale;
-
-            public WorkerLook(char letter, Color uniform, Color accent, bool hat, bool hair, bool apron, bool bow,
-                bool scarf, float height, float hatY, Vector3 hatScale)
-            {
-                Letter = letter;
-                Uniform = uniform;
-                Accent = accent;
-                HasHat = hat;
-                HasHair = hair;
-                HasApron = apron;
-                HasBow = bow;
-                HasScarf = scarf;
-                Height = height;
-                HatY = hatY;
-                HatScale = hatScale;
-            }
-        }
     }
 }

@@ -27,6 +27,7 @@ namespace BurgerShop.Restaurant
         RestaurantWallet wallet;
         SessionGoalTracker goals;
         ShopExpansion expansion;
+        bool purchasing;
         public BurgerInventory Player { get; private set; }
         public IEnumerable<Offer> Offers
         {
@@ -96,16 +97,30 @@ namespace BurgerShop.Restaurant
         }
         public bool TryBuy(string id,int expectedLevel)
         {
+            if(purchasing)return false;
             if(!offers.TryGetValue(id,out var offer)||offer.Target==null||!offer.Target.gameObject.activeInHierarchy)return false;
             int level=Level(id);
             if(level!=expectedLevel||level>offer.Costs.Length||wallet==null||goals==null)return false;
-            if(!wallet.TrySpend(offer.Costs[level-1]))return false;
-            levels[id]=level+1;offer.Apply(level+1);goals.AddUpgradeStars();
-            goals.EvaluateStarGateTasks();
+            purchasing=true;
+            try
+            {
+                if(!wallet.TrySpend(offer.Costs[level-1],()=>{
+                    levels[id]=level+1;offer.Apply(level+1);goals.AddUpgradeStars();
+                    goals.EvaluateStarGateTasks();
+                }))return false;
+            }
+            finally{purchasing=false;}
             FeedbackDirector.Current?.Success(offer.Target.position,"Level Up!",Player!=null?Player.transform:null);
             VisualMeshPulse.Play(offer.Target);
             GetComponent<Persistence.RestaurantPersistence>()?.Flush();
             return true;
+        }
+        public void RestorePurchasedLevel(string id,int level)
+        {
+            if(!id.StartsWith("custom:")||!offers.TryGetValue(id,out var offer))return;
+            // Keep the highest valid owned tier when older snapshots contain only one of the two records.
+            levels[id]=Mathf.Clamp(Mathf.Max(Level(id),level),1,offer.Costs.Length+1);
+            offer.Apply(levels[id]);
         }
         public void RecordGrill(GrillUpgradeZone grill)
         {

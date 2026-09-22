@@ -90,6 +90,36 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
+        public void Spec083BigEaterPaysOneHundredOnlyAfterTenBurgers()
+        {
+            queue.CustomerKindFactory = () => CustomerKind.BigEater;
+            FillQueue();
+            var customer = queue.ReadyCustomer;
+            Assert.That(customer.OrderSize, Is.EqualTo(10));
+            AtCounter();
+            for (int delivered = 1; delivered <= 10; delivered++)
+            {
+                grill.Advance(12f);
+                Assert.That(inventory.TryCollectFrom(grill), Is.True);
+                Assert.That(stock.TryPlaceFrom(inventory), Is.True);
+                serving.Advance(1f);
+                CompleteHandoff();
+                Assert.That(customer.RemainingQuantity, Is.EqualTo(10 - delivered));
+                if (delivered < 10)
+                {
+                    Assert.That(wallet.CompletedSales, Is.Zero);
+                    Assert.That(cash.GroundValue, Is.Zero);
+                }
+            }
+            Assert.That(customer.PaidAmount, Is.EqualTo(100));
+            Assert.That(cash.GroundValue, Is.EqualTo(100));
+            Assert.That(wallet.CompletedSales, Is.EqualTo(1));
+            serving.Advance(100f);
+            Assert.That(cash.GroundValue, Is.EqualTo(100));
+            Assert.That(wallet.CompletedSales, Is.EqualTo(1));
+        }
+
+        [Test]
         public void EmptyHandsOutOfRangeAndWalkingCustomersCannotCharge()
         {
             AtCounter();

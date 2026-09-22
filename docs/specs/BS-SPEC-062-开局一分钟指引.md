@@ -1,8 +1,8 @@
 # BS-SPEC-062：开局一分钟指引
 
 - 版本：v1.2
-- 状态：已实现，本地定向验证通过；未推 GitHub
-- 对应基线：本地 main + 未提交 057–061；Rank 1 当前代码已是 `Upgrade the burger machine`（`ShopGoalKind.UpgradeGrill`）
+- 状态：已完成，本地定向验证通过；已纳入本地提交 `0e93618`
+- 开发时基线（历史）：本地 main + 未提交 057–061；Rank 1 当前代码已是 `Upgrade the burger machine`（`ShopGoalKind.UpgradeGrill`）
 - 用户确认：要指引升级/新功能，不要教赚钱循环；不要恢复 Waiting/Serve 条
 - 前置：BS-SPEC-042 店铺等级；BS-SPEC-061 已去掉 ActionHint
 

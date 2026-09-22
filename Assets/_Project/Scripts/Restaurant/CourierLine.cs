@@ -63,7 +63,7 @@ namespace BurgerShop.Restaurant
         {
             if(area==null)return;
             area.gameObject.SetActive(open);
-            foreach(Transform part in transform)if(part.name=="Wall+Z")part.gameObject.SetActive(!open);
+            foreach(Transform part in transform)if(part.name=="Wall+Z")part.gameObject.SetActive(!open&&MainHallExpansion.HasAccess);
             if(open&&automate&&source!=null&&intakeBelt==null)BuildAutomation();
         }
         void Build(bool scenery=true)

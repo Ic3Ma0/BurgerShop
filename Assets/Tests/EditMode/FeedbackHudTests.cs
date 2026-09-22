@@ -103,7 +103,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(inventory.TryCollectFrom(grill), Is.True);
             tracker.Advance(0.01f);
             Assert.That(tracker.Stars, Is.Zero);
-            tracker.RecordMilestone(ShopGoalKind.UpgradeGrill);
+            tracker.RecordMilestone(ShopGoalKind.ServeCustomers); // 080: the first sale awards opening stars.
             stars.Advance(0.08f);
             capsule.Advance(0.08f);
             Assert.That(tracker.Stars, Is.EqualTo(2));

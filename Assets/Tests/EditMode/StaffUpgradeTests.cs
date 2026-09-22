@@ -176,8 +176,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(ShopLayout.ContainsHrUpgradeRange(player.transform.position), Is.True);
             Assert.That(hud.IsVisible, Is.True);
             Assert.That(hud.Popup.TitleLabel.text, Is.EqualTo("Staff upgrades"));
-            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("Speed").And.Contain("50"));
-            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("Carry").And.Contain("50"));
+            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("Speed").And.Contain("Hire staff first"));
+            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("Carry").And.Contain("Hire staff first"));
             Assert.That(hud.Popup.CloseLabel.text, Is.EqualTo("Close"));
             EnterHr();
             Assert.That(hud.IsVisible, Is.True);
@@ -264,6 +264,7 @@ namespace BurgerShop.Tests.EditMode
         [Test]
         public void PoorButtonsStayGreyAndLaterHiresUseCurrentTiers()
         {
+            var goals=root.AddComponent<SessionGoalTracker>();goals.Restore(3,0,0);
             wallet.RestoreProgress(40, 0);
             EnterHr();
             Assert.That(hud.Popup.FirstButton.interactable, Is.False);
@@ -275,9 +276,27 @@ namespace BurgerShop.Tests.EditMode
             wallet.RestoreProgress(50, 0);
             hud.RefreshNow();
             hud.ClickSpeed();
-            Assert.That(board.SpeedTier, Is.EqualTo(1));
+            Assert.That(board.TryBuySpeed(),Is.False);
+            Assert.That(board.TryBuyCarry(),Is.False);
+            Assert.That(wallet.Coins,Is.EqualTo(50));
+            Assert.That(goals.Stars,Is.Zero);
+            Assert.That(board.SpeedTier, Is.Zero);
+            // A legacy tier remains legal and is applied to the first subsequent hire.
+            board.RestoreTiers(1,0);
             RestaurantWorker worker = HireOne();
             Assert.That(worker.WalkSpeed, Is.EqualTo(StaffBoost.WalkSpeed(1)).Within(0.001f));
+        }
+
+        [TestCase(1)][TestCase(3)]
+        public void PaidUpgradeAppliesToEveryHiredEmployeeAndCannotReenter(int count)
+        {
+            for(int i=0;i<count;i++)HireOne();
+            wallet.RestoreProgress(1000,0);EnterHr();
+            bool reentered=true;wallet.CoinsSpent+=_=>reentered=board.TryBuySpeed();
+            Assert.That(board.TryBuySpeed(),Is.True);Assert.That(reentered,Is.False);
+            Assert.That(wallet.Coins,Is.EqualTo(950));
+            foreach(var employee in hiring.Workers)
+                Assert.That(employee.WalkSpeed,Is.EqualTo(StaffBoost.WalkSpeed(1)).Within(.001f));
         }
 
         [Test]
@@ -298,9 +317,17 @@ namespace BurgerShop.Tests.EditMode
             wallet.RestoreProgress(50, wallet.CompletedSales);
             EnterHr();
             hud.ClickSpeed();
+            Assert.That(board.SpeedTier,Is.EqualTo(1));
             string directory = Path.Combine(Path.GetTempPath(), "BurgerShopStaffUp-" + System.Guid.NewGuid().ToString("N"));
             try
             {
+                // The multi-slot session now initializes an empty directory as a new game.
+                // Seed the upgraded snapshot before loading; do not expect transient state to survive new-game reset.
+                Assert.That(new LocalSaveStore(directory).Save(new RestaurantSaveData {
+                    version=RestaurantSaveData.CurrentVersion,coins=wallet.Coins,completedSales=wallet.CompletedSales,grillLevel=1,
+                    workerHired=true,hiredWorkerCount=1,staffSpeedTier=board.SpeedTier,
+                    shopRank=ShopRanks.HireRank,mainHallBuilt=true
+                }),Is.True);
                 var persistence = root.AddComponent<RestaurantPersistence>();
                 var grillUpgrade = root.AddComponent<GrillUpgradeZone>();
                 grillUpgrade.Configure(grill, wallet, player, office.HirePoint);

@@ -19,6 +19,8 @@ namespace BurgerShop.Customer
         int layoutRevision=-1;
         public Vector3[] QueuePositions=>localSlots==null?System.Array.Empty<Vector3>():System.Array.ConvertAll(localSlots,transform.TransformPoint);
         float spawnCountdown;
+        readonly Dictionary<CustomerAgent,CustomerWalkPath> personalApproaches=new Dictionary<CustomerAgent,CustomerWalkPath>();
+        float approachLength;
         int nextTicket = 1;
         bool shuttingDown;
         bool paused, unfocused;
@@ -39,8 +41,8 @@ namespace BurgerShop.Customer
         public CustomerAgent ReadyCustomer => FrontCustomer != null && FrontCustomer.HasReachedSlot && FrontCustomer.HasOrdered && FrontCustomer.CanAcceptOrder ? FrontCustomer : null;
         public float MinimumGap => minimumGap;
 
-        // Slots are supplied front first. Everyone follows one path from the entrance
-        // through the tail toward the counter, preserving arrival order around bends.
+        // Slots are front first. Shared progress preserves arrival order; personal approach
+        // lanes merge at the tail before walking to the exact reserved service slots.
         public void Configure(Vector3 entrance, Vector3 queueEntry, Vector3[] slots, Vector3 counter,
             float interval = 4f, float firstArrivalDelay = 1.5f)
         {
@@ -88,6 +90,7 @@ namespace BurgerShop.Customer
             for (int i = 1; i < route.Length; i++)
                 cumulativeDistance[i] = cumulativeDistance[i - 1] + Vector3.Distance(route[i - 1], route[i]);
             for (int i = 0; i < slots.Length; i++) slotDistance[i] = cumulativeDistance[route.Length - 1 - i];
+            approachLength=slotDistance[slots.Length-1];personalApproaches.Clear();
         }
 
         void Update() => Advance(Time.deltaTime);
@@ -112,8 +115,10 @@ namespace BurgerShop.Customer
                 float target = slotDistance[i];
                 float limit = i == 0 ? target : Mathf.Min(target, customers[i - 1].DistanceAlongPath - minimumGap);
                 float progress = Mathf.Max(customer.DistanceAlongPath,
-                    Mathf.Min(customer.DistanceAlongPath + walkSpeed * deltaTime, limit));
-                customer.MoveOnPath(PositionAt(progress), progress, progress >= target - 0.001f, transform.TransformPoint(counterPosition), deltaTime);
+                    Mathf.Min(customer.DistanceAlongPath + walkSpeed * CustomerWalkPath.Pace(customer.TicketNumber) * deltaTime, limit));
+                Vector3 next=PersonalPosition(customer,progress);
+                if(i>0&&Vector3.Distance(next,customers[i-1].transform.position)<.85f){progress=customer.DistanceAlongPath;next=customer.transform.position;}
+                customer.MoveOnPath(next, progress, progress >= target - 0.001f, transform.TransformPoint(counterPosition), deltaTime);
             }
 
             FrontCustomer?.AdvanceCalling(deltaTime, FindFirstObjectByType<BurgerShop.Player.PlayerMotor>()?.transform);
@@ -135,7 +140,9 @@ namespace BurgerShop.Customer
             bool occupied = customers.Exists(c => c.Kind != CustomerKind.Normal);
             CustomerKind kind = CustomerKindFactory != null ? CustomerKindFactory() : specials.Next(
                 Product == KitchenProduct.Burger && goals != null && goals.Rank >= 2 && wallet != null && wallet.CompletedSales >= 5, occupied, UnityEngine.Random.value);
-            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, transform.TransformPoint(route[0]), OrderQuantityFactory(), kind, Product);
+            bool first = Product==KitchenProduct.Burger && goals!=null && goals.Rank==1
+                && !goals.FirstOrderComplete && nextTicket==1 && (wallet?.CompletedSales??0)==0;
+            CustomerAgent arriving = CustomerAgent.Create(transform, nextTicket++, transform.TransformPoint(route[0]), first?1:OrderQuantityFactory(), first?CustomerKind.Normal:kind, Product);
             arriving.AssignSlot(Count);
             arriving.Removed += OnCustomerRemoved;
             customers.Add(arriving);
@@ -158,7 +165,7 @@ namespace BurgerShop.Customer
                 float distance=Mathf.Clamp01(progress[i])*slotDistance[i];
                 if(i>0)distance=Mathf.Min(distance,customers[i-1].DistanceAlongPath-minimumGap);
                 distance=Mathf.Max(0,distance);
-                customers[i].MoveOnPath(PositionAt(distance),distance,distance>=slotDistance[i]-.001f,transform.TransformPoint(counterPosition),0);
+                customers[i].MoveOnPath(PersonalPosition(customers[i],distance),distance,distance>=slotDistance[i]-.001f,transform.TransformPoint(counterPosition),0);
             }
         }
         // Only the waiting front customer can be served. The caller owns departure.
@@ -180,6 +187,7 @@ namespace BurgerShop.Customer
                 return false;
             }
             customer.Removed -= OnCustomerRemoved;
+            personalApproaches.Remove(customer);
             customers.RemoveAt(index);
             customer.LeaveQueue();
             departingCustomer = customer;
@@ -190,6 +198,7 @@ namespace BurgerShop.Customer
         void OnCustomerRemoved(CustomerAgent customer)
         {
             if (shuttingDown || this == null) return;
+            personalApproaches.Remove(customer);
             if (customers.Remove(customer)) ReassignSlots();
         }
 
@@ -198,6 +207,18 @@ namespace BurgerShop.Customer
             for (int i = 0; i < customers.Count; i++)
                 if (customers[i] != null) customers[i].AssignSlot(i);
             spawnCountdown = spawnInterval;
+        }
+
+        Vector3 PersonalPosition(CustomerAgent customer,float distance)
+        {
+            if(distance>=approachLength||approachLength<=0)return PositionAt(distance);
+            if(!personalApproaches.TryGetValue(customer,out var path))
+            {
+                var points=new List<Vector3>();
+                for(int i=0;i<=route.Length-localSlots.Length;i++)points.Add(transform.TransformPoint(route[i]));
+                path=new CustomerWalkPath(points,customer.TicketNumber);personalApproaches.Add(customer,path);
+            }
+            return path.At(distance/approachLength*path.Length);
         }
 
         Vector3 PositionAt(float distance)
