@@ -129,7 +129,7 @@ namespace BurgerShop.Tests.EditMode
             now+=TimeSpan.FromHours(8).Ticks;Assert.That(p.SettleOffline(),Is.True);Assert.That(p.OfflineGrant,Is.Zero);Assert.That(p.OfflineStaffCount,Is.Zero);
             Assert.That(p.OfflineVisible,Is.True);Assert.That(p.DismissOfflineReceipt(),Is.True);
             p.GetComponent<WorkerHiringZone>().RestoreWorkers(3,0,0);p.GetComponent<StaffUpgradeBoard>().RestoreTiers(10,10);
-            p.Flush();store.Load(out var before);int cheapest=OfflineEarnings.CheapestUpgrade(p);
+            p.Flush();store.Load(out var before);int cheapest=OfflineUpgradeCostSource.CheapestUpgrade(p);
             long expected=OfflineEarnings.Grant(cheapest,3,10,10,480);now+=TimeSpan.FromHours(8).Ticks;
             Assert.That(p.SettleOffline(),Is.True);Assert.That(wallet.Coins-before.coins,Is.EqualTo(expected));
             store.Load(out var after);Assert.That(after.coins,Is.EqualTo(wallet.Coins));

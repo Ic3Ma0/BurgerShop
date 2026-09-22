@@ -1,0 +1,8 @@
+{
+  "name": "BurgerShop.Economy.Rules",
+  "rootNamespace": "BurgerShop.Economy",
+  "references": [],
+  "overrideReferences": true,
+  "precompiledReferences": [],
+  "noEngineReferences": true
+}

@@ -3,7 +3,8 @@
   "references": [
     "BurgerShop.Runtime",
     "Unity.InputSystem",
-    "UnityEngine.UI"
+    "UnityEngine.UI",
+    "BurgerShop.Economy.Rules"
   ],
   "includePlatforms": [
     "Editor"

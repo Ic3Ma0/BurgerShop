@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+bash "$project_dir/scripts/check-boundaries.sh"
 unity_editor="${UNITY_EDITOR:-/Applications/Unity/Hub/Editor/6000.3.23f1/Unity.app/Contents/MacOS/Unity}"
 [[ -x "$unity_editor" ]] || { echo 'Set UNITY_EDITOR to Unity 6000.3.23f1.' >&2; exit 1; }
 [[ ! -e "$project_dir/Temp/UnityLockfile" ]] || { echo 'Close this project in Unity before building.' >&2; exit 1; }

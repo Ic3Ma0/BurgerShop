@@ -427,18 +427,18 @@ namespace BurgerShop.Persistence
             if(phase==SaveSessionPhase.Quiescing&&!quiesceFlush)return false;
             if(phase!=SaveSessionPhase.Running&&phase!=SaveSessionPhase.Hydrating&&phase!=SaveSessionPhase.Quiescing)return false;
             if(!ready||store==null||!store.CanWrite)return false;
-            long now=UtcNowTicks();long ticks=OfflineEarnings.ElapsedTicks(lastSeen,now);
-            long grant=lastSeen==0?0:OfflineEarnings.Grant(OfflineEarnings.CheapestUpgrade(this),hiring.HiredCount,
-                staffUpgrades?.SpeedTier??0,staffUpgrades?.CarryTier??0,ticks/(decimal)System.TimeSpan.TicksPerMinute);
+            long now=UtcNowTicks();
+            var data=Capture();
+            var plan=OfflineSettlement.Calculate(data.coins,lastSeen,now,
+                new OfflineReceipt(OfflineGrant,OfflineTicks,OfflineStaffCount,OfflineVisible),
+                lastSeen==0?0:OfflineUpgradeCostSource.CheapestUpgrade(this),hiring.HiredCount,
+                staffUpgrades?.SpeedTier??0,staffUpgrades?.CarryTier??0);
             // Balance and consumed timestamp share the same atomic file replacement.
             // The panel is a persisted receipt for money already credited, not another claim.
-            var data=Capture();data.lastSeenUtcTicks=now;
-            grant=System.Math.Min(grant,long.MaxValue-data.coins);
-            data.coins+=grant;
-            if(!OfflineVisible&&lastSeen>0&&ticks>0)
-            {data.offlineReceiptVisible=true;data.offlineReceiptGrant=grant;data.offlineReceiptTicks=ticks;data.offlineReceiptStaffCount=hiring.HiredCount;}
-            else if(OfflineVisible&&grant>0)
-            {data.offlineReceiptGrant=grant;data.offlineReceiptTicks=ticks;data.offlineReceiptStaffCount=hiring.HiredCount;}
+            data.lastSeenUtcTicks=plan.LastSeenUtcTicks;
+            data.coins=plan.Coins;
+            data.offlineReceiptVisible=plan.Receipt.Visible;data.offlineReceiptGrant=plan.Receipt.Grant;
+            data.offlineReceiptTicks=plan.Receipt.Ticks;data.offlineReceiptStaffCount=plan.Receipt.StaffCount;
             if(!store.Save(data)){settlementPending=true;Status="SAVE FAILED - OFFLINE PAYMENT NOT APPLIED";return false;}
             settlementPending=false;
             lastSeen=now;OfflineGrant=data.offlineReceiptGrant;OfflineTicks=data.offlineReceiptTicks;

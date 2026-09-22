@@ -1,0 +1,25 @@
+name: Code boundaries
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dependency and spec boundary checks
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: |
+          base="${PR_BASE:-$PUSH_BASE}"
+          if [[ -n "$base" && ! "$base" =~ ^0+$ ]]; then
+            bash scripts/check-boundaries.sh --base "$base"
+          else
+            bash scripts/check-boundaries.sh
+          fi
