@@ -14,6 +14,7 @@ namespace BurgerShop.Persistence
 
         readonly string directory;
         SaveSlotManifest manifest;
+        bool incompatible;
 
         public SaveSlotStore(string directory)
         {
@@ -27,6 +28,9 @@ namespace BurgerShop.Persistence
         public int OccupiedCount => Slots.Length;
         public string ActiveFileName => FileNameFor(ActiveSlotId);
         public bool ManifestExists => File.Exists(ManifestPath);
+        public bool IsIncompatible => incompatible;
+        public SaveSlotOpResult LastOpResult { get; private set; } = SaveSlotOpResult.Success;
+        public string LastError { get; private set; }
 
         public static string NumberedFileName(int id) => "restaurant-save-" + id + ".json";
 
@@ -39,78 +43,103 @@ namespace BurgerShop.Persistence
 
         public string FilePathFor(int id) => Path.Combine(directory, FileNameFor(id));
 
-        public SaveSlotInfo Find(int id)
+        public SaveSlotInfo Find(int id) => Find(manifest, id);
+
+        public bool CanStartNewGame => !incompatible && OccupiedCount < MaxSlots && FirstEmptyId() > 0;
+
+        public bool CanDelete(int id) => !incompatible && id != ActiveSlotId && OccupiedCount > 1 && Find(id) != null;
+
+        public SaveSlotOpResult RecordActive(int shopRank, long coins, long lastPlayedUtcTicks, string displayName = null)
         {
-            if (manifest.slots == null) return null;
-            for (int i = 0; i < manifest.slots.Length; i++)
-                if (manifest.slots[i] != null && manifest.slots[i].id == id) return manifest.slots[i];
-            return null;
-        }
-
-        public bool CanStartNewGame => OccupiedCount < MaxSlots;
-
-        public bool CanDelete(int id) => id != ActiveSlotId && OccupiedCount > 1 && Find(id) != null;
-
-        public void RecordActive(int shopRank, long coins, long lastPlayedUtcTicks, string displayName = null)
-        {
-            var slot = Ensure(ActiveSlotId);
+            if (incompatible) return SetResult(SaveSlotOpResult.IncompatibleManifest, "manifest is newer than this reader");
+            var next = Clone(manifest);
+            var slot = EnsureSlot(next, next.activeSlotId <= 0 ? 1 : next.activeSlotId);
             slot.shopRank = shopRank < 1 ? 1 : shopRank;
             slot.coins = coins < 0 ? 0 : coins;
             slot.lastPlayedUtcTicks = lastPlayedUtcTicks;
             if (!string.IsNullOrEmpty(displayName)) slot.displayName = displayName;
             else if (string.IsNullOrEmpty(slot.displayName)) slot.displayName = Label(slot.id);
-            Write();
+            var result = Write(next);
+            if (result != SaveSlotOpResult.Success) return result;
+            manifest = next;
+            return SetResult(SaveSlotOpResult.Success, null);
         }
 
-        public bool TryCreateSlot(out int id)
+        public SaveSlotOpResult TryCreateSlot(out int id)
         {
             id = 0;
-            if (!CanStartNewGame) return false;
+            if (incompatible) return SetResult(SaveSlotOpResult.IncompatibleManifest, "manifest is newer than this reader");
+            if (!CanStartNewGame) return SetResult(SaveSlotOpResult.NotAllowed, "no empty slot");
             id = FirstEmptyId();
-            if (id <= 0) return false;
-            manifest.activeSlotId = id;
-            Ensure(id);
-            Write();
-            return true;
+            if (id <= 0)
+            {
+                id = 0;
+                return SetResult(SaveSlotOpResult.NotAllowed, "no empty slot");
+            }
+            var next = Clone(manifest);
+            next.activeSlotId = id;
+            EnsureSlot(next, id);
+            var result = Write(next);
+            if (result != SaveSlotOpResult.Success)
+            {
+                id = 0;
+                return result;
+            }
+            manifest = next;
+            return SetResult(SaveSlotOpResult.Success, null);
         }
 
-        public bool TryActivate(int id)
+        public SaveSlotOpResult TryActivate(int id)
         {
-            if (Find(id) == null) return false;
-            manifest.activeSlotId = id;
-            Write();
-            return true;
+            if (incompatible) return SetResult(SaveSlotOpResult.IncompatibleManifest, "manifest is newer than this reader");
+            if (Find(id) == null) return SetResult(SaveSlotOpResult.SlotMissing, "slot " + id + " is not in the index");
+            var next = Clone(manifest);
+            next.activeSlotId = id;
+            var result = Write(next);
+            if (result != SaveSlotOpResult.Success) return result;
+            manifest = next;
+            return SetResult(SaveSlotOpResult.Success, null);
         }
 
-        public bool TryDelete(int id)
+        public SaveSlotOpResult TryDelete(int id)
         {
-            if (!CanDelete(id)) return false;
-            TryDeleteFile(FilePathFor(id));
-            TryDeleteFile(FilePathFor(id) + ".bak");
-            TryDeleteFile(FilePathFor(id) + ".tmp");
+            if (incompatible) return SetResult(SaveSlotOpResult.IncompatibleManifest, "manifest is newer than this reader");
+            if (Find(id) == null) return SetResult(SaveSlotOpResult.SlotMissing, "slot " + id + " is not in the index");
+            if (!CanDelete(id)) return SetResult(SaveSlotOpResult.NotAllowed, "cannot delete the active or last slot");
+            foreach (string path in FilesForSlot(id))
+                TryDeletePath(path);
+            if (SlotFilesRemain(id))
+                return SetResult(SaveSlotOpResult.CommitFailed, "slot files still exist");
+            var next = Clone(manifest);
             var kept = new List<SaveSlotInfo>(OccupiedCount);
-            foreach (var slot in manifest.slots)
-                if (slot != null && slot.id != id) kept.Add(slot);
-            manifest.slots = kept.ToArray();
-            Write();
-            return true;
+            if (next.slots != null)
+                foreach (var slot in next.slots)
+                    if (slot != null && slot.id != id) kept.Add(slot);
+            next.slots = kept.ToArray();
+            var result = Write(next);
+            if (result != SaveSlotOpResult.Success) return result;
+            manifest = next;
+            return SetResult(SaveSlotOpResult.Success, null);
         }
 
         SaveSlotManifest LoadOrMigrate()
         {
             if (File.Exists(ManifestPath))
             {
-                var loaded = ReadManifest();
-                if (loaded != null && loaded.slots != null && loaded.slots.Length > 0)
-                    return loaded;
-            }
-
-            string legacy = Path.Combine(directory, LegacyFileName);
-            if (File.Exists(legacy) || File.Exists(legacy + ".bak"))
-            {
-                var migrated = MigrateLegacy();
-                Write(migrated);
-                return migrated;
+                if (TryReadManifest(out var loaded, out bool future))
+                {
+                    if (future)
+                    {
+                        incompatible = true;
+                        LastOpResult = SaveSlotOpResult.IncompatibleManifest;
+                        LastError = "manifest is newer than this reader";
+                        return loaded ?? EmptyManifest();
+                    }
+                    var merged = MergeDiscovered(loaded);
+                    if (IndexChanged(loaded, merged))
+                        Write(merged);
+                    return merged;
+                }
             }
 
             var recovered = RecoverFromFiles();
@@ -120,61 +149,70 @@ namespace BurgerShop.Persistence
                 return recovered;
             }
 
-            return new SaveSlotManifest
-            {
-                version = ManifestVersion,
-                activeSlotId = 1,
-                slots = Array.Empty<SaveSlotInfo>()
-            };
+            return EmptyManifest();
         }
 
-        SaveSlotManifest MigrateLegacy()
+        SaveSlotManifest MergeDiscovered(SaveSlotManifest loaded)
         {
-            var store = new LocalSaveStore(directory, LegacyFileName);
-            store.Load(out var data);
-            return new SaveSlotManifest
+            var recovered = RecoverFromFiles();
+            var map = new Dictionary<int, SaveSlotInfo>();
+            if (loaded?.slots != null)
+                foreach (var slot in loaded.slots)
+                    if (slot != null && slot.id >= 1 && slot.id <= MaxSlots)
+                        map[slot.id] = CloneSlot(slot);
+            if (recovered.slots != null)
+                foreach (var slot in recovered.slots)
+                    if (slot != null && slot.id >= 1 && slot.id <= MaxSlots && !map.ContainsKey(slot.id))
+                        map[slot.id] = CloneSlot(slot);
+            var merged = new SaveSlotManifest
             {
                 version = ManifestVersion,
-                activeSlotId = 1,
-                slots = new[]
-                {
-                    new SaveSlotInfo
-                    {
-                        id = 1,
-                        displayName = Label(1),
-                        fileName = LegacyFileName,
-                        lastPlayedUtcTicks = data != null && data.version >= 16 ? data.lastSeenUtcTicks : 0,
-                        shopRank = data != null ? data.ResolvedShopRank : 1,
-                        coins = data != null ? data.coins : 0
-                    }
-                }
+                activeSlotId = loaded != null && loaded.activeSlotId >= 1 && loaded.activeSlotId <= MaxSlots
+                    ? loaded.activeSlotId
+                    : 1,
+                slots = ToSortedSlots(map)
             };
+            if (Find(merged, merged.activeSlotId) == null && merged.slots.Length > 0)
+                merged.activeSlotId = NewestId(merged.slots);
+            return merged;
         }
 
         SaveSlotManifest RecoverFromFiles()
         {
-            var found = new List<SaveSlotInfo>();
-            if (File.Exists(Path.Combine(directory, LegacyFileName)))
-                found.Add(Summarize(1, LegacyFileName));
-            string numberedOne = Path.Combine(directory, NumberedFileName(1));
-            if (found.Count == 0 && File.Exists(numberedOne))
-                found.Add(Summarize(1, NumberedFileName(1)));
-            for (int id = 2; id <= MaxSlots; id++)
+            var map = new Dictionary<int, SaveSlotInfo>();
+            for (int id = 1; id <= MaxSlots; id++)
             {
-                string name = NumberedFileName(id);
-                if (File.Exists(Path.Combine(directory, name))) found.Add(Summarize(id, name));
+                if (!TryResolveOccupiedFile(id, out string fileName)) continue;
+                map[id] = Summarize(id, fileName);
             }
-            int active = found.Count == 0 ? 1 : found[0].id;
-            long newest = -1;
-            foreach (var slot in found)
-                if (slot.lastPlayedUtcTicks >= newest) { newest = slot.lastPlayedUtcTicks; active = slot.id; }
+            var slots = ToSortedSlots(map);
             return new SaveSlotManifest
             {
                 version = ManifestVersion,
-                activeSlotId = active,
-                slots = found.ToArray()
+                activeSlotId = slots.Length == 0 ? 1 : NewestId(slots),
+                slots = slots
             };
         }
+
+        bool TryResolveOccupiedFile(int id, out string fileName)
+        {
+            string[] names = id <= 1
+                ? new[] { LegacyFileName, NumberedFileName(1) }
+                : new[] { NumberedFileName(id) };
+            foreach (string name in names)
+            {
+                string path = Path.Combine(directory, name);
+                if (File.Exists(path) || File.Exists(path + ".bak"))
+                {
+                    fileName = name;
+                    return true;
+                }
+            }
+            fileName = id <= 1 ? LegacyFileName : NumberedFileName(id);
+            return false;
+        }
+
+        bool SlotOccupiedOnDisk(int id) => TryResolveOccupiedFile(id, out _);
 
         SaveSlotInfo Summarize(int id, string fileName)
         {
@@ -191,12 +229,12 @@ namespace BurgerShop.Persistence
             };
         }
 
-        SaveSlotInfo Ensure(int id)
+        SaveSlotInfo EnsureSlot(SaveSlotManifest target, int id)
         {
-            var existing = Find(id);
+            var existing = Find(target, id);
             if (existing != null)
             {
-                if (string.IsNullOrEmpty(existing.fileName)) existing.fileName = FileNameFor(id);
+                if (string.IsNullOrEmpty(existing.fileName)) existing.fileName = id <= 1 ? LegacyFileName : NumberedFileName(id);
                 if (string.IsNullOrEmpty(existing.displayName)) existing.displayName = Label(id);
                 if (existing.shopRank < 1) existing.shopRank = 1;
                 return existing;
@@ -209,38 +247,50 @@ namespace BurgerShop.Persistence
                 shopRank = 1,
                 coins = 0
             };
-            var list = new List<SaveSlotInfo>(manifest.slots ?? Array.Empty<SaveSlotInfo>()) { created };
+            var list = new List<SaveSlotInfo>(target.slots ?? Array.Empty<SaveSlotInfo>()) { created };
             list.Sort((a, b) => a.id.CompareTo(b.id));
-            manifest.slots = list.ToArray();
+            target.slots = list.ToArray();
             return created;
         }
 
         int FirstEmptyId()
         {
             for (int id = 1; id <= MaxSlots; id++)
-                if (Find(id) == null) return id;
+                if (Find(id) == null && !SlotOccupiedOnDisk(id)) return id;
             return 0;
         }
 
-        SaveSlotManifest ReadManifest()
+        bool TryReadManifest(out SaveSlotManifest loaded, out bool future)
         {
+            loaded = null;
+            future = false;
             try
             {
-                var loaded = JsonUtility.FromJson<SaveSlotManifest>(File.ReadAllText(ManifestPath));
-                if (loaded == null) return null;
-                if (loaded.version > ManifestVersion) return null;
+                loaded = JsonUtility.FromJson<SaveSlotManifest>(File.ReadAllText(ManifestPath));
+                if (loaded == null) return false;
+                if (loaded.version > ManifestVersion)
+                {
+                    future = true;
+                    if (loaded.slots == null) loaded.slots = Array.Empty<SaveSlotInfo>();
+                    return true;
+                }
                 if (loaded.slots == null) loaded.slots = Array.Empty<SaveSlotInfo>();
                 if (loaded.activeSlotId < 1 || loaded.activeSlotId > MaxSlots) loaded.activeSlotId = 1;
-                return loaded;
+                loaded.version = ManifestVersion;
+                return true;
             }
-            catch (Exception) { return null; }
+            catch (Exception)
+            {
+                loaded = null;
+                future = false;
+                return false;
+            }
         }
 
-        void Write() => Write(manifest);
-
-        void Write(SaveSlotManifest data)
+        SaveSlotOpResult Write(SaveSlotManifest data)
         {
-            if (data == null) return;
+            if (incompatible) return SetResult(SaveSlotOpResult.IncompatibleManifest, "manifest is newer than this reader");
+            if (data == null) return SetResult(SaveSlotOpResult.InvalidData, "manifest is null");
             data.version = ManifestVersion;
             string path = ManifestPath;
             string temporary = path + ".tmp";
@@ -250,8 +300,28 @@ namespace BurgerShop.Persistence
                 File.WriteAllText(temporary, JsonUtility.ToJson(data, true));
                 if (File.Exists(path)) File.Replace(temporary, path, null);
                 else File.Move(temporary, path);
+                return SetResult(SaveSlotOpResult.Success, null);
             }
-            catch (Exception) { }
+            catch (UnauthorizedAccessException error)
+            {
+                return SetResult(SaveSlotOpResult.PermissionDenied, error.Message);
+            }
+            catch (System.Security.SecurityException error)
+            {
+                return SetResult(SaveSlotOpResult.PermissionDenied, error.Message);
+            }
+            catch (IOException error)
+            {
+                return SetResult(SaveSlotOpResult.CommitFailed, error.Message);
+            }
+            catch (NotSupportedException error)
+            {
+                return SetResult(SaveSlotOpResult.CommitFailed, error.Message);
+            }
+            catch (Exception error)
+            {
+                return SetResult(SaveSlotOpResult.CommitFailed, error.Message);
+            }
             finally
             {
                 try { if (File.Exists(temporary)) File.Delete(temporary); }
@@ -259,10 +329,113 @@ namespace BurgerShop.Persistence
             }
         }
 
-        static void TryDeleteFile(string path)
+        IEnumerable<string> FilesForSlot(int id)
         {
-            try { if (File.Exists(path)) File.Delete(path); }
+            var names = new HashSet<string>();
+            var listed = Find(id);
+            if (listed != null && !string.IsNullOrEmpty(listed.fileName)) names.Add(listed.fileName);
+            if (id <= 1)
+            {
+                names.Add(LegacyFileName);
+                names.Add(NumberedFileName(1));
+            }
+            else names.Add(NumberedFileName(id));
+            foreach (string name in names)
+            {
+                string path = Path.Combine(directory, name);
+                yield return path;
+                yield return path + ".bak";
+                yield return path + ".tmp";
+            }
+        }
+
+        bool SlotFilesRemain(int id)
+        {
+            foreach (string path in FilesForSlot(id))
+                if (File.Exists(path) || Directory.Exists(path)) return true;
+            return false;
+        }
+
+        static void TryDeletePath(string path)
+        {
+            try
+            {
+                if (File.Exists(path)) File.Delete(path);
+            }
             catch (Exception) { }
+        }
+
+        SaveSlotOpResult SetResult(SaveSlotOpResult result, string error)
+        {
+            LastOpResult = result;
+            LastError = error;
+            return result;
+        }
+
+        static SaveSlotManifest EmptyManifest() => new SaveSlotManifest
+        {
+            version = ManifestVersion,
+            activeSlotId = 1,
+            slots = Array.Empty<SaveSlotInfo>()
+        };
+
+        static SaveSlotInfo Find(SaveSlotManifest data, int id)
+        {
+            if (data?.slots == null) return null;
+            for (int i = 0; i < data.slots.Length; i++)
+                if (data.slots[i] != null && data.slots[i].id == id) return data.slots[i];
+            return null;
+        }
+
+        static SaveSlotInfo[] ToSortedSlots(Dictionary<int, SaveSlotInfo> map)
+        {
+            var list = new List<SaveSlotInfo>(map.Count);
+            foreach (var pair in map) list.Add(pair.Value);
+            list.Sort((a, b) => a.id.CompareTo(b.id));
+            return list.ToArray();
+        }
+
+        static int NewestId(SaveSlotInfo[] slots)
+        {
+            int active = slots[0].id;
+            long newest = slots[0].lastPlayedUtcTicks;
+            for (int i = 1; i < slots.Length; i++)
+                if (slots[i].lastPlayedUtcTicks >= newest)
+                {
+                    newest = slots[i].lastPlayedUtcTicks;
+                    active = slots[i].id;
+                }
+            return active;
+        }
+
+        static bool IndexChanged(SaveSlotManifest before, SaveSlotManifest after)
+        {
+            if (before == null || after == null) return true;
+            if (before.activeSlotId != after.activeSlotId) return true;
+            int beforeCount = before.slots == null ? 0 : before.slots.Length;
+            int afterCount = after.slots == null ? 0 : after.slots.Length;
+            if (beforeCount != afterCount) return true;
+            for (int i = 0; i < afterCount; i++)
+            {
+                if (before.slots[i] == null || after.slots[i] == null) return true;
+                if (before.slots[i].id != after.slots[i].id) return true;
+            }
+            return false;
+        }
+
+        static SaveSlotManifest Clone(SaveSlotManifest source)
+        {
+            if (source == null) return EmptyManifest();
+            var copy = JsonUtility.FromJson<SaveSlotManifest>(JsonUtility.ToJson(source));
+            if (copy == null) return EmptyManifest();
+            if (copy.slots == null) copy.slots = Array.Empty<SaveSlotInfo>();
+            return copy;
+        }
+
+        static SaveSlotInfo CloneSlot(SaveSlotInfo source)
+        {
+            if (source == null) return null;
+            return JsonUtility.FromJson<SaveSlotInfo>(JsonUtility.ToJson(source));
         }
 
         public static string Label(int id) => "Shop " + id;

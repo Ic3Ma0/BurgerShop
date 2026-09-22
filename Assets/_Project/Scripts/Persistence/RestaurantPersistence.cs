@@ -104,9 +104,9 @@ namespace BurgerShop.Persistence
         public bool StartNewGame()
         {
             if (!ready || slots == null) return false;
-            Flush();
+            if (!Flush()) return false;
             RememberActiveSlot();
-            if (!slots.TryCreateSlot(out _)) return false;
+            if (slots.TryCreateSlot(out _) != SaveSlotOpResult.Success) return false;
             BindActiveStore();
             ApplyNewGame();
             RememberActiveSlot();
@@ -116,9 +116,9 @@ namespace BurgerShop.Persistence
         public bool SwitchToSlot(int id)
         {
             if (!ready || slots == null || id == ActiveSlotId) return false;
-            Flush();
+            if (!Flush()) return false;
             RememberActiveSlot();
-            if (!slots.TryActivate(id)) return false;
+            if (slots.TryActivate(id) != SaveSlotOpResult.Success) return false;
             BindActiveStore();
             ApplyLoadedSnapshot(resetIfMissing: true);
             RememberActiveSlot();
@@ -126,7 +126,7 @@ namespace BurgerShop.Persistence
             return true;
         }
 
-        public bool DeleteSlot(int id) => slots != null && slots.TryDelete(id);
+        public bool DeleteSlot(int id) => slots != null && slots.TryDelete(id) == SaveSlotOpResult.Success;
 
         void BindActiveStore()
         {
@@ -169,7 +169,10 @@ namespace BurgerShop.Persistence
             if (goals != null) goals.ApplyUnlocks();
             GetComponent<Building.FacilityLayout>()?.Restore(null);
             GetComponent<RestroomExpansion>()?.Restore(false, 0, 0);
-            Status = "NEW GAME - AUTOSAVE ON";
+            Status = LoadResult == SaveLoadResult.NewerVersion ? "NEWER SAVE - SAVING DISABLED"
+                : LoadResult == SaveLoadResult.Unreadable ? "SAVE UNREADABLE - FILES KEPT"
+                : LoadResult == SaveLoadResult.Unavailable ? "SAVE UNAVAILABLE"
+                : "NEW GAME - AUTOSAVE ON";
             lastSeen = 0;
             OfflineGrant = 0;
             OfflineTicks = 0;

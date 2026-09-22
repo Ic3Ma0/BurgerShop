@@ -2,6 +2,17 @@ using System;
 
 namespace BurgerShop.Persistence
 {
+    public enum SaveSlotOpResult
+    {
+        Success,
+        InvalidData,
+        SlotMissing,
+        NotAllowed,
+        IncompatibleManifest,
+        PermissionDenied,
+        CommitFailed
+    }
+
     [Serializable]
     public sealed class SaveSlotInfo
     {

@@ -9,6 +9,11 @@ namespace BurgerShop.Persistence
 
     public sealed class LocalSaveStore
     {
+        // 16 KiB rejected pretty-printed v17 snapshots that still pass IsValid (tens of layout rows).
+        // 256 KiB covers hundreds of unique layout records plus the rest of the v17 envelope, and
+        // still stops a runaway write from replacing a good file.
+        public const int MaxFileBytes = 256 * 1024;
+
         [Serializable]
         sealed class Envelope
         {
@@ -62,7 +67,7 @@ namespace BurgerShop.Persistence
         {
             data = null;
             if (!File.Exists(source)) return SaveLoadResult.NewGame;
-            if (new FileInfo(source).Length > 16384) return SaveLoadResult.Unreadable;
+            if (new FileInfo(source).Length > MaxFileBytes) return SaveLoadResult.Unreadable;
             Envelope envelope;
             try { envelope = JsonUtility.FromJson<Envelope>(File.ReadAllText(source)); }
             catch (ArgumentException) { return SaveLoadResult.Unreadable; }
@@ -76,11 +81,16 @@ namespace BurgerShop.Persistence
         public bool Save(RestaurantSaveData data)
         {
             if (!CanWrite || data == null || !data.IsValid) return false;
+            byte[] bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(new Envelope { data = data, checksum = data.Checksum() }, true));
+            if (bytes.Length > MaxFileBytes)
+            {
+                LastError = "snapshot exceeds " + MaxFileBytes + " bytes";
+                return false;
+            }
             string temporary = path + ".tmp";
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
-                byte[] bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(new Envelope { data = data, checksum = data.Checksum() }, true));
                 using (FileStream stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
                     stream.Write(bytes, 0, bytes.Length);
