@@ -29,6 +29,8 @@
 
 ## 发现但暂不处理的问题（顺手记录，不自动修）
 
-- 本地遗留分支 `chore/project-integrations`（Notion/Slack 协作 docs，3 提交）未合并、远端已删，去留待用户决定。
 - PR #18（restroom 家具）、#19（MIT license）为 DRAFT，未处理。
-- `feat/goal-02…09` 等已合并分支的本地残留可清理，不影响仓库。
+
+## 已处理记录
+
+- 2026-09-23：用户确认删除本地遗留分支 `chore/project-integrations`（未合并的 Notion/Slack 协作 docs），并清理全部已合并残留分支（`feat/goal-02…09`、`counter-table-serve`、`growth-gameplay`、`shop-rank`、`ui-feel-feedback`、`chore/unity-63-…`、`fix/staff-stuck`）。本地现仅存 `main`、当前分支与 `cursor/restroom-ui-5bab`（PR #18 head）。
