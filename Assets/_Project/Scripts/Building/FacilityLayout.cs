@@ -174,7 +174,12 @@ namespace BurgerShop.Building
             return Candidate;
         }
         public bool BeginMove(FacilityInstance instance)
-        {Cancel();if(instance==null||!instances.ContainsKey(instance.Id)||!instance.Available)return false;Moving=instance;return true;}
+        {
+            Cancel();if(instance==null||!instances.ContainsKey(instance.Id)||!instance.Available)return false;
+            foreach(var table in instance.GetComponentsInChildren<DiningTable>())
+                if(table.OccupiedSeats>0)return Fail("请等顾客用餐结束后再移动餐桌");
+            Moving=instance;return true;
+        }
         public void Cancel()
         {if(Candidate!=null){Candidate.gameObject.SetActive(false);BurgerVisual.Release(Candidate.gameObject);}Candidate=null;Moving=null;LastError="";}
         public List<Rect> Floors()
@@ -346,7 +351,11 @@ namespace BurgerShop.Building
                     buying=false;
                 }
             }
+            // Queue guests are children of their counter for ownership, not passengers.
+            var guests=chosen.GetComponentsInChildren<CustomerAgent>();
+            var guestPositions=Array.ConvertAll(guests,g=>g.transform.position);
             chosen.transform.SetPositionAndRotation(new Vector3(position.x,0,position.z),Quaternion.Euler(0,yaw,0));
+            for(int i=0;i<guests.Length;i++)guests[i].transform.position=guestPositions[i];
             if(Candidate!=null)
             {
                 chosen.transform.SetParent(transform,true);chosen.gameObject.SetActive(true);

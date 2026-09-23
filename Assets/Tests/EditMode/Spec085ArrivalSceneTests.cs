@@ -27,8 +27,13 @@ namespace BurgerShop.Tests.EditMode
             var q=MainKitchen<CustomerQueue>();q.enabled=false;q.SendMessage("OnApplicationFocus",true);
             var layout=FacilityLayout.Current;layout.Discover();
             var counter=q.GetComponentInParent<FacilityInstance>();Assert.That(counter,Is.Not.Null);
+            for(int i=0;i<600&&q.Count==0;i++)q.Advance(1/60f);
+            Assert.That(q.Count,Is.GreaterThan(0));
+            var existing=new Dictionary<CustomerAgent,Vector3>();
+            foreach(var customer in q.Customers)existing[customer]=customer.transform.position;
             Assert.That(layout.BeginMove(counter),Is.True);
             Assert.That(layout.Confirm(new Vector3(6,0,-4),90),Is.True,layout.LastError);
+            foreach(var entry in existing)Assert.That(Vector3.Distance(entry.Key.transform.position,entry.Value),Is.LessThan(.0001f),"Moving a counter must not carry its guests along");
             q.Advance(.01f);
             Vector3[] slots=q.QueuePositions;
             var route=(Vector3[])typeof(CustomerQueue).GetField("route",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(q);

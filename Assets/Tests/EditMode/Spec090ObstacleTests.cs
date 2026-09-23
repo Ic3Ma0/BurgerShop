@@ -80,6 +80,26 @@ namespace BurgerShop.Tests.EditMode
                 new object[]{new Vector3(5,0,0),10f,true,Vector3.zero,0f});
             Assert.That(customer.transform.position,Is.EqualTo(start));Assert.That(customer.HasReachedSlot,Is.False);
         }
+        [Test] public void EnlargedMachineRefreshesNavigation()
+        {
+            var machine=ExpandableGrill.CreateStarter(root.transform,null,null);
+            machine.transform.position=Vector3.zero;Physics.SyncTransforms();layout.RefreshNavigation();
+            AssertPath(new Vector3(-5,0,0),new Vector3(5,0,0));
+            int revision=layout.Revision;machine.ApplyLook(3,false);
+            Assert.That(layout.Revision,Is.GreaterThan(revision));
+            AssertPath(new Vector3(-5,0,0),new Vector3(5,0,0));
+        }
+        [TestCase(false)] [TestCase(true)]
+        public void PlayerCannotWalkThroughActualMachineOrTable(bool table)
+        {
+            if(table)DiningTable.Create(root.transform,Vector3.zero);
+            else ExpandableGrill.CreateStarter(root.transform,null,null).transform.position=Vector3.zero;
+            Physics.SyncTransforms();
+            var actor=new GameObject("Player");actor.transform.SetParent(root.transform);actor.transform.position=new Vector3(-5,1.05f,0);
+            var cc=actor.AddComponent<CharacterController>();cc.height=2;cc.radius=.4f;
+            for(int i=0;i<100;i++)cc.Move(Vector3.right*.1f);
+            Assert.That(actor.transform.position.x,Is.LessThan(-.5f));
+        }
         [Test] public void PlayerControllerCannotCrossNewSolid()
         {
             Obstacle(PrimitiveType.Cube,new Vector3(0,.8f,0),new Vector3(2,1.6f,4));

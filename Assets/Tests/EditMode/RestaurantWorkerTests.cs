@@ -111,6 +111,25 @@ namespace BurgerShop.Tests.EditMode
             for (int i = 0; i < 1200; i++) queue.Advance(1f / 60f);
         }
 
+        [Test]
+        public void WorkerRoutesAroundNewObstacleAndStillDelivers()
+        {
+            var worker=Hire();
+            var layout=root.AddComponent<BurgerShop.Building.FacilityLayout>();
+            layout.Configure(player,wallet,null,null,null,hiring,null,null);
+            var wall=GameObject.CreatePrimitive(PrimitiveType.Cube);wall.transform.SetParent(root.transform);
+            wall.transform.position=new Vector3(3, .8f,1);wall.transform.localScale=new Vector3(1,1.6f,4);
+            Physics.SyncTransforms();layout.RefreshNavigation();
+            for(int i=0;i<3600;i++)
+            {
+                var before=worker.transform.position;
+                AdvanceStaff(1f/60f);
+                Assert.That(ActorObstacles.Clear(before,worker.transform.position),Is.True,"employee crossed a body");
+                if(i==1200){wall.transform.position=new Vector3(2,.8f,-2);Physics.SyncTransforms();layout.RefreshNavigation();}
+            }
+            Assert.That(stock.Count+cashier.CompletedOrders,Is.GreaterThan(0),"employee must deliver, not merely stop safely");
+        }
+
         [TestCase(.71f)]
         [TestCase(.85f)]
         [TestCase(.99f)]
