@@ -22,7 +22,16 @@ namespace BurgerShop.Economy
                     var queue = serving.GetComponent<CustomerQueue>();
                     if (queue == null || queue.Product != product || serving.GetComponentInParent<BagLine>() != null) continue;
                     downstream += serving.ServiceableStock;
-                    if (queue.ReadyCustomer != null) waiting += queue.Count;
+                    // Count the next customer stepping into the front slot as well as a
+                    // handoff. Neither short transition means that demand has disappeared.
+                    var front=queue.FrontCustomer;
+                    var slots=queue.QueuePositions;
+                    if(front!=null&&slots.Length>0)
+                    {
+                        float pitch=slots.Length>1?Vector3.Distance(slots[0],slots[1]):queue.MinimumGap;
+                        if(front.HasOrdered||ShopLayout.Horizontal(front.transform.position,slots[0])<=pitch)
+                            waiting+=queue.Count;
+                    }
                 }
                 policy.Observe(InvestmentNeed.Production, line, waiting > 0 && sourceStock == 0 && downstream == 0, operatingTime);
                 policy.Observe(InvestmentNeed.Transport, line, waiting > 0 && sourceStock > 0 && downstream == 0, operatingTime);

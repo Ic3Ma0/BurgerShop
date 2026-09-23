@@ -118,26 +118,6 @@ namespace BurgerShop.Restaurant
                 return pad!=null&&pad.RankVisible?pad:null; }
         }
         public string NextWingHint => !HasWing ? "Install a wing" : !HasColaMachine ? "Install a cola" : !HasColaBar ? "Install a cola bar" : "Install a table";
-        TextMesh wingGuide;
-        void LateUpdate()
-        {
-            if (wingGuide == null)
-            {
-                wingGuide = new GameObject("WingBuildGuide").AddComponent<TextMesh>();
-                wingGuide.transform.SetParent(transform, false);
-                wingGuide.anchor = TextAnchor.MiddleCenter;
-                wingGuide.fontSize = 48; wingGuide.characterSize = .14f;
-                wingGuide.color = new Color(.16f,.22f,.24f);
-            }
-            var next = NextWingPad;
-            wingGuide.gameObject.SetActive(next != null);
-            if (next == null) return;
-            bool atDoor = HasWing && player != null && player.transform.position.x < ShopLayout.WallHalf;
-            wingGuide.transform.position = (atDoor ? ShopLayout.SideDoor : next.transform.position) + Vector3.up * 2.2f;
-            wingGuide.text = atDoor ? "ENTER >" : (NextWingHint.Replace("Install a ", "").ToUpperInvariant() + "  " + next.Remaining + "\nv");
-            if (Camera.main != null) wingGuide.transform.rotation = Camera.main.transform.rotation;
-        }
-
         public string NextInstallHint
         {
             get
@@ -520,6 +500,7 @@ namespace BurgerShop.Restaurant
                 UI.VisualMeshPulse.Play(look);
                 PurchaseCompleted?.Invoke();
             }, label);
+            zone.SetStoreOnly();
             return zone;
         }
 

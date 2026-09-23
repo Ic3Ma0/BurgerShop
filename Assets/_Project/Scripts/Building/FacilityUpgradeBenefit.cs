@@ -10,8 +10,10 @@ namespace BurgerShop.Building
             {
                 case FacilityKind.CarCounter:
                     return $"Service interval {DriveThruLane.IntervalForLevel(level):0.00}s";
-                case FacilityKind.BurgerCounter: case FacilityKind.ColaCounter: case FacilityKind.BagCounter:
+                case FacilityKind.BurgerCounter: case FacilityKind.ColaCounter:
                     return $"Service interval {BurgerServingZone.HandoffDuration + BurgerServingZone.CooldownForLevel(level):0.00}s";
+                case FacilityKind.BagCounter:
+                    return $"Service interval {BurgerServingZone.HandoffDuration + BagLine.CooldownForLevel(level):0.00}s";
                 case FacilityKind.BlueBoxTable:
                     return $"Packing {BoxingStation.SecondsForLevel(level):0.00}s";
                 case FacilityKind.BagMachine:

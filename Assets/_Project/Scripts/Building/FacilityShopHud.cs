@@ -118,6 +118,7 @@ namespace BurgerShop.Building
         public void Open()
         {
             if(open){Close();return;}
+            StatUpgradePopup.Current?.Dismiss();
             open=true;previousTimeScale=Time.timeScale;Time.timeScale=0;
             follow=Camera.main!=null?Camera.main.GetComponent<CameraFollow>():null;
             if(follow!=null){followWasEnabled=follow.enabled;follow.enabled=false;}
@@ -166,7 +167,7 @@ namespace BurgerShop.Building
                 buyButtons[i].gameObject.SetActive(visible);
                 buyButtons[i].interactable=unlocked&&layout.Wallet.Coins>=layout.Price(kinds[i]);
                 var quote=layout.Quote(kinds[i]);
-                prices[i].text=unlocked?quote.Due.ToString("N0")+(quote.Invested>0?$" (paid {quote.Invested})":""):$"Unlocks at Lv.{offer.Rank}";
+                prices[i].text=unlocked?quote.Due.ToString("N0"):$"Unlocks at Lv.{offer.Rank}";
                 prices[i].color=unlocked?HudChrome.Green:HudChrome.Ink;
                 var opening=new Economy.BusinessOpeningQuote(layout);
                 var kind=kinds[i];
@@ -174,8 +175,9 @@ namespace BurgerShop.Building
                     kind==FacilityKind.BlueBoxTable||kind==FacilityKind.CarCounter?opening.BlueCopy:
                     kind==FacilityKind.BagMachine||kind==FacilityKind.BagTable||kind==FacilityKind.BagCounter?opening.BagCopy:"";
                 var summary=buyButtons[i].transform.Find("OpeningQuote")?.GetComponent<Text>();
-                if(summary==null)summary=HudChrome.Label(buyButtons[i].transform,"OpeningQuote",new Vector2(0,1),new Vector2(0,1),new Vector2(0,1),new Vector2(18,-250),new Vector2(380,78),21,HudChrome.Ink,TextAnchor.UpperLeft,false,false);
-                summary.text=business;
+                if(summary==null)summary=HudChrome.Label(buyButtons[i].transform,"OpeningQuote",new Vector2(0,1),new Vector2(0,1),new Vector2(0,1),new Vector2(18,-250),new Vector2(380,176),21,HudChrome.Ink,TextAnchor.UpperLeft,false,false);
+                summary.horizontalOverflow=HorizontalWrapMode.Wrap;
+                summary.text=unlocked?$"Base {quote.BasePrice} · Current {quote.FullPrice}\nPaid {quote.Invested} · Due {quote.Due}"+(business.Length>0?"\n"+business:""):"";
                 var pill=buyButtons[i].transform.Find("ActionPill");
                 if(pill!=null)
                 {
@@ -284,7 +286,7 @@ namespace BurgerShop.Building
             catalogHint.rectTransform.sizeDelta=new Vector2(size.x-48,44);
             catalogScroll.viewport.offsetMax=new Vector2(-26,-218);
             var cards=ownedPage?ownedButtons:expansionPage?expansionButtons:buyButtons;
-            float cardHeight=expansionPage?460:ownedPage?308:400, pitch=cardHeight+20;
+            float cardHeight=expansionPage?460:ownedPage?308:500, pitch=cardHeight+20;
             int columns=size.x>=700?2:1,index=0;
             float width=(size.x-52-(columns-1)*20)/columns;
             foreach(var card in cards)
@@ -295,7 +297,7 @@ namespace BurgerShop.Building
                 ((RectTransform)card.transform.Find("PhotoBackground")).sizeDelta=new Vector2(width-24,162);
                 ((RectTransform)card.transform.Find("PhotoBackground/ProductPhoto")).sizeDelta=new Vector2(width-42,154);
                 if(expansionPage)((RectTransform)card.transform.Find("Description")).sizeDelta=new Vector2(width-36,148);
-                var quoteLabel=card.transform.Find("OpeningQuote");if(quoteLabel!=null)((RectTransform)quoteLabel).sizeDelta=new Vector2(width-36,92);
+                var quoteLabel=card.transform.Find("OpeningQuote");if(quoteLabel!=null)((RectTransform)quoteLabel).sizeDelta=new Vector2(width-36,176);
             }
             ((RectTransform)content).sizeDelta=new Vector2(0,Mathf.CeilToInt(index/(float)columns)*pitch);
             toolbar.localScale=Vector3.one*Mathf.Min(1,(available.x-32)/940);

@@ -38,7 +38,7 @@ namespace BurgerShop.UI
 
         public static Font Font()
         {
-            if (font == null) font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (font == null) font = Resources.Load<Font>("Fonts/NotoSansCJKsc-Regular") ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             return font;
         }
 
@@ -145,13 +145,16 @@ namespace BurgerShop.UI
         public static void Style(Text text, int size, Color color, TextAnchor align, bool bold, bool darkOutline)
         {
             text.font = Font();
-            text.fontSize = Mathf.Max(28,size);
+            text.fontSize = Mathf.Clamp(size,14,44);
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = Mathf.Min(16,text.fontSize);
+            text.resizeTextMaxSize = text.fontSize;
             text.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
             text.alignment = align;
             text.color = color;
             text.raycastTarget = false;
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
             Outline outline = text.GetComponent<Outline>();
             if (outline != null) outline.enabled = false;
             Shadow shadow = text.GetComponent<Shadow>();
@@ -203,7 +206,7 @@ namespace BurgerShop.UI
         public static Text Label(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 pos, Vector2 size,
             int fontSize, Color color, TextAnchor align, bool bold, bool darkOutline)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(LocalizedText));
             go.transform.SetParent(parent, false);
             RectTransform rect = go.GetComponent<RectTransform>();
             rect.anchorMin = anchorMin;

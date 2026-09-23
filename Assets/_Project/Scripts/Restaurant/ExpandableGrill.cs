@@ -67,6 +67,7 @@ namespace BurgerShop.Restaurant
 
         public void ApplyLook(int level, bool animate)
         {
+            bool changed=shown!=Mathf.Clamp(level,1,3);
             shown = Mathf.Clamp(level, 1, 3);
             if (looks != null)
                 for (int i = 0; i < looks.Length; i++)
@@ -78,6 +79,7 @@ namespace BurgerShop.Restaurant
                 Station.AttachFill(ActiveLook != null ? ActiveLook.Find("ProgressFill") : null);
             }
             PlaceStatus();
+            if(changed)BurgerShop.Building.FacilityLayout.Current?.RefreshNavigation();
             _ = animate;
         }
 

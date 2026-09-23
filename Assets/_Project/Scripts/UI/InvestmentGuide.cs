@@ -16,7 +16,9 @@ namespace BurgerShop.UI
         {
             public string Id, Title, Benefit;
             public int Cost;
-            public Vector3 Target;
+            Vector3 target;
+            public Component Actor;
+            public Vector3 Target { get => Actor != null ? Actor.transform.position : target; set => target = value; }
             public FacilityInstance Facility;
             public InvestmentNeed Need;
             public string Line = "";
@@ -45,7 +47,7 @@ namespace BurgerShop.UI
                 long missing=Math.Max(0,offer.Cost-(wallet?.Coins??0));
                 string reason=priority.Persistent(offer.Need,offer.Line)?Reason(offer.Need)+"\n":"";
                 return $"{reason}{offer.Benefit}\n{offer.Cost} coins"+(offer.AwardsStars?" · +2 stars":"")+$" · {goals.MissingStars} stars to upgrade"
-                    +(missing>0?$"\nEarn {missing} more coins":"\nTap to locate · other investments also earn stars");
+                    +(missing>0?$"\nEarn {missing} more coins":offer.Actor != null ? "\nTap the character or this card to upgrade" : "\nTap to locate · other investments also earn stars");
             }
         }
         public void Next(){Refresh(true);if(offers.Count==0)return;int i=offers.FindIndex(o=>o.Id==pinned);Pin(offers[(i+1)%offers.Count]);manual=true;}
@@ -66,8 +68,8 @@ namespace BurgerShop.UI
         List<Offer> ReadOffers()
         {
             var result=new List<Offer>();
-            void Add(string id,string title,string benefit,int cost,Vector3 target,FacilityInstance facility=null,InvestmentNeed need=InvestmentNeed.None,string line="",bool prerequisite=false,bool shop=false,bool stars=true)
-            {if(cost>=0)result.Add(new Offer{Id=id,Title=title,Benefit=benefit,Cost=cost,Target=target,Facility=facility,Need=need,Line=line,Prerequisite=prerequisite,ShopPurchase=shop,AwardsStars=stars});}
+            void Add(string id,string title,string benefit,int cost,Vector3 target,FacilityInstance facility=null,InvestmentNeed need=InvestmentNeed.None,string line="",bool prerequisite=false,bool shop=false,bool stars=true,Component actor=null)
+            {if(cost>=0)result.Add(new Offer{Id=id,Title=title,Benefit=benefit,Cost=cost,Target=target,Facility=facility,Need=need,Line=line,Prerequisite=prerequisite,ShopPurchase=shop,AwardsStars=stars,Actor=actor});}
             foreach(var grill in goals.GetComponentsInChildren<GrillUpgradeZone>())
                 if(grill.IsAvailable&&!grill.IsMaxLevel)
                 {
@@ -82,14 +84,14 @@ namespace BurgerShop.UI
             var player=goals.GetComponent<BoostUpgradeZone>();
             if(player!=null)
             {
-                if(!player.SpeedIsMax)Add("player-speed","Upgrade player speed",$"Speed {PlayerBoost.MoveSpeed(player.SpeedTier,player.CarryTier):0.00} → {PlayerBoost.MoveSpeed(player.SpeedTier+1,player.CarryTier):0.00}",player.SpeedCost,ShopLayout.BoostPoint,null,InvestmentNeed.Transport,TransportLine());
-                if(!player.CarryIsMax)Add("player-carry","Upgrade player carry",$"Carry {PlayerBoost.CarryCapacity(player.CarryTier)} → {PlayerBoost.CarryCapacity(player.CarryTier+1)}"+(PlayerBoost.IsEmptyCarryLevel(player.CarryTier+1)?" · +3% empty speed":""),player.CarryCost,ShopLayout.BoostPoint,null,InvestmentNeed.Transport,TransportLine());
+                if(!player.SpeedIsMax)Add("player-speed","Upgrade player speed",$"Speed {PlayerBoost.MoveSpeed(player.SpeedTier,player.CarryTier):0.00} → {PlayerBoost.MoveSpeed(player.SpeedTier+1,player.CarryTier):0.00}",player.SpeedCost,Vector3.zero,null,InvestmentNeed.Transport,TransportLine(),actor:player.Player);
+                if(!player.CarryIsMax)Add("player-carry","Upgrade player carry",$"Carry {PlayerBoost.CarryCapacity(player.CarryTier)} → {PlayerBoost.CarryCapacity(player.CarryTier+1)}"+(PlayerBoost.IsEmptyCarryLevel(player.CarryTier+1)?" · +3% empty speed":""),player.CarryCost,Vector3.zero,null,InvestmentNeed.Transport,TransportLine(),actor:player.Player);
             }
             var staff=goals.GetComponent<StaffUpgradeBoard>();
             if(staff!=null&&staff.CanUpgradeStaff)
             {
-                if(!staff.SpeedIsMax)Add("staff-speed","Upgrade staff speed",$"Speed {StaffBoost.WalkSpeed(staff.SpeedTier,staff.CarryTier):0.00} → {StaffBoost.WalkSpeed(staff.SpeedTier+1,staff.CarryTier):0.00}",staff.SpeedCost,ShopLayout.HrHirePoint,null,InvestmentNeed.Transport,TransportLine());
-                if(!staff.CarryIsMax)Add("staff-carry","Upgrade staff carry",$"Carry {StaffBoost.CarryCapacity(staff.CarryTier)} → {StaffBoost.CarryCapacity(staff.CarryTier+1)}"+(PlayerBoost.IsEmptyCarryLevel(staff.CarryTier+1)?" · +3% empty speed":""),staff.CarryCost,ShopLayout.HrHirePoint,null,InvestmentNeed.Transport,TransportLine());
+                if(!staff.SpeedIsMax)Add("staff-speed","Upgrade staff speed",$"Speed {StaffBoost.WalkSpeed(staff.SpeedTier,staff.CarryTier):0.00} → {StaffBoost.WalkSpeed(staff.SpeedTier+1,staff.CarryTier):0.00}",staff.SpeedCost,Vector3.zero,null,InvestmentNeed.Transport,TransportLine(),actor:staff.FirstWorker);
+                if(!staff.CarryIsMax)Add("staff-carry","Upgrade staff carry",$"Carry {StaffBoost.CarryCapacity(staff.CarryTier)} → {StaffBoost.CarryCapacity(staff.CarryTier+1)}"+(PlayerBoost.IsEmptyCarryLevel(staff.CarryTier+1)?" · +3% empty speed":""),staff.CarryCost,Vector3.zero,null,InvestmentNeed.Transport,TransportLine(),actor:staff.FirstWorker);
             }
             foreach(var table in goals.GetComponentsInChildren<TableUpgradeZone>(true))
                 if(table.Table!=null&&table.Table.gameObject.activeInHierarchy&&!table.HasChosenSet)

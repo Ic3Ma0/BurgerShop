@@ -171,6 +171,7 @@ namespace BurgerShop.Restaurant
                 Vector3 target=restroomRoute[restroomStep];target.y=transform.position.y;
                 Vector3 offset=target-transform.position;float distance=offset.magnitude;
                 if(distance>.01f)transform.rotation=Quaternion.LookRotation(offset);
+                if(!ActorObstacles.Clear(transform.position,Vector3.MoveTowards(transform.position,target,remaining))){restroomRoute=null;return true;}
                 if(distance>remaining){transform.position+=offset.normalized*remaining;return true;}
                 transform.position=target;remaining-=distance;restroomStep++;
             }
@@ -181,7 +182,7 @@ namespace BurgerShop.Restaurant
         public void Advance(float deltaTime)
         {
             if (deltaTime <= 0f || !isActiveAndEnabled || !DependenciesReady) return;
-            if(Building.FacilityLayout.Current?.HasCustomLayout==true&&layoutRevision!=Building.FacilityLayout.Current.Revision)
+            if(Building.FacilityLayout.Current!=null&&layoutRevision!=Building.FacilityLayout.Current.Revision)
             {
                 layoutRevision=Building.FacilityLayout.Current.Revision;
                 var travel=State==WorkerState.Collecting?WorkerState.ToGrill:State==WorkerState.Serving?WorkerState.ToCounter:
@@ -346,11 +347,13 @@ namespace BurgerShop.Restaurant
             }
         }
 
+        const float CounterArrivalRadius = .7f;
+
         void TickServing()
         {
             Vector3 servingOffset = transform.position - ServingStand();
             servingOffset.y = 0f;
-            if (servingOffset.sqrMagnitude > 0.7f * 0.7f)
+            if (servingOffset.sqrMagnitude > CounterArrivalRadius * CounterArrivalRadius)
             {
                 WorkerJob travel = CarryingFood ? WorkerJob.Stock
                     : Job == WorkerJob.ServeCola ? WorkerJob.ServeCola
@@ -543,7 +546,8 @@ namespace BurgerShop.Restaurant
             Vector3 dest = DestinationFor(travel);
             Vector3 offset = dest - transform.position;
             offset.y = 0f;
-            if (offset.sqrMagnitude <= 1f)
+            float arrivalRadius = travel == WorkerState.ToCounter ? CounterArrivalRadius : 1f;
+            if (offset.sqrMagnitude <= arrivalRadius * arrivalRadius)
             {
                 State = travel == WorkerState.ToGrill ? WorkerState.Collecting
                     : travel == WorkerState.ToCounter ? WorkerState.Serving
@@ -592,10 +596,15 @@ namespace BurgerShop.Restaurant
             else route = new[] { AtHeight(aisleCorner), AtHeight(destination) };
             if (ShopLayout.WingUnlocked && (destination.x > ShopLayout.WallHalf || transform.position.x > ShopLayout.WallHalf))
                 route = System.Array.ConvertAll(ShopLayout.WingRoute(transform.position, destination), AtHeight);
-            if(Building.FacilityLayout.Current?.HasCustomLayout==true||RestroomExpansion.Current?.Built==true)
+            if(Building.FacilityLayout.Current!=null)
             {
                 var routed=Building.FacilityLayout.Current.Route(transform.position,destination);
-                route=routed!=null&&routed.Length>0?routed:ShopLayout.Walk(transform.position,destination);
+                route=routed;
+            }
+            if(route!=null)
+            {
+                Vector3 cursor=transform.position;
+                foreach(var p in route){if(!ActorObstacles.Clear(cursor,p)){route=ActorObstacles.Route(transform.position,destination);break;}cursor=p;}
             }
             waypoint = 0;
         }
@@ -620,10 +629,14 @@ namespace BurgerShop.Restaurant
             if (state == WorkerState.ToTrash)
             {
                 if (cleaningTable == null) cleaningTable = DirtyTable;
-                return cleaningTable != null ? cleaningTable.Center : transform.position;
+                return cleaningTable != null ? cleaningTable.WaitPosition : transform.position;
             }
             if (state == WorkerState.ToBin)
-                return bin != null ? bin.DropPosition : transform.position;
+            {
+                if(bin==null)return transform.position;
+                var outward=transform.position-bin.DropPosition;outward.y=0;
+                return bin.DropPosition+(outward.sqrMagnitude>.001f?outward.normalized:Vector3.back)*.95f;
+            }
             return transform.position;
         }
 
@@ -677,7 +690,7 @@ namespace BurgerShop.Restaurant
             if(route==null)
             {
                 routeRetry-=deltaTime;
-                if(routeRetry<=0){routeRetry=RouteRetrySeconds;route=Building.FacilityLayout.Current?.Route(transform.position,DestinationFor(State));waypoint=0;}
+                if(routeRetry<=0){routeRetry=RouteRetrySeconds;route=ActorObstacles.Route(transform.position,DestinationFor(State));waypoint=0;}
                 if(route==null)return false;
             }
             float remaining = WalkSpeed * deltaTime;
@@ -687,6 +700,8 @@ namespace BurgerShop.Restaurant
                 float distance = offset.magnitude;
                 if (distance > 0.001f)
                     transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(offset), 1f - Mathf.Exp(-12f * deltaTime));
+                var next=Vector3.MoveTowards(transform.position,route[waypoint],remaining);
+                if(!ActorObstacles.Clear(transform.position,next)){route=null;routeRetry=0;return false;}
                 if (remaining < distance)
                 {
                     transform.position += offset.normalized * remaining;
@@ -702,6 +717,7 @@ namespace BurgerShop.Restaurant
         {
             Vector3 point = transform.position;
             if(RestroomExpansion.Current?.Built==true&&RestroomExpansion.Floor.Contains(new Vector2(point.x,point.z)))return;
+            if(Building.FacilityLayout.Current!=null)foreach(var floor in Building.FacilityLayout.Current.Floors())if(floor.Contains(new Vector2(point.x,point.z)))return;
             Vector3 clamped = ShopLayout.ClampPlayable(point);
             if ((clamped - point).sqrMagnitude < 0.0001f) return;
             transform.position = new Vector3(clamped.x, point.y, clamped.z);

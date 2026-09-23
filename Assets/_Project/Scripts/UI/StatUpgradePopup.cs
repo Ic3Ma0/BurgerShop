@@ -1,11 +1,18 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 namespace BurgerShop.UI
 {
     public sealed class StatUpgradePopup : MonoBehaviour
     {
+        public static StatUpgradePopup Current { get; private set; }
+        GameObject backdrop;
+        float previousTimeScale;
+        bool ownsPause, followWasEnabled;
+        Player.CameraFollow follow;
+        public Text Subtitle { get; private set; }
         public static readonly Color ReadyLeft = HudChrome.Tomato;
         public static readonly Color ReadyRight = HudChrome.Tomato;
         public static readonly Color Disabled = HudChrome.TrackNavy;
@@ -32,16 +39,27 @@ namespace BurgerShop.UI
         public static StatUpgradePopup Build(Transform parent, string objectName, string title,
             string firstName, string secondName)
         {
+            var shade = HudChrome.Panel(parent, objectName + "Backdrop", Vector2.zero, Vector2.zero,
+                Vector2.zero, Vector2.zero, new Color(.06f, .09f, .08f, .5f));
+            shade.raycastTarget = true;
+            shade.rectTransform.anchorMax = Vector2.one;
+            shade.rectTransform.offsetMin = shade.rectTransform.offsetMax = Vector2.zero;
+            shade.gameObject.SetActive(false);
             Image plate = HudChrome.Panel(parent, objectName, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, 144f), new Vector2(816f, 488f), HudChrome.Cream, 1f);
+                Vector2.zero, new Vector2(816f, 488f), HudChrome.Cream, 1f);
             plate.raycastTarget = true;
             var popup = plate.gameObject.AddComponent<StatUpgradePopup>();
             popup.Panel = plate.rectTransform;
+            popup.backdrop = shade.gameObject;
             popup.Group = plate.gameObject.AddComponent<CanvasGroup>();
             popup.TitleLabel = HudChrome.Label(plate.transform, "Title", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f), new Vector2(-48f, -40f), new Vector2(600f, 56f), 44,
                 HudChrome.Ink, TextAnchor.UpperCenter, true, true);
             popup.TitleLabel.text = title;
+            popup.Subtitle = HudChrome.Label(plate.transform, "Scope", new Vector2(.5f, 1), new Vector2(.5f, 1),
+                new Vector2(.5f, 1), new Vector2(0, -106), new Vector2(720, 40), 26,
+                HudChrome.Ink, TextAnchor.MiddleCenter, false, false);
+            popup.Subtitle.text = "Upgrade your character";
             popup.FirstButton = MakeButton(plate.transform, firstName + "Button", new Vector2(-192f, -56f));
             popup.SecondButton = MakeButton(plate.transform, secondName + "Button", new Vector2(192f, -56f));
             popup.FirstLabel = LabelOn(popup.FirstButton.transform, firstName + "Label");
@@ -115,6 +133,51 @@ namespace BurgerShop.UI
         {
             IsDismissed = true;
             SetVisible(false);
+            if (backdrop != null) backdrop.SetActive(false);
+            if (Current == this) Current = null;
+            if (!ownsPause) return;
+            ownsPause = false;
+            Time.timeScale = previousTimeScale;
+            if (follow != null) follow.enabled = followWasEnabled;
+        }
+
+        public bool Open()
+        {
+            if (IsVisible) return true;
+            var layout = FindFirstObjectByType<Building.FacilityLayout>();
+            if (layout != null && layout.Editing) return false;
+            var shop = FindFirstObjectByType<Building.FacilityShopHud>();
+            if (Time.timeScale <= 0 && Current == null && FacilityDetailsHud.Current?.IsOpen != true && shop?.IsOpen != true) return false;
+            Current?.Dismiss();
+            FacilityDetailsHud.Current?.Close();
+            if (shop != null && shop.IsOpen) shop.Close();
+            previousTimeScale = Time.timeScale; Time.timeScale = 0; ownsPause = true;
+            follow = Camera.main != null ? Camera.main.GetComponent<Player.CameraFollow>() : null;
+            if (follow != null) { followWasEnabled = follow.enabled; follow.enabled = false; }
+            FindFirstObjectByType<VirtualJoystick>()?.OnCancel(null);
+            IsDismissed = false; Current = this;
+            if (backdrop != null) { backdrop.transform.SetAsLastSibling(); backdrop.SetActive(true); }
+            transform.SetAsLastSibling(); SetVisible(true); Fit();
+            return true;
+        }
+
+        void Fit()
+        {
+            if (!(transform.parent is RectTransform parent)) return;
+            float scale = Mathf.Min(1, (parent.rect.width - 40) / Panel.sizeDelta.x, (parent.rect.height - 80) / Panel.sizeDelta.y);
+            Panel.localScale = Vector3.one * Mathf.Max(.1f, scale);
+        }
+        void Update()
+        {
+            if (!IsVisible) return;
+            if (Keyboard.current?.escapeKey.wasPressedThisFrame == true) Dismiss();
+            else Fit();
+        }
+        void OnDisable() => Dismiss();
+        void OnDestroy()
+        {
+            Dismiss();
+            if (backdrop != null) Restaurant.BurgerVisual.Release(backdrop);
         }
 
         public void ResetDismissed() => IsDismissed = false;

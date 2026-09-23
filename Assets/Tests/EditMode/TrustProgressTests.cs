@@ -87,7 +87,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(card, Is.Not.Null);
             Assert.That(card.activeInHierarchy, Is.True);
             Assert.That(card.GetComponent<Button>().interactable, Is.False);
-            Assert.That(card.transform.Find("Detail").GetComponent<Text>().text, Does.Contain("Lv.4"));
+            Assert.That(card.transform.Find("Detail").GetComponent<Text>().text, Does.Contain("4级"));
             Assert.That(layout.BeginPurchase(FacilityKind.BurgerMachine), Is.Null);
             shop.Close();
             goals.Restore(4, 0, 0);

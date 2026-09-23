@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 16:26:02Z" end-time="2026-09-22 16:26:02Z" duration="0.2090015">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:26:02Z" end-time="2026-09-22 16:26:02Z" duration="0.209002" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1795" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs089-staff/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:26:02Z" end-time="2026-09-22 16:26:02Z" duration="0.196466" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="28314" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1796" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:26:02Z" end-time="2026-09-22 16:26:02Z" duration="0.191013" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1797" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:26:02Z" end-time="2026-09-22 16:26:02Z" duration="0.185379" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1798" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:26:02Z" end-time="2026-09-22 16:26:02Z" duration="0.179832" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1310" name="RestaurantWorkerTests" fullname="BurgerShop.Tests.EditMode.RestaurantWorkerTests" classname="BurgerShop.Tests.EditMode.RestaurantWorkerTests" runstate="Runnable" testcasecount="23" result="Failed" site="Child" start-time="2026-09-22 16:26:02Z" end-time="2026-09-22 16:26:02Z" duration="0.169108" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1332" name="TwoHiredWorkersStayActiveAfterWorkingAndRestore" fullname="BurgerShop.Tests.EditMode.RestaurantWorkerTests.TwoHiredWorkersStayActiveAfterWorkingAndRestore" methodname="TwoHiredWorkersStayActiveAfterWorkingAndRestore" classname="BurgerShop.Tests.EditMode.RestaurantWorkerTests" runstate="Runnable" seed="58360176" result="Failed" start-time="2026-09-22 16:26:02Z" end-time="2026-09-22 16:26:02Z" duration="0.161646" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: 2
+  But was:  0
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.RestaurantWorkerTests.TwoHiredWorkersStayActiveAfterWorkingAndRestore () [0x0021f] in /private/tmp/bs089-staff/Assets/Tests/EditMode/RestaurantWorkerTests.cs:501
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

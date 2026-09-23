@@ -1,4 +1,5 @@
 using BurgerShop.Building;
+using BurgerShop.Customer;
 using BurgerShop.Economy;
 using BurgerShop.Player;
 using BurgerShop.Restaurant;
@@ -88,6 +89,89 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(quote.BasePrice,Is.EqualTo(200));Assert.That(quote.FullPrice,Is.EqualTo(full));
             Assert.That(quote.Invested,Is.EqualTo(30));Assert.That(quote.Due,Is.EqualTo(full-30));
             Assert.That(quote.Equals(new FacilityPurchaseQuote(FacilityKind.BurgerMachine,owned+1,30)),Is.False);
+        }
+
+        [Test] public void LiveObservationDistinguishesSupplyTransportAndServiceIncludingHandoffs()
+        {
+            var actor=Carrier("Operator");
+            var wallet=root.AddComponent<RestaurantWallet>();
+            var queue=root.AddComponent<CustomerQueue>();
+            queue.OrderQuantityFactory=()=>1;
+            queue.Configure(new Vector3(0,0,-5),new Vector3(0,0,-4),
+                new[]{Vector3.zero,new Vector3(0,0,-1.5f),new Vector3(0,0,-3)},Vector3.right);
+            for(int i=0;i<1800;i++)queue.Advance(1f/60);
+            Assert.That(queue.Count,Is.EqualTo(3));
+            Assert.That(queue.ReadyCustomer,Is.Not.Null);
+            var stock=root.AddComponent<CounterStock>();stock.Configure(null,null);
+            var service=root.AddComponent<BurgerServingZone>();
+            service.Configure(queue,actor,wallet,actor.transform,new[]{Vector3.one*10},stock,(DiningArea)null);
+            var machine=root.AddComponent<ProductionStation>();machine.Configure(null,null,null);
+            var priority=new InvestmentPriority();
+
+            InvestmentObservation.Read(service,priority,0);InvestmentObservation.Read(service,priority,10);
+            Assert.That(priority.Persistent(InvestmentNeed.Production,"Burger"),Is.True);
+            machine.Advance(3);Assert.That(actor.TryCollectFrom(machine),Is.True);
+            Assert.That(machine.Stock,Is.Zero,"carried food still counts as available upstream stock");
+            InvestmentObservation.Read(service,priority,20);InvestmentObservation.Read(service,priority,30);
+            Assert.That(priority.Persistent(InvestmentNeed.Production,"Burger"),Is.False);
+            Assert.That(priority.Persistent(InvestmentNeed.Transport,"Burger"),Is.True);
+
+            Assert.That(stock.TryPlaceFrom(actor),Is.True);
+            machine.Advance(3);Assert.That(actor.TryCollectFrom(machine),Is.True);Assert.That(stock.TryPlaceFrom(actor),Is.True);
+            InvestmentObservation.Read(service,priority,40);
+            Assert.That(service.TryServeFrom(actor),Is.True);Assert.That(service.IsHandoffActive,Is.True);
+            InvestmentObservation.Read(service,priority,50);
+            Assert.That(priority.Persistent(InvestmentNeed.Service,"Burger"),Is.True,"handoff animation must not erase waiting demand");
+            Assert.That(priority.Persistent(InvestmentNeed.Transport,"Burger"),Is.False);
+            service.Advance(BurgerServingZone.HandoffDuration);
+            queue.Advance(.01f);
+            Assert.That(queue.FrontCustomer.HasReachedSlot,Is.False,"next customer is stepping forward");
+            InvestmentObservation.Read(service,priority,60);InvestmentObservation.Read(service,priority,70);
+            Assert.That(priority.Persistent(InvestmentNeed.Service,"Burger"),Is.True,"advancing the queue is still service demand");
+            Assert.That(priority.Priority(InvestmentNeed.Service,"Burger",false),
+                Is.LessThan(priority.Priority(InvestmentNeed.Production,"Burger",false)));
+        }
+
+        [Test] public void DirtyTablesDoNotProduceABuyMoreSeatsRecommendation()
+        {
+            var area=root.AddComponent<DiningArea>();
+            var table=DiningTable.Create(root.transform,Vector3.zero);area.Configure(new[]{table});
+            for(int i=0;i<table.SeatCount;i++)
+            {
+                var guest=CustomerAgent.Create(root.transform,i+1,Vector3.one*10,1);
+                Assert.That(table.TryAssignSeat(guest,out _,out _),Is.True);
+            }
+            var priority=new InvestmentPriority();
+            InvestmentObservation.Read(area,priority,0);InvestmentObservation.Read(area,priority,10);
+            Assert.That(priority.Persistent(InvestmentNeed.Seats,"dining"),Is.True);
+            table.LeaveMealTrash(0);
+            InvestmentObservation.Read(area,priority,20);InvestmentObservation.Read(area,priority,30);
+            Assert.That(priority.Persistent(InvestmentNeed.Seats,"dining"),Is.False);
+        }
+
+        [Test] public void PurchasedTierRestoresWithoutPaymentAndUpgradePublishesCommittedState()
+        {
+            const string id="custom:08300000000000000000000000000009";
+            var actor=Carrier("Player");var wallet=root.AddComponent<RestaurantWallet>();
+            var goals=root.AddComponent<SessionGoalTracker>();
+            var growth=root.AddComponent<GrowthUpgrades>();growth.Configure(wallet,goals,actor,null);
+            int applied=0;
+            growth.Register(new GrowthUpgrades.Offer{Id=id,Target=root.transform,Costs=new[]{100,200},Apply=n=>applied=n});
+            wallet.RestoreProgress(500,0);
+            growth.RestorePurchasedLevel(id,2);
+            Assert.That(growth.Level(id),Is.EqualTo(2));Assert.That(applied,Is.EqualTo(2));
+            Assert.That(wallet.Coins,Is.EqualTo(500));Assert.That(goals.Stars,Is.Zero);
+            wallet.CoinsSpent+=amount=>
+            {
+                Assert.That(amount,Is.EqualTo(200));Assert.That(growth.Level(id),Is.EqualTo(3));
+                Assert.That(applied,Is.EqualTo(3));Assert.That(goals.Stars,Is.EqualTo(2));
+                Assert.That(growth.TryBuy(id,3),Is.False);
+            };
+            Assert.That(growth.TryBuy(id,1),Is.False);
+            Assert.That(growth.TryBuy(id,2),Is.True);Assert.That(wallet.Coins,Is.EqualTo(300));
+            growth.RestorePurchasedLevel(id,1);
+            Assert.That(growth.Level(id),Is.EqualTo(3),"an older duplicate snapshot cannot lower an owned tier");
+            Assert.That(applied,Is.EqualTo(3));Assert.That(goals.Stars,Is.EqualTo(2));
         }
     }
 }

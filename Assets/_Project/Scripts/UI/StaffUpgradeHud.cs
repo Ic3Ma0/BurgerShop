@@ -7,6 +7,8 @@ namespace BurgerShop.UI
     {
         StaffUpgradeBoard board;
         StatUpgradePopup popup;
+        int expectedSpeed, expectedCarry;
+        float nextPurchase;
 
         public StatUpgradePopup Popup => popup;
         public bool IsVisible => popup != null && popup.IsVisible;
@@ -24,15 +26,25 @@ namespace BurgerShop.UI
         {
             board = upgrades;
             popup = sheet;
+            if (popup != null) popup.Subtitle.text = "Upgrades apply to all hired staff";
             popup?.Bind(ClickSpeed, ClickCarry, ClickClose);
             Refresh();
         }
 
-        public void ClickSpeed() => board?.TryBuySpeed();
+        public void ClickSpeed() { if (IsVisible && Time.unscaledTime >= nextPurchase) { nextPurchase = Time.unscaledTime + .3f; board.TryBuySpeed(expectedSpeed); Refresh(); } }
 
-        public void ClickCarry() => board?.TryBuyCarry();
+        public void ClickCarry() { if (IsVisible && Time.unscaledTime >= nextPurchase) { nextPurchase = Time.unscaledTime + .3f; board.TryBuyCarry(expectedCarry); Refresh(); } }
 
         public void ClickClose() => popup?.Dismiss();
+
+        public bool CanSelect(RestaurantWorker worker) => board != null && board.Owns(worker);
+        public bool Open(RestaurantWorker worker = null)
+        {
+            if (board == null || (worker != null && !CanSelect(worker)) || !popup.Open()) return false;
+            nextPurchase = 0; Refresh(); return true;
+        }
+
+        void OnDisable() => ClickClose();
 
         public void RefreshNow() => Refresh();
 
@@ -41,19 +53,8 @@ namespace BurgerShop.UI
         void Refresh()
         {
             if (popup == null) return;
-            bool inRange = board != null && board.IsPlayerInRange;
-            if (!inRange)
-            {
-                popup.ResetDismissed();
-                popup.SetVisible(false);
-                return;
-            }
-            if (popup.IsDismissed)
-            {
-                popup.SetVisible(false);
-                return;
-            }
-            popup.SetVisible(true);
+            if (!IsVisible || board == null) return;
+            expectedSpeed = board.SpeedTier; expectedCarry = board.CarryTier;
             if (!board.CanUpgradeStaff)
             {
                 string reason = !board.HasStaff ? "Hire staff first" : "Expand main hall first";

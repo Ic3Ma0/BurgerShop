@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Failed(Child)" total="6" passed="2" failed="4" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 10:23:37Z" end-time="2026-09-22 10:23:38Z" duration="1.0213594">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="610" result="Failed" site="Child" start-time="2026-09-22 10:23:37Z" end-time="2026-09-22 10:23:38Z" duration="1.021359" total="6" passed="2" failed="4" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1724" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs083-economy/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="610" result="Failed" site="Child" start-time="2026-09-22 10:23:37Z" end-time="2026-09-22 10:23:38Z" duration="1.016825" total="6" passed="2" failed="4" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="93980" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1725" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="610" result="Failed" site="Child" start-time="2026-09-22 10:23:37Z" end-time="2026-09-22 10:23:38Z" duration="1.014644" total="6" passed="2" failed="4" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1726" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="610" result="Failed" site="Child" start-time="2026-09-22 10:23:37Z" end-time="2026-09-22 10:23:38Z" duration="1.012633" total="6" passed="2" failed="4" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1727" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="610" result="Failed" site="Child" start-time="2026-09-22 10:23:37Z" end-time="2026-09-22 10:23:38Z" duration="1.010576" total="6" passed="2" failed="4" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1203" name="GrowthEconomyTests" fullname="BurgerShop.Tests.EditMode.GrowthEconomyTests" classname="BurgerShop.Tests.EditMode.GrowthEconomyTests" runstate="Runnable" testcasecount="6" result="Failed" site="Child" start-time="2026-09-22 10:23:37Z" end-time="2026-09-22 10:23:38Z" duration="1.005035" total="6" passed="2" failed="4" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1207" name="BagRecipeConservesBothIngredientsAndTwoBagOrderSettlesOnce" fullname="BurgerShop.Tests.EditMode.GrowthEconomyTests.BagRecipeConservesBothIngredientsAndTwoBagOrderSettlesOnce" methodname="BagRecipeConservesBothIngredientsAndTwoBagOrderSettlesOnce" classname="BurgerShop.Tests.EditMode.GrowthEconomyTests" runstate="Runnable" seed="898041043" result="Passed" start-time="2026-09-22 10:23:37Z" end-time="2026-09-22 10:23:38Z" duration="0.136706" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1209" name="DiningTipIsLockedOnSeatingAndBagConstructionRestoresPartially" fullname="BurgerShop.Tests.EditMode.GrowthEconomyTests.DiningTipIsLockedOnSeatingAndBagConstructionRestoresPartially" methodname="DiningTipIsLockedOnSeatingAndBagConstructionRestoresPartially" classname="BurgerShop.Tests.EditMode.GrowthEconomyTests" runstate="Runnable" seed="1172010679" result="Failed" start-time="2026-09-22 10:23:38Z" end-time="2026-09-22 10:23:38Z" duration="0.015292" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.GrowthEconomyTests.DiningTipIsLockedOnSeatingAndBagConstructionRestoresPartially () [0x0005a] in /private/tmp/bs083-economy/Assets/Tests/EditMode/GrowthEconomyTests.cs:150
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1206" name="OldSaveCompensationIsOneTimeAndVersionNineKeepsManualRank" fullname="BurgerShop.Tests.EditMode.GrowthEconomyTests.OldSaveCompensationIsOneTimeAndVersionNineKeepsManualRank" methodname="OldSaveCompensationIsOneTimeAndVersionNineKeepsManualRank" classname="BurgerShop.Tests.EditMode.GrowthEconomyTests" runstate="Runnable" seed="440075213" result="Passed" start-time="2026-09-22 10:23:38Z" end-time="2026-09-22 10:23:38Z" duration="0.032117" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1208" name="OneWorkerCanCompleteAllThreeLines" fullname="BurgerShop.Tests.EditMode.GrowthEconomyTests.OneWorkerCanCompleteAllThreeLines" methodname="OneWorkerCanCompleteAllThreeLines" classname="BurgerShop.Tests.EditMode.GrowthEconomyTests" runstate="Runnable" seed="341382414" result="Failed" start-time="2026-09-22 10:23:38Z" end-time="2026-09-22 10:23:38Z" duration="0.783001" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[dining=0 drive=0 bag=0 worker=ToPackage/Pack pos=(7.10, 1.05, -17.00) raw=0 bags=0 output=0 stock=0]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.GrowthEconomyTests.OneWorkerCanCompleteAllThreeLines () [0x001a6] in /private/tmp/bs083-economy/Assets/Tests/EditMode/GrowthEconomyTests.cs:142
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1204" name="TablePurchaseAwardsOnceAndRankRequiresConfirmation" fullname="BurgerShop.Tests.EditMode.GrowthEconomyTests.TablePurchaseAwardsOnceAndRankRequiresConfirmation" methodname="TablePurchaseAwardsOnceAndRankRequiresConfirmation" classname="BurgerShop.Tests.EditMode.GrowthEconomyTests" runstate="Runnable" seed="2113318985" result="Failed" start-time="2026-09-22 10:23:38Z" end-time="2026-09-22 10:23:38Z" duration="0.017893" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.GrowthEconomyTests.TablePurchaseAwardsOnceAndRankRequiresConfirmation () [0x0018d] in /private/tmp/bs083-economy/Assets/Tests/EditMode/GrowthEconomyTests.cs:56
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1205" name="UpgradePathEarnsEnoughStarsWithoutAutomaticRanks" fullname="BurgerShop.Tests.EditMode.GrowthEconomyTests.UpgradePathEarnsEnoughStarsWithoutAutomaticRanks" methodname="UpgradePathEarnsEnoughStarsWithoutAutomaticRanks" classname="BurgerShop.Tests.EditMode.GrowthEconomyTests" runstate="Runnable" seed="1549946431" result="Failed" start-time="2026-09-22 10:23:38Z" end-time="2026-09-22 10:23:38Z" duration="0.014433" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.GrowthEconomyTests.UpgradePathEarnsEnoughStarsWithoutAutomaticRanks () [0x0009e] in /private/tmp/bs083-economy/Assets/Tests/EditMode/GrowthEconomyTests.cs:66
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

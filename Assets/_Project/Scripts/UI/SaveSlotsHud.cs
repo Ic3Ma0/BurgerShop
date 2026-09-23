@@ -120,6 +120,7 @@ namespace BurgerShop.UI
             panel.gameObject.SetActive(true);
             backdrop.gameObject.SetActive(true);
             Refresh();
+            Fit();
         }
 
         public void Close()
@@ -203,8 +204,18 @@ namespace BurgerShop.UI
         void Update()
         {
             if (!open) return;
+            Fit();
             var keyboard = UnityEngine.InputSystem.Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) Close();
+        }
+
+        void Fit()
+        {
+            var available = ((RectTransform)transform).rect.size;
+            var sheet = (RectTransform)panel;
+            float scale = Mathf.Min(1f, (available.x - 40f) / sheet.sizeDelta.x,
+                (available.y - 60f) / sheet.sizeDelta.y);
+            sheet.localScale = Vector3.one * Mathf.Max(.1f, scale);
         }
 
         void OnDisable()

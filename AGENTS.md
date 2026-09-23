@@ -18,7 +18,14 @@
 
 新增玩法、扩建、成长或经济设计时，遵循 `docs/design/BURGER_RESTAURANT_DIRECTION.md` 的“新增玩法的分析要求”，并填写 `docs/specs/SPEC_TEMPLATE.md` 的相关部分。提出实现方案前，说明玩家当前需求、现实餐厅逻辑、独特决策、解锁顺序及经济影响。内容更多本身不构成设计理由；历史数值快照必须与当前代码核对。
 
-基线快照：`docs/PRODUCT_AGENT_HANDOFF.md`。存档规则：`docs/goal-08-save.md`。`docs/goal-09-device-vivo.md` 仅为历史真机证据，不是当前验收要求。
+基线快照：`docs/PRODUCT_AGENT_HANDOFF.md`。存档规则：`docs/goal-08-save.md`。`docs/goal-09-device-vivo.md` 仅为历史真机证据，不是当前验收要求。当前任务状态：`docs/CURRENT_TASK.md`。
+
+## 接手与交接（跨工具）
+
+- 当前任务状态唯一入口：`docs/CURRENT_TASK.md`。任何工具接手时先读它，再读相关 spec 与 `docs/architecture/CODE_BOUNDARIES.md`；旧聊天记录不是当前代码事实。
+- 接手时先核对分支、HEAD、已暂存、未暂存和未跟踪文件；保护现有修改，不清理、重置或覆盖，也不为匹配某份文档而回退本地代码。
+- 每个可验证检查点（功能可跑、修复确认、发现阻塞）更新 `CURRENT_TASK.md`；交付后把执行历史归档进对应 spec 的"技术执行与交接"区。交接不依赖上一个工具的最后一次对话。
+- 修复或实现当前需求时，不顺手重构无关系统；发现别的问题记入 `CURRENT_TASK.md` 的待处理清单，本次范围照旧。
 
 ## 开发前明确代码边界
 
@@ -59,4 +66,4 @@
 
 ## 语言
 
-用户沟通和 spec 使用中文。游戏内文案使用英文，除非 spec 明确更改。
+用户沟通、spec 和游戏内玩家可见文案使用简体中文（BS-SPEC-086）。代码标识、存档键与内部规则字符串不翻译。

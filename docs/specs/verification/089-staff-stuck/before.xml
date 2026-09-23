@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Failed(Child)" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.4202821">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.420282" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1795" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs089-staff/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.404496" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="27927" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1796" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.393625" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1797" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.382766" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1798" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="663" result="Failed" site="Child" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.376671" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1310" name="RestaurantWorkerTests" fullname="BurgerShop.Tests.EditMode.RestaurantWorkerTests" classname="BurgerShop.Tests.EditMode.RestaurantWorkerTests" runstate="Runnable" testcasecount="23" result="Failed" site="Child" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.363167" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-suite type="ParameterizedMethod" id="1314" name="WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace" fullname="BurgerShop.Tests.EditMode.RestaurantWorkerTests.WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace" classname="BurgerShop.Tests.EditMode.RestaurantWorkerTests" runstate="Runnable" testcasecount="3" result="Failed" site="Child" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.358614" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <failure>
+                  <message><![CDATA[One or more child tests had errors]]></message>
+                </failure>
+                <test-case id="1311" name="WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace(0.71f)" fullname="BurgerShop.Tests.EditMode.RestaurantWorkerTests.WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace(0.71f)" methodname="WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace" classname="BurgerShop.Tests.EditMode.RestaurantWorkerTests" runstate="Runnable" seed="2125346056" result="Failed" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.333513" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <failure>
+                    <message><![CDATA[  Outside serving range must start walking, not re-enter Serving in place
+  Expected: ToCounter
+  But was:  Serving
+]]></message>
+                    <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.RestaurantWorkerTests.WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace (System.Single distance) [0x00098] in /private/tmp/bs089-staff/Assets/Tests/EditMode/RestaurantWorkerTests.cs:125
+]]></stack-trace>
+                  </failure>
+                </test-case>
+                <test-case id="1312" name="WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace(0.85f)" fullname="BurgerShop.Tests.EditMode.RestaurantWorkerTests.WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace(0.85f)" methodname="WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace" classname="BurgerShop.Tests.EditMode.RestaurantWorkerTests" runstate="Runnable" seed="1776266179" result="Failed" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.008118" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <failure>
+                    <message><![CDATA[  Outside serving range must start walking, not re-enter Serving in place
+  Expected: ToCounter
+  But was:  Serving
+]]></message>
+                    <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.RestaurantWorkerTests.WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace (System.Single distance) [0x00098] in /private/tmp/bs089-staff/Assets/Tests/EditMode/RestaurantWorkerTests.cs:125
+]]></stack-trace>
+                  </failure>
+                </test-case>
+                <test-case id="1313" name="WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace(0.99f)" fullname="BurgerShop.Tests.EditMode.RestaurantWorkerTests.WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace(0.99f)" methodname="WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace" classname="BurgerShop.Tests.EditMode.RestaurantWorkerTests" runstate="Runnable" seed="280932291" result="Failed" start-time="2026-09-22 16:23:43Z" end-time="2026-09-22 16:23:43Z" duration="0.007189" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <failure>
+                    <message><![CDATA[  Outside serving range must start walking, not re-enter Serving in place
+  Expected: ToCounter
+  But was:  Serving
+]]></message>
+                    <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.RestaurantWorkerTests.WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace (System.Single distance) [0x00098] in /private/tmp/bs089-staff/Assets/Tests/EditMode/RestaurantWorkerTests.cs:125
+]]></stack-trace>
+                  </failure>
+                  <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

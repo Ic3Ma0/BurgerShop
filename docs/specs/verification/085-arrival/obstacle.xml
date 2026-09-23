@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 12:23:46Z" end-time="2026-09-22 12:23:46Z" duration="0.1782715">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="640" result="Passed" start-time="2026-09-22 12:23:46Z" end-time="2026-09-22 12:23:46Z" duration="0.178272" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1765" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs085-arrival/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="640" result="Passed" start-time="2026-09-22 12:23:46Z" end-time="2026-09-22 12:23:46Z" duration="0.167356" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="5664" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1766" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="640" result="Passed" start-time="2026-09-22 12:23:46Z" end-time="2026-09-22 12:23:46Z" duration="0.158951" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1767" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="640" result="Passed" start-time="2026-09-22 12:23:46Z" end-time="2026-09-22 12:23:46Z" duration="0.150812" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1768" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="640" result="Passed" start-time="2026-09-22 12:23:46Z" end-time="2026-09-22 12:23:46Z" duration="0.143033" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1714" name="Spec085ArrivalTests" fullname="BurgerShop.Tests.EditMode.Spec085ArrivalTests" classname="BurgerShop.Tests.EditMode.Spec085ArrivalTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-22 12:23:46Z" end-time="2026-09-22 12:23:46Z" duration="0.132649" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1718" name="CurrentObstacleStillRequiresSafeDetourAfterShortening" fullname="BurgerShop.Tests.EditMode.Spec085ArrivalTests.CurrentObstacleStillRequiresSafeDetourAfterShortening" methodname="CurrentObstacleStillRequiresSafeDetourAfterShortening" classname="BurgerShop.Tests.EditMode.Spec085ArrivalTests" runstate="Runnable" seed="643522652" result="Passed" start-time="2026-09-22 12:23:46Z" end-time="2026-09-22 12:23:46Z" duration="0.126817" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

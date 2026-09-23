@@ -26,15 +26,15 @@ namespace BurgerShop.Building
         public void RefreshNavigation(){navigation=null;navigationRevision=-1;Revision++;}
         public Vector3[] Route(Vector3 from,Vector3 to)
         {
-            if(navigation==null||navigationRevision!=Revision){Physics.SyncTransforms();var floors=Floors();if(RestroomExpansion.Current?.Built==true)floors.Add(RestroomExpansion.Floor);floors.Add(Rect.MinMaxRect(-36,-25,-10.2f,-21));floors.Add(Rect.MinMaxRect(-13.8f,-23.5f,-10.2f,-14));navigation=new LayoutNavigation(floors,NavigationObstacles());navigationRevision=Revision;}
+            if(navigation==null||navigationRevision!=Revision){Physics.SyncTransforms();var floors=Floors();if(RestroomExpansion.Current?.Built==true)floors.Add(RestroomExpansion.Floor);floors.Add(Rect.MinMaxRect(-36,-25,-10.2f,-21));floors.Add(Rect.MinMaxRect(-13.8f,-23.5f,-10.2f,-14));navigation=new LayoutNavigation(floors,NavigationObstacles(), ActorObstacles.Radius + .05f);navigationRevision=Revision;}
             return navigation.Route(from,to);
         }
         List<PlacementFootprint> NavigationObstacles()
         {
             var result=new List<PlacementFootprint>();
-            foreach(var c in GetComponentsInChildren<BoxCollider>())
+            foreach(var c in GetComponentsInChildren<Collider>())
             {
-                if(!c.enabled||c.isTrigger||c.GetComponentInParent<PlayerMotor>()!=null||c.GetComponentInParent<CustomerAgent>()!=null||c.GetComponentInParent<RestaurantWorker>()!=null)continue;
+                if(!ActorObstacles.IsObstacle(c))continue;
                 var b=c.bounds;if(b.max.y<.2f||b.min.y>1.8f||c.name.Contains("Floor")||c.name=="Road"||c.name.Contains("Lane"))continue;
                 result.Add(new PlacementFootprint(new Vector2(b.center.x,b.center.z),new Vector2(b.size.x,b.size.z),0));
             }
@@ -174,7 +174,12 @@ namespace BurgerShop.Building
             return Candidate;
         }
         public bool BeginMove(FacilityInstance instance)
-        {Cancel();if(instance==null||!instances.ContainsKey(instance.Id)||!instance.Available)return false;Moving=instance;return true;}
+        {
+            Cancel();if(instance==null||!instances.ContainsKey(instance.Id)||!instance.Available)return false;
+            foreach(var table in instance.GetComponentsInChildren<DiningTable>())
+                if(table.OccupiedSeats>0)return Fail("请等顾客用餐结束后再移动餐桌");
+            Moving=instance;return true;
+        }
         public void Cancel()
         {if(Candidate!=null){Candidate.gameObject.SetActive(false);BurgerVisual.Release(Candidate.gameObject);}Candidate=null;Moving=null;LastError="";}
         public List<Rect> Floors()
@@ -320,6 +325,11 @@ namespace BurgerShop.Building
             if(Committing)return false;
             var chosen=Candidate!=null?Candidate:Moving;
             if(!CanPlace(chosen,position,yaw,true))return false;
+            var shape=chosen.Footprint(position,yaw);
+            bool Occupies(Vector3 p)=>PlacementGeometry.Overlaps(shape,new PlacementFootprint(new Vector2(p.x,p.z),Vector2.one*.8f,0));
+            if(player!=null&&Occupies(player.transform.position))return Fail("请避开人物后再摆放");
+            foreach(var actor in GetComponentsInChildren<CustomerAgent>())if(Occupies(actor.transform.position))return Fail("请避开顾客后再摆放");
+            foreach(var actor in GetComponentsInChildren<RestaurantWorker>())if(Occupies(actor.transform.position))return Fail("请避开员工后再摆放");
             bool buying=Candidate!=null;
             bool spentOnPurchase=buying;
             var original=buying?OriginalPad(chosen.Kind):null;
@@ -341,7 +351,11 @@ namespace BurgerShop.Building
                     buying=false;
                 }
             }
+            // Queue guests are children of their counter for ownership, not passengers.
+            var guests=chosen.GetComponentsInChildren<CustomerAgent>();
+            var guestPositions=Array.ConvertAll(guests,g=>g.transform.position);
             chosen.transform.SetPositionAndRotation(new Vector3(position.x,0,position.z),Quaternion.Euler(0,yaw,0));
+            for(int i=0;i<guests.Length;i++)guests[i].transform.position=guestPositions[i];
             if(Candidate!=null)
             {
                 chosen.transform.SetParent(transform,true);chosen.gameObject.SetActive(true);

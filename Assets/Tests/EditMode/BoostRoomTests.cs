@@ -26,6 +26,7 @@ namespace BurgerShop.Tests.EditMode
         [SetUp]
         public void SetUp()
         {
+            Time.timeScale = 1;
             root = new GameObject("BoostRoomTest");
             Material wall = RuntimeMaterials.Create(new Color(0.45f, 0.32f, 0.18f));
             Material floor = RuntimeMaterials.Create(new Color(0.76f, 0.62f, 0.42f));
@@ -75,17 +76,19 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(root);
+        public void TearDown() { hud?.ClickClose(); Time.timeScale = 1; Object.DestroyImmediate(root); }
 
         void Enter()
         {
             player.transform.position = ShopLayout.BoostPoint + Vector3.up;
             boost.Advance(0.01f);
+            Assert.That(hud.Open(), Is.True);
             hud.RefreshNow();
         }
 
         void Leave()
         {
+            hud.ClickClose();
             player.transform.position = Vector3.zero;
             boost.Advance(0.01f);
             hud.RefreshNow();
@@ -123,7 +126,8 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(room.transform.Find("TrainingBar"), Is.Null);
             Assert.That(GameObject.Find("BoostUpgradeSpot"), Is.Null);
             Assert.That(Vector3.Distance(room.BoostPoint.position, ShopLayout.BoostPoint), Is.LessThan(0.001f));
-            Assert.That(room.BoostLabel.text, Does.Contain("Player upgrades"));
+            Assert.That(room.BoostLabel.gameObject.activeSelf, Is.False);
+            Assert.That(room.transform.Find("PlayerUpgradePoint"), Is.Null);
             Assert.That(room.transform.Find("CarServiceFloor"),Is.Not.Null);
             Assert.That(GameObject.Find("TrainingSign"),Is.Null);
             Assert.That(room.BoostLabel.text, Does.Not.Contain("pizza").IgnoreCase);
@@ -154,24 +158,26 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void EnteringBoostRoomShowsThePlayerUpgradePopup()
+        public void ApproachingFormerPointDoesNotOpenUntilExplicitSelection()
         {
             Leave();
             Assert.That(hud.IsVisible, Is.False);
             player.transform.position = ShopLayout.BoostPoint + Vector3.up;
             hud.RefreshNow();
             Assert.That(ShopLayout.ContainsBoostUpgradeRange(player.transform.position), Is.True);
+            Assert.That(hud.IsVisible, Is.False);
+            Assert.That(hud.Open(), Is.True);
             Assert.That(hud.IsVisible, Is.True);
-            Assert.That(hud.Popup.TitleLabel.text, Is.EqualTo("Player upgrades"));
-            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("Speed").And.Contain("50"));
-            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("Carry").And.Contain("50"));
-            Assert.That(hud.Popup.CloseLabel.text, Is.EqualTo("Close"));
+            Assert.That(hud.Popup.TitleLabel.text, Is.EqualTo("玩家升级"));
+            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("速度").And.Contain("50"));
+            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("携带").And.Contain("50"));
+            Assert.That(hud.Popup.CloseLabel.text, Is.EqualTo("关闭"));
             Enter();
             Assert.That(hud.IsVisible, Is.True);
         }
 
         [Test]
-        public void ClickSpeedAndCarrySpendIndependentlyAndLeaveCloses()
+        public void SpeedAndCarryKeepTheirPricesAndExplicitCloseEndsSelection()
         {
             int[] prices = { 50,60,70,80,100,110,130,160,190,220,260,310,360,430,510,600,710,830,980,1160 };
             int budget = 2 * Sum(prices, prices.Length);
@@ -185,7 +191,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(boost.SpeedTier, Is.Zero, "Standing no longer buys a combined tier.");
             Assert.That(wallet.Coins, Is.EqualTo(budget));
 
-            hud.ClickSpeed();
+            boost.TryBuySpeed();
             hud.RefreshNow();
             Assert.That(wallet.Coins, Is.EqualTo(budget - 50));
             Assert.That(boost.SpeedTier, Is.EqualTo(1));
@@ -195,7 +201,7 @@ namespace BurgerShop.Tests.EditMode
             Assert.That(hud.IsVisible, Is.True);
             Assert.That(hud.Popup.FirstLabel.text, Does.Contain("60"));
 
-            hud.ClickCarry();
+            boost.TryBuyCarry();
             hud.RefreshNow();
             Assert.That(wallet.Coins, Is.EqualTo(budget - 100));
             Assert.That(boost.CarryTier, Is.EqualTo(1));
@@ -205,12 +211,13 @@ namespace BurgerShop.Tests.EditMode
 
             for (int tier = 2; tier <= 20; tier++)
             {
-                hud.ClickSpeed();
-                hud.ClickCarry();
+                boost.TryBuySpeed();
+                boost.TryBuyCarry();
                 hud.RefreshNow();
                 Assert.That(boost.SpeedTier, Is.EqualTo(tier));
                 Assert.That(boost.CarryTier, Is.EqualTo(tier));
-                Assert.That(motor.MoveSpeed, Is.EqualTo(4.675f * (1f + .15f * Mathf.Min(tier, 6) + .08f * Mathf.Max(0, tier - 6))).Within(0.001f));
+                Assert.That(motor.MoveSpeed, Is.EqualTo(4.675f * (1f + .15f * Mathf.Min(tier, 6) + .08f * Mathf.Max(0, tier - 6))
+                    * (1f + .03f * (tier < 9 ? 0 : (tier - 7) / 2))).Within(0.001f));
                 Assert.That(player.Capacity, Is.EqualTo(4 + Mathf.Min(tier, 8) + Mathf.Max(0, tier - 8) / 2));
                 Assert.That(wallet.Coins, Is.EqualTo(budget - 2 * Sum(prices, tier)));
                 Assert.That(staffBag.Capacity, Is.EqualTo(2));
@@ -225,10 +232,10 @@ namespace BurgerShop.Tests.EditMode
 
             Assert.That(boost.IsMaxLevel, Is.True);
             Assert.That(room.BoostLabel.text, Is.EqualTo("Boost MAX\n20 / 20"));
-            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("MAX"));
-            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("MAX"));
-            hud.ClickSpeed();
-            hud.ClickCarry();
+            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("满级"));
+            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("满级"));
+            boost.TryBuySpeed();
+            boost.TryBuyCarry();
             Assert.That(wallet.Coins, Is.Zero);
             Leave();
             Assert.That(hud.IsVisible, Is.False);
@@ -334,6 +341,11 @@ namespace BurgerShop.Tests.EditMode
             string directory = Path.Combine(Path.GetTempPath(), "BurgerShopPlayerUp-" + System.Guid.NewGuid().ToString("N"));
             try
             {
+                // Configure loads a save or initializes a new game; seed the upgraded state first.
+                Assert.That(new LocalSaveStore(directory).Save(new RestaurantSaveData {
+                    version = RestaurantSaveData.CurrentVersion, coins = 40, completedSales = 2, grillLevel = 1,
+                    playerSpeedTier = 4, playerCarryTier = 2
+                }), Is.True);
                 var persistence = root.AddComponent<RestaurantPersistence>();
                 var grill = root.AddComponent<ProductionStation>();
                 Transform output = new GameObject("Output").transform;

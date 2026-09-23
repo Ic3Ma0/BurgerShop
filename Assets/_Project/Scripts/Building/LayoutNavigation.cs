@@ -10,9 +10,12 @@ namespace BurgerShop.Building
         readonly Rect bounds;
         readonly int width,height;
         readonly bool[] walkable;
+        readonly IReadOnlyList<PlacementFootprint> solids;
+        readonly float clearance;
         int[] regions;
         public LayoutNavigation(IReadOnlyList<Rect> floors,IReadOnlyList<PlacementFootprint> obstacles,float radius=.4f)
         {
+            solids=obstacles;clearance=radius;
             bounds=floors[0];foreach(var floor in floors)bounds=Rect.MinMaxRect(Mathf.Min(bounds.xMin,floor.xMin),Mathf.Min(bounds.yMin,floor.yMin),Mathf.Max(bounds.xMax,floor.xMax),Mathf.Max(bounds.yMax,floor.yMax));
             width=Mathf.CeilToInt(bounds.width/Step);height=Mathf.CeilToInt(bounds.height/Step);walkable=new bool[width*height];
             for(int i=0;i<walkable.Length;i++)
@@ -47,11 +50,21 @@ namespace BurgerShop.Building
             }
         }
         Vector2 Point(int i)=>new Vector2(bounds.xMin+(i%width+.5f)*Step,bounds.yMin+(i/width+.5f)*Step);
+        bool SegmentClear(Vector2 a,Vector2 b)
+        {
+            int steps=Mathf.Max(1,Mathf.CeilToInt(Vector2.Distance(a,b)/.1f));
+            for(int i=0;i<=steps;i++)
+            {
+                var body=new PlacementFootprint(Vector2.Lerp(a,b,i/(float)steps),Vector2.one*clearance*2,0);
+                foreach(var solid in solids)if(PlacementGeometry.Overlaps(body,solid))return false;
+            }
+            return true;
+        }
         int Nearest(Vector2 point)
         {
             int x=Mathf.FloorToInt((point.x-bounds.xMin)/Step),y=Mathf.FloorToInt((point.y-bounds.yMin)/Step),best=-1;float distance=2.25f;
             for(int dy=-3;dy<=3;dy++)for(int dx=-3;dx<=3;dx++)
-            {int nx=x+dx,ny=y+dy;if(nx<0||nx>=width||ny<0||ny>=height)continue;int i=ny*width+nx;if(!walkable[i])continue;float d=(Point(i)-point).sqrMagnitude;if(d<distance){distance=d;best=i;}}
+            {int nx=x+dx,ny=y+dy;if(nx<0||nx>=width||ny<0||ny>=height)continue;int i=ny*width+nx;if(!walkable[i])continue;float d=(Point(i)-point).sqrMagnitude;if(d<distance&&SegmentClear(point,Point(i))){distance=d;best=i;}}
             return best;
         }
         // Flood once, then all service-port checks are constant-time. Do not build a path per port.

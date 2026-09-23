@@ -18,6 +18,8 @@ namespace BurgerShop.Restaurant
         public int CarryCost => StaffBoost.CostForNextTier(CarryTier);
         public bool SpeedIsMax => StaffBoost.IsMax(SpeedTier);
         public bool CarryIsMax => StaffBoost.IsMax(CarryTier);
+        public RestaurantWorker FirstWorker => hiring != null ? hiring.Worker : null;
+        public bool Owns(RestaurantWorker worker) => worker != null && worker.gameObject.activeInHierarchy && hiring != null && System.Linq.Enumerable.Contains(hiring.Workers, worker);
         public bool HasStaff => hiring != null && hiring.HiredCount > 0;
         public bool CanUpgradeStaff => HasStaff && MainHallExpansion.HasAccess
             && (GetComponent<UI.SessionGoalTracker>()?.Allows(ShopRanks.HireRank) ?? true);
@@ -46,9 +48,9 @@ namespace BurgerShop.Restaurant
             ApplyToHired();
         }
 
-        public bool TryBuySpeed() => TryBuy(true);
+        public bool TryBuySpeed(int expectedTier = -1) => TryBuy(true, expectedTier);
 
-        public bool TryBuyCarry() => TryBuy(false);
+        public bool TryBuyCarry(int expectedTier = -1) => TryBuy(false, expectedTier);
 
         public void ApplyTo(RestaurantWorker worker)
         {
@@ -62,9 +64,10 @@ namespace BurgerShop.Restaurant
                 ApplyTo(hiring.Workers[i]);
         }
 
-        bool TryBuy(bool speed)
+        bool TryBuy(bool speed, int expectedTier)
         {
-            if (purchasing || !CanUpgradeStaff || !IsPlayerInRange || wallet == null) return false;
+            if (purchasing || !CanUpgradeStaff || wallet == null) return false;
+            if (expectedTier >= 0 && expectedTier != (speed ? SpeedTier : CarryTier)) return false;
             bool max = speed ? SpeedIsMax : CarryIsMax;
             int cost = speed ? SpeedCost : CarryCost;
             if (max || wallet.Coins < cost) return false;

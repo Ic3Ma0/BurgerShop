@@ -1,0 +1,40 @@
+# 当前任务状态
+
+> 接手任何工作前先读本文件；它只反映"现在"，已交付功能的执行历史在各 spec 的"技术执行与交接"区。每个可验证检查点（功能可跑、修复确认、发现阻塞）更新本文件；交接不依赖上一个工具的最后一次对话。
+
+- 最后更新：2026-09-23 · Codex（PR #20 P1/P2 修复）
+- 分支：`fix/facility-obstacle-routing`（已推送，跟踪 origin 同名分支）
+- 进行中：[PR #20](https://github.com/Ic3Ma0/BurgerShop/pull/20) review 与 091 补验证
+
+## 当前状态：BS-SPEC-083–091 批次已提交，PR #20 待 review
+
+083–091 批次由 Codex 实现（2026-09-23 凌晨止）、Claude Code 核对整理并完成提交推送：
+
+- `ba054b9` 089 员工柜台到达与服务距离（有验证）
+- `76ee841` docs：跨工具交接机制（AGENTS.md「接手与交接」节、本文件、SPEC_TEMPLATE.md 执行区）
+- `7b4d8fd` feat：083 收尾 + 084–091 全部代码、测试与 spec（77 文件，+2328/−345）
+- `66dd3d1` docs：083–088 验证证据（41 文件）
+- PR #20（base `main`）：review 中
+
+## 未完成（阻塞合并）
+
+- 090 的 PR #20 P1/P2 已修复：严格终点可达性、连续入座/离座、桌角路线及拐点步长；本轮 68 项定向回归 67 通过，1 项既有员工读档失败。证据：`docs/specs/verification/090-obstacles/pr20-review/DELIVERY.md`。真实场景已渲染，人工手感仍待复验。
+- 091（纸袋工位商城外观一致）：本任务不修改，仍需其独立验证记录。
+- 089 之后未重跑整体 EditMode 回归，无日志佐证。
+
+## 接手后的下一步
+
+1. 090 已补验证记录；091 由对应任务继续补充独立证据。090 的新增修复与证据追加至当前 PR #20；
+2. 处理 PR review 意见；
+3. 合并后把执行历史归档进各 spec 的"技术执行与交接"区，清空本文件的进行中条目。
+
+## 发现但暂不处理的问题（顺手记录，不自动修）
+
+- 090 扩大回归发现 043 商城三项旧断言失败（旧摆放坐标不在当前小店地块、预览红色、确认后候选仍在）；在隔离副本撤回 090 运行时代码后，同三项同原因失败。非本次引入，不将其记为通过。
+- 员工读档测试 `TwoHiredWorkersStayActiveAfterWorkingAndRestore` 仍失败，089 已保存无修复基线证据。
+
+- PR #18（restroom 家具）、#19（MIT license）为 DRAFT，未处理。
+
+## 已处理记录
+
+- 2026-09-23：用户确认删除本地遗留分支 `chore/project-integrations`（未合并的 Notion/Slack 协作 docs），并清理全部已合并残留分支（`feat/goal-02…09`、`counter-table-serve`、`growth-gameplay`、`shop-rank`、`ui-feel-feedback`、`chore/unity-63-…`、`fix/staff-stuck`）。本地现仅存 `main`、当前分支与 `cursor/restroom-ui-5bab`（PR #18 head）。

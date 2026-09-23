@@ -169,6 +169,20 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
+        public void EnlargedBinCanReceiveTrashOutsideItsPhysicalFootprint()
+        {
+            table.LeaveMealTrash(0);
+            PickupAllOnTable();
+            inventory.transform.position=bin.DropPosition+Vector3.right*1.1f;
+            Assert.That(bin.IsInRange,Is.True,"the player stops outside the enlarged bin, not at its centre");
+            for(int i=0;i<120;i++)bin.Advance(1f/60);
+            Assert.That(trash.Count,Is.Zero);
+            Assert.That(table.OutstandingTrash,Is.Zero);
+            inventory.transform.position=bin.DropPosition+Vector3.right*2;
+            Assert.That(bin.IsInRange,Is.False);
+        }
+
+        [Test]
         public void DumpIsFasterThanTablePickupAndTheBinIsLarger()
         {
             Assert.That(TrashInventory.DumpDuration, Is.LessThan(TrashMotion.Duration));
@@ -280,7 +294,7 @@ namespace BurgerShop.Tests.EditMode
             CustomerAgent second = queue.ReadyCustomer;
             serving.Advance(1f);
             serving.Advance(BurgerServingZone.HandoffDuration);
-            for (int i = 0; i < 240; i++) second.AdvanceDeparture(1f / 60f);
+            for (int i = 0; i < 900 && Vector3.Distance(Flatten(second.transform.position), Flatten(table.WaitPosition)) >= .15f; i++) second.AdvanceDeparture(1f / 60f);
             Assert.That(second.IsEating, Is.False);
             Assert.That(second.IsDining, Is.True);
             Assert.That(second.gameObject.activeInHierarchy, Is.True);

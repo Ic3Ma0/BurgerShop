@@ -112,6 +112,46 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
+        public void WorkerRoutesAroundNewObstacleAndStillDelivers()
+        {
+            var worker=Hire();
+            var layout=root.AddComponent<BurgerShop.Building.FacilityLayout>();
+            layout.Configure(player,wallet,null,null,null,hiring,null,null);
+            var wall=GameObject.CreatePrimitive(PrimitiveType.Cube);wall.transform.SetParent(root.transform);
+            wall.transform.position=new Vector3(3, .8f,1);wall.transform.localScale=new Vector3(1,1.6f,4);
+            Physics.SyncTransforms();layout.RefreshNavigation();
+            for(int i=0;i<3600;i++)
+            {
+                var before=worker.transform.position;
+                AdvanceStaff(1f/60f);
+                Assert.That(ActorObstacles.Clear(before,worker.transform.position),Is.True,"employee crossed a body");
+                if(i==1200){wall.transform.position=new Vector3(2,.8f,-2);Physics.SyncTransforms();layout.RefreshNavigation();}
+            }
+            Assert.That(stock.Count+cashier.CompletedOrders,Is.GreaterThan(0),"employee must deliver, not merely stop safely");
+        }
+
+        [TestCase(.71f)]
+        [TestCase(.85f)]
+        [TestCase(.99f)]
+        public void WorkerClosesCounterArrivalGapInsteadOfLoopingInPlace(float distance)
+        {
+            var worker=Hire();
+            typeof(RestaurantWorker).GetProperty("Job").SetValue(worker,WorkerJob.Serve);
+            typeof(RestaurantWorker).GetProperty("State").SetValue(worker,WorkerState.Serving);
+            var stand=(Vector3)typeof(RestaurantWorker).GetMethod("ServingStand",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(worker,null);
+            worker.transform.position=new Vector3(stand.x+distance,1.05f,stand.z);
+            worker.Advance(.02f);
+            Assert.That(worker.State,Is.EqualTo(WorkerState.ToCounter),"Outside serving range must start walking, not re-enter Serving in place");
+            bool reached=false;
+            for(int i=0;i<1500;i++)
+            {
+                worker.Advance(.02f);
+                if(ShopLayout.Horizontal(worker.transform.position,stand)<=.7f){reached=true;break;}
+            }
+            Assert.That(reached,Is.True,"Worker must reach the actual serving radius");
+        }
+
+        [Test]
         public void HiringNeedsFundsRangeAndAnUninterruptedHold()
         {
             wallet.RecordSale(49);

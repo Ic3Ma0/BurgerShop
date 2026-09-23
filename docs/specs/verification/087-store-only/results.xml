@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="11" result="Passed" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 13:09:39Z" end-time="2026-09-22 13:09:40Z" duration="0.3726921">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="656" result="Passed" start-time="2026-09-22 13:09:39Z" end-time="2026-09-22 13:09:40Z" duration="0.372692" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1785" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs087-store/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="656" result="Passed" start-time="2026-09-22 13:09:39Z" end-time="2026-09-22 13:09:40Z" duration="0.350761" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="10625" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1786" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="656" result="Passed" start-time="2026-09-22 13:09:39Z" end-time="2026-09-22 13:09:40Z" duration="0.348236" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1787" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="656" result="Passed" start-time="2026-09-22 13:09:39Z" end-time="2026-09-22 13:09:40Z" duration="0.345806" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1788" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="656" result="Passed" start-time="2026-09-22 13:09:39Z" end-time="2026-09-22 13:09:40Z" duration="0.343345" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1149" name="FacilityDirectPurchaseTests" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.060207" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1152" name="DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.011903" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1150" name="DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent(Burger)" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent(Burger)" methodname="DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" seed="1189029559" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.008931" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1151" name="DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent(Cola)" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent(Cola)" methodname="DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" seed="55479012" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.000236" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1159" name="EveryTableShapeHasDistinctCachedStylePhotos" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.EveryTableShapeHasDistinctCachedStylePhotos" methodname="EveryTableShapeHasDistinctCachedStylePhotos" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" seed="2131938621" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.032617" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1158" name="GestureRejectsDragLongPressOtherFacilityUiAndMultitouch" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.GestureRejectsDragLongPressOtherFacilityUiAndMultitouch" methodname="GestureRejectsDragLongPressOtherFacilityUiAndMultitouch" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" seed="947339065" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.000619" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1157" name="InsufficientTableMoneyDoesNotLosePartialCredit" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.InsufficientTableMoneyDoesNotLosePartialCredit" methodname="InsufficientTableMoneyDoesNotLosePartialCredit" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" seed="815054878" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.007544" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1156" name="TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.003821" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1153" name="TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(0,Bistro,50)" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(0,Bistro,50)" methodname="TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" seed="771973718" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.001619" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1154" name="TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(25,Diner,80)" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(25,Diner,80)" methodname="TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" seed="245150834" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.000852" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1155" name="TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(80,Patio,120)" fullname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(80,Patio,120)" methodname="TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice" classname="BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests" runstate="Runnable" seed="1312029619" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:33Z" duration="0.000829" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="1675" name="Spec083EconomySceneTests" fullname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests" classname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 13:09:37Z" end-time="2026-09-22 13:09:38Z" duration="0.344953" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1677" name="PlacementRefreshesChangedQuoteBeforeChargingAndCancelIsFree" fullname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests.PlacementRefreshesChangedQuoteBeforeChargingAndCancelIsFree" methodname="PlacementRefreshesChangedQuoteBeforeChargingAndCancelIsFree" classname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests" runstate="Runnable" seed="786579433" result="Passed" start-time="2026-09-22 13:09:33Z" end-time="2026-09-22 13:09:36Z" duration="2.087348" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                </properties>
+              </test-case>
+              <test-case id="1676" name="QuotesWindowUpgradesAndSavedLevelsUseRealSceneOwners" fullname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests.QuotesWindowUpgradesAndSavedLevelsUseRealSceneOwners" methodname="QuotesWindowUpgradesAndSavedLevelsUseRealSceneOwners" classname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests" runstate="Runnable" seed="1372277580" result="Passed" start-time="2026-09-22 13:09:36Z" end-time="2026-09-22 13:09:38Z" duration="2.066899" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1738" name="Spec087StoreOnlyTests" fullname="BurgerShop.Tests.EditMode.Spec087StoreOnlyTests" classname="BurgerShop.Tests.EditMode.Spec087StoreOnlyTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-22 13:09:39Z" end-time="2026-09-22 13:09:40Z" duration="0.322733" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1739" name="HiddenPadsPreserveCreditAndStorePurchaseSurvivesReload" fullname="BurgerShop.Tests.EditMode.Spec087StoreOnlyTests.HiddenPadsPreserveCreditAndStorePurchaseSurvivesReload" methodname="HiddenPadsPreserveCreditAndStorePurchaseSurvivesReload" classname="BurgerShop.Tests.EditMode.Spec087StoreOnlyTests" runstate="Runnable" seed="1929587736" result="Passed" start-time="2026-09-22 13:09:38Z" end-time="2026-09-22 13:09:40Z" duration="2.070787" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

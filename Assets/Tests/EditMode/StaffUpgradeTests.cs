@@ -27,6 +27,7 @@ namespace BurgerShop.Tests.EditMode
         [SetUp]
         public void SetUp()
         {
+            Time.timeScale = 1;
             root = new GameObject("StaffUpgradeTest");
             Material wall = RuntimeMaterials.Create(new Color(0.45f, 0.32f, 0.18f));
             Material floor = RuntimeMaterials.Create(new Color(0.76f, 0.62f, 0.42f));
@@ -88,7 +89,7 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(root);
+        public void TearDown() { hud?.ClickClose(); Time.timeScale = 1; Object.DestroyImmediate(root); }
 
         Transform Point(string name, Vector3 position)
         {
@@ -118,11 +119,13 @@ namespace BurgerShop.Tests.EditMode
         void EnterHr()
         {
             player.transform.position = ShopLayout.HrHirePoint + Vector3.up;
+            Assert.That(hud.Open(), Is.True);
             hud.RefreshNow();
         }
 
         void LeaveHr()
         {
+            hud.ClickClose();
             player.transform.position = Vector3.zero;
             hud.RefreshNow();
         }
@@ -167,18 +170,20 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void ApproachingHrShowsTheStaffUpgradePopup()
+        public void ApproachingHrDoesNotOpenUntilExplicitSelection()
         {
             LeaveHr();
             Assert.That(hud.IsVisible, Is.False);
             player.transform.position = ShopLayout.HrDoor + Vector3.up;
             hud.RefreshNow();
             Assert.That(ShopLayout.ContainsHrUpgradeRange(player.transform.position), Is.True);
+            Assert.That(hud.IsVisible, Is.False);
+            Assert.That(hud.Open(), Is.True);
             Assert.That(hud.IsVisible, Is.True);
-            Assert.That(hud.Popup.TitleLabel.text, Is.EqualTo("Staff upgrades"));
-            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("Speed").And.Contain("Hire staff first"));
-            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("Carry").And.Contain("Hire staff first"));
-            Assert.That(hud.Popup.CloseLabel.text, Is.EqualTo("Close"));
+            Assert.That(hud.Popup.TitleLabel.text, Is.EqualTo("员工升级"));
+            Assert.That(hud.Popup.FirstLabel.text, Does.Contain("速度").And.Contain("先雇用员工"));
+            Assert.That(hud.Popup.SecondLabel.text, Does.Contain("携带").And.Contain("先雇用员工"));
+            Assert.That(hud.Popup.CloseLabel.text, Is.EqualTo("关闭"));
             EnterHr();
             Assert.That(hud.IsVisible, Is.True);
         }
@@ -250,12 +255,14 @@ namespace BurgerShop.Tests.EditMode
         }
 
         [Test]
-        public void LeavingHrClosesThePopup()
+        public void LeavingHrDoesNotCloseAnExplicitSelection()
         {
             EnterHr();
             Assert.That(hud.IsVisible, Is.True);
-            LeaveHr();
-            Assert.That(hud.IsVisible, Is.False);
+            player.transform.position = Vector3.zero;
+            hud.RefreshNow();
+            Assert.That(hud.IsVisible, Is.True);
+            hud.ClickClose();
             player.transform.position = ShopLayout.BoostPoint + Vector3.up;
             hud.RefreshNow();
             Assert.That(hud.IsVisible, Is.False);

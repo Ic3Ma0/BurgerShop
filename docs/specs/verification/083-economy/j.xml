@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="26" result="Failed(Child)" total="26" passed="25" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.3241463">
+  <test-suite type="TestSuite" id="1000" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="630" result="Failed" site="Child" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.324146" total="26" passed="25" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1751" name="BurgerShop.EditModeTests.dll" fullname="/private/tmp/bs083-economy/Library/ScriptAssemblies/BurgerShop.EditModeTests.dll" runstate="Runnable" testcasecount="630" result="Failed" site="Child" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.298735" total="26" passed="25" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="92327" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1752" name="BurgerShop" fullname="BurgerShop" runstate="Runnable" testcasecount="630" result="Failed" site="Child" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.294676" total="26" passed="25" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1753" name="Tests" fullname="BurgerShop.Tests" runstate="Runnable" testcasecount="630" result="Failed" site="Child" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.291046" total="26" passed="25" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1754" name="EditMode" fullname="BurgerShop.Tests.EditMode" runstate="Runnable" testcasecount="630" result="Failed" site="Child" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.287476" total="26" passed="25" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1118" name="DiningTrashTests" fullname="BurgerShop.Tests.EditMode.DiningTrashTests" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.276164" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1129" name="DirtyTableDoesNotBlockACleanNeighbor" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.DirtyTableDoesNotBlockACleanNeighbor" methodname="DirtyTableDoesNotBlockACleanNeighbor" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="1928566346" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.141430" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1125" name="DumpClipIsAShortProceduralRustle" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.DumpClipIsAShortProceduralRustle" methodname="DumpClipIsAShortProceduralRustle" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="792211298" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.004171" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1121" name="DumpFliesIntoTheBinThenCountsAfterTheAnimation" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.DumpFliesIntoTheBinThenCountsAfterTheAnimation" methodname="DumpFliesIntoTheBinThenCountsAfterTheAnimation" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="1718872364" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.004109" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1123" name="DumpIsFasterThanTablePickupAndTheBinIsLarger" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.DumpIsFasterThanTablePickupAndTheBinIsLarger" methodname="DumpIsFasterThanTablePickupAndTheBinIsLarger" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="257028094" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.001557" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1124" name="DumpSoundRequestDoesNotThrowAndDumpStillCompletes" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.DumpSoundRequestDoesNotThrowAndDumpStillCompletes" methodname="DumpSoundRequestDoesNotThrowAndDumpStillCompletes" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="1253149979" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.070289" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1127" name="EachGuestLeavesTwoTrashAndPlayerCanHoldMoreThanFour" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.EachGuestLeavesTwoTrashAndPlayerCanHoldMoreThanFour" methodname="EachGuestLeavesTwoTrashAndPlayerCanHoldMoreThanFour" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="2137986891" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.005236" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1122" name="EnlargedBinCanReceiveTrashOutsideItsPhysicalFootprint" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.EnlargedBinCanReceiveTrashOutsideItsPhysicalFootprint" methodname="EnlargedBinCanReceiveTrashOutsideItsPhysicalFootprint" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="1156177787" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.001792" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1119" name="FinishedMealLeavesExactlyTwoLargePaperWadsAndLocksTheWholeTable" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.FinishedMealLeavesExactlyTwoLargePaperWadsAndLocksTheWholeTable" methodname="FinishedMealLeavesExactlyTwoLargePaperWadsAndLocksTheWholeTable" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="1858005357" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.010868" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1120" name="NearbyPickupFliesThenCountsAfterTheAnimation" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.NearbyPickupFliesThenCountsAfterTheAnimation" methodname="NearbyPickupFliesThenCountsAfterTheAnimation" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="1219050370" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.001730" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1128" name="NextCustomerWaitsBesideADirtyTableFacingItUntilTrashIsCleared" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.NextCustomerWaitsBesideADirtyTableFacingItUntilTrashIsCleared" methodname="NextCustomerWaitsBesideADirtyTableFacingItUntilTrashIsCleared" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="340534700" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.016621" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1126" name="SeatReopensAfterTableTrashIsPickedUp" fullname="BurgerShop.Tests.EditMode.DiningTrashTests.SeatReopensAfterTableTrashIsPickedUp" methodname="SeatReopensAfterTableTrashIsPickedUp" classname="BurgerShop.Tests.EditMode.DiningTrashTests" runstate="Runnable" seed="579822582" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:08:14Z" duration="0.009981" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1673" name="Spec083EconomyPacingTests" fullname="BurgerShop.Tests.EditMode.Spec083EconomyPacingTests" classname="BurgerShop.Tests.EditMode.Spec083EconomyPacingTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-22 10:08:16Z" end-time="2026-09-22 10:15:15Z" duration="418.562740" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1674" name="NewGameToFirstEmployeeWithCollectedIncomeTrace" fullname="BurgerShop.Tests.EditMode.Spec083EconomyPacingTests.NewGameToFirstEmployeeWithCollectedIncomeTrace" methodname="NewGameToFirstEmployeeWithCollectedIncomeTrace" classname="BurgerShop.Tests.EditMode.Spec083EconomyPacingTests" runstate="Runnable" seed="1179198638" result="Passed" start-time="2026-09-22 10:08:14Z" end-time="2026-09-22 10:15:15Z" duration="420.601052" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="900000" />
+                </properties>
+                <output><![CDATA[seconds	event	rank	wallet	floor	income	spent	staff	grill	x	z
+0.00	start;seed=830922;normal speed;no funded grants;menu pause=0	1	0	0	0	0	0	1	-0.50	-8.00
+0.01	pickup	1	0	0	0	0	0	1	-0.50	-8.00
+0.01	sample	1	0	0	0	0	0	1	-0.50	-8.00
+6.98	stock	1	0	0	0	0	0	1	2.14	-6.70
+10.00	sample	1	0	0	0	0	0	1	1.37	-6.71
+20.00	sample	1	0	0	0	0	0	1	-0.97	-6.46
+27.67	serve	1	0	0	0	0	0	1	-1.18	-4.03
+27.86	pickup	1	0	0	0	0	0	1	-1.20	-3.83
+28.31	rank-up	2	0	10	0	0	0	1	-0.47	-4.73
+28.31	collect	2	0	10	0	0	0	1	-0.47	-4.73
+29.40	pickup	2	10	0	10	0	0	1	-2.88	-2.65
+30.00	sample	2	10	0	10	0	0	1	-0.96	-3.37
+30.75	stock	2	10	0	10	0	0	1	1.32	-5.15
+31.51	serve	2	10	0	10	0	0	1	-1.13	-4.01
+31.55	pickup	2	10	0	10	0	0	1	-1.16	-3.82
+32.00	collect	2	10	10	10	0	0	1	0.16	-5.03
+35.26	pickup	2	20	0	20	0	0	1	-2.88	-2.65
+36.57	stock	2	20	0	20	0	0	1	1.32	-5.15
+37.32	serve	2	20	0	20	0	0	1	-1.14	-4.01
+37.37	pickup	2	20	0	20	0	0	1	-1.16	-3.82
+38.09	stock	2	20	0	20	0	0	1	1.31	-5.15
+38.88	serve	2	20	0	20	0	0	1	-1.14	-4.02
+38.92	pickup	2	20	0	20	0	0	1	-1.16	-3.82
+39.63	stock	2	20	0	20	0	0	1	1.31	-5.15
+40.00	sample	2	20	0	20	0	0	1	-0.41	-5.22
+40.25	collect	2	20	10	20	0	0	1	-1.04	-4.63
+42.62	buy production 30	2	0	0	30	30	0	2	-8.25	-3.34
+42.62	clean	2	0	0	30	30	0	2	-8.25	-3.34
+43.29	dump	2	0	0	30	30	0	2	-9.85	-3.35
+43.55	rank-up	3	0	0	30	30	0	2	-8.68	-3.35
+46.06	stock	3	0	0	30	30	0	2	-11.96	-9.98
+49.51	serve	3	0	0	30	30	0	2	-1.29	-4.04
+49.55	pickup	3	0	0	30	30	0	2	-1.28	-3.84
+50.00	sample	3	0	0	30	30	0	2	-0.05	-5.03
+50.00	collect	3	0	30	30	30	0	2	-0.04	-5.03
+53.43	pickup	3	30	0	60	30	0	2	-2.88	-2.65
+57.86	stock	3	30	0	60	30	0	2	1.31	-5.16
+58.04	collect	3	30	10	60	30	0	2	1.09	-5.17
+60.00	sample	3	30	10	60	30	0	2	-0.33	-5.18
+63.34	clean	3	40	0	70	30	0	2	-8.27	-3.35
+64.00	dump	3	40	0	70	30	0	2	-9.85	-3.35
+66.76	stock	3	40	0	70	30	0	2	-11.96	-9.98
+70.00	sample	3	40	0	70	30	0	2	-1.33	-5.03
+70.21	serve	3	40	0	70	30	0	2	-1.29	-4.04
+70.26	pickup	3	40	0	70	30	0	2	-1.28	-3.84
+70.71	collect	3	40	10	70	30	0	2	-0.04	-5.03
+71.91	pickup	3	50	0	80	30	0	2	-2.88	-2.65
+73.31	stock	3	50	0	80	30	0	2	1.31	-5.16
+74.06	serve	3	50	0	80	30	0	2	-1.13	-4.01
+74.10	pickup	3	50	0	80	30	0	2	-1.16	-3.82
+74.55	collect	3	50	10	80	30	0	2	0.07	-5.04
+80.00	sample	3	60	10	90	30	0	2	-2.91	-3.99
+82.56	clean	3	80	0	110	30	0	2	-8.27	-3.21
+82.60	dump	3	80	0	110	30	0	2	-8.44	-3.22
+84.99	clean	3	80	0	110	30	0	2	-11.96	-9.98
+87.85	dump	3	80	0	110	30	0	2	-9.85	-3.36
+90.00	sample	3	80	0	110	30	0	2	-10.16	-9.85
+90.61	clean	3	80	0	110	30	0	2	-11.96	-9.98
+93.47	dump	3	80	0	110	30	0	2	-9.85	-3.36
+96.12	pickup	3	80	0	110	30	0	2	-11.96	-9.98
+99.76	stock	3	80	0	110	30	0	2	2.18	-6.70
+100.00	sample	3	80	0	110	30	0	2	1.04	-6.72
+101.01	serve	3	80	0	110	30	0	2	-1.18	-4.03
+101.05	pickup	3	80	0	110	30	0	2	-1.20	-3.83
+101.50	collect	3	80	10	110	30	0	2	0.04	-5.04
+102.73	pickup	3	90	0	120	30	0	2	-2.88	-2.64
+104.10	stock	3	90	0	120	30	0	2	1.31	-5.16
+104.85	serve	3	90	0	120	30	0	2	-1.13	-4.02
+104.89	pickup	3	90	0	120	30	0	2	-1.16	-3.82
+105.34	collect	3	90	10	120	30	0	2	0.07	-5.04
+106.57	pickup	3	100	0	130	30	0	2	-2.88	-2.65
+107.98	stock	3	100	0	130	30	0	2	1.31	-5.16
+108.73	serve	3	100	0	130	30	0	2	-1.14	-4.02
+108.77	pickup	3	100	0	130	30	0	2	-1.16	-3.82
+109.22	collect	3	100	10	130	30	0	2	0.08	-5.04
+110.00	sample	3	100	20	130	30	0	2	-1.33	-5.14
+120.00	sample	3	110	30	140	30	0	2	-9.51	-3.95
+121.63	dump	3	140	0	170	30	0	2	-8.74	-6.30
+127.56	clean	3	140	0	170	30	0	2	-11.96	-9.98
+130.00	sample	3	140	0	170	30	0	2	-9.67	-9.98
+137.06	dump	3	140	0	170	30	0	2	-9.85	-3.36
+139.83	clean	3	140	0	170	30	0	2	-11.96	-9.98
+140.00	sample	3	140	0	170	30	0	2	-11.20	-9.98
+142.71	dump	3	140	0	170	30	0	2	-9.85	-3.36
+145.38	clean	3	140	0	170	30	0	2	-11.96	-9.98
+147.30	dump	3	140	0	170	30	0	2	-9.85	-7.86
+149.11	pickup	3	140	0	170	30	0	2	-11.96	-9.98
+150.00	sample	3	140	0	170	30	0	2	-7.85	-9.91
+152.79	stock	3	140	0	170	30	0	2	2.18	-6.70
+154.06	serve	3	140	0	170	30	0	2	-1.18	-4.03
+154.10	pickup	3	140	0	170	30	0	2	-1.20	-3.83
+154.83	stock	3	140	0	170	30	0	2	1.31	-5.16
+155.59	serve	3	140	0	170	30	0	2	-1.13	-4.02
+155.63	pickup	3	140	0	170	30	0	2	-1.16	-3.82
+156.36	stock	3	140	0	170	30	0	2	1.31	-5.16
+157.12	serve	3	140	0	170	30	0	2	-1.14	-4.02
+157.16	pickup	3	140	0	170	30	0	2	-1.16	-3.82
+157.88	stock	3	140	0	170	30	0	2	1.31	-5.16
+158.64	serve	3	140	0	170	30	0	2	-1.14	-4.02
+158.68	pickup	3	140	0	170	30	0	2	-1.17	-3.82
+159.41	stock	3	140	0	170	30	0	2	1.31	-5.16
+160.00	sample	3	140	0	170	30	0	2	-1.02	-4.76
+160.16	serve	3	140	0	170	30	0	2	-1.13	-4.02
+160.21	pickup	3	140	0	170	30	0	2	-1.16	-3.82
+160.93	stock	3	140	0	170	30	0	2	1.31	-5.16
+161.69	serve	3	140	0	170	30	0	2	-1.14	-4.01
+161.74	pickup	3	140	0	170	30	0	2	-1.16	-3.82
+162.46	stock	3	140	0	170	30	0	2	1.31	-5.16
+163.22	serve	3	140	0	170	30	0	2	-1.13	-4.02
+163.26	pickup	3	140	0	170	30	0	2	-1.16	-3.82
+163.98	stock	3	140	0	170	30	0	2	1.31	-5.16
+164.74	serve	3	140	0	170	30	0	2	-1.13	-4.02
+164.78	pickup	3	140	0	170	30	0	2	-1.16	-3.82
+165.50	stock	3	140	0	170	30	0	2	1.31	-5.16
+166.26	serve	3	140	0	170	30	0	2	-1.14	-4.02
+166.30	pickup	3	140	0	170	30	0	2	-1.16	-3.82
+167.03	stock	3	140	0	170	30	0	2	1.31	-5.16
+167.79	serve	3	140	0	170	30	0	2	-1.14	-4.01
+167.83	pickup	3	140	0	170	30	0	2	-1.16	-3.82
+168.28	collect	3	140	100	170	30	0	2	0.06	-5.04
+169.52	buy main hall	3	0	90	180	180	0	2	-2.88	-2.65
+169.87	hire	3	50	40	230	180	0	2	-2.88	-2.65
+170.00	sample	3	60	30	240	180	0	2	-2.88	-3.26
+180.00	sample	3	90	10	270	180	0	2	9.73	-8.04
+190.00	sample	3	90	10	270	180	0	2	9.94	-1.69
+200.00	sample	3	90	10	270	180	0	2	15.22	-0.15
+206.93	collect	3	40	10	270	230	1	2	20.25	0.00
+210.00	sample	3	40	10	270	230	1	2	17.19	0.00
+220.00	sample	3	40	10	270	230	1	2	10.29	-0.19
+230.00	sample	3	40	10	270	230	1	2	10.01	-8.63
+238.37	post-hire window start;floor=0	3	70	0	300	230	1	2	-8.21	-3.34
+238.37	serve	3	70	0	300	230	1	2	-8.21	-3.34
+238.43	pickup	3	70	0	300	230	1	2	-7.96	-3.31
+238.88	collect	3	70	20	300	230	1	2	-7.08	-4.01
+240.00	sample	3	70	20	300	230	1	2	-2.86	-3.39
+240.36	pickup	3	90	0	320	230	1	2	-2.89	-2.65
+241.34	collect	3	90	10	320	230	1	2	-0.29	-5.04
+243.98	clean	3	100	0	330	230	1	2	-8.27	-3.35
+244.64	dump	3	100	0	330	230	1	2	-9.85	-3.35
+244.67	collect	3	100	10	330	230	1	2	-9.69	-3.35
+250.00	sample	3	110	10	340	230	1	2	-7.49	-4.22
+251.20	dump	3	120	0	350	230	1	2	-8.59	-3.37
+252.00	collect	3	120	10	350	230	1	2	-8.16	-6.37
+252.76	dump	3	130	0	360	230	1	2	-8.43	-6.36
+255.41	clean	3	130	0	360	230	1	2	-11.96	-9.98
+258.52	dump	3	130	0	360	230	1	2	-9.85	-7.86
+260.00	sample	3	130	0	360	230	1	2	-8.86	-9.76
+261.41	pickup	3	130	0	360	230	1	2	-11.96	-9.98
+263.53	serve	3	130	0	360	230	1	2	-5.86	-9.88
+265.72	pickup	3	130	0	360	230	1	2	-1.28	-3.84
+266.17	collect	3	130	10	360	230	1	2	-0.27	-5.04
+267.33	pickup	3	140	0	370	230	1	2	-2.88	-2.65
+268.65	stock	3	140	0	370	230	1	2	1.30	-5.17
+269.40	serve	3	140	0	370	230	1	2	-1.13	-4.02
+269.44	pickup	3	140	0	370	230	1	2	-1.16	-3.82
+270.00	sample	3	140	0	370	230	1	2	0.24	-5.08
+270.23	stock	3	140	0	370	230	1	2	1.30	-5.17
+270.98	serve	3	140	0	370	230	1	2	-1.14	-4.02
+271.02	pickup	3	140	0	370	230	1	2	-1.17	-3.82
+271.47	collect	3	140	20	370	230	1	2	-0.27	-5.03
+272.70	pickup	3	160	0	390	230	1	2	-2.88	-2.65
+274.02	stock	3	160	0	390	230	1	2	1.30	-5.17
+274.77	pickup	3	160	0	390	230	1	2	-1.13	-4.02
+275.14	collect	3	160	10	390	230	1	2	-0.45	-5.02
+277.74	clean	3	170	0	400	230	1	2	-8.27	-3.35
+278.40	dump	3	170	0	400	230	1	2	-9.85	-3.35
+278.94	collect	3	170	10	400	230	1	2	-8.26	-4.29
+279.67	dump	3	180	0	410	230	1	2	-8.21	-3.34
+280.00	sample	3	180	0	410	230	1	2	-8.16	-4.90
+282.10	serve	3	180	0	410	230	1	2	-11.96	-9.98
+286.05	collect	3	180	10	410	230	1	2	-1.39	-3.05
+286.54	pickup	3	190	0	420	230	1	2	-2.87	-2.64
+288.34	stock	3	190	0	420	230	1	2	1.30	-5.17
+289.49	pickup	3	190	0	420	230	1	2	-1.14	-4.01
+290.00	sample	3	190	0	420	230	1	2	-0.35	-5.03
+290.44	stock	3	190	0	420	230	1	2	1.30	-5.17
+291.33	pickup	3	190	0	420	230	1	2	-1.13	-4.02
+292.26	stock	3	190	0	420	230	1	2	1.30	-5.17
+293.23	pickup	3	190	0	420	230	1	2	-1.14	-4.01
+294.16	stock	3	190	0	420	230	1	2	1.30	-5.17
+295.05	pickup	3	190	0	420	230	1	2	-1.14	-4.02
+295.06	collect	3	190	10	420	230	1	2	-1.14	-4.05
+297.38	clean	3	200	0	430	230	1	2	-8.21	-3.34
+297.50	collect	3	200	10	430	230	1	2	-8.75	-3.34
+300.00	sample	3	200	10	430	230	1	2	-2.81	-3.12
+300.23	clean	3	210	0	440	230	1	2	-2.89	-2.65
+303.17	serve	3	210	0	440	230	1	2	-2.89	-2.65
+304.37	collect	3	210	20	440	230	1	2	-1.40	-2.99
+304.89	pickup	3	230	0	460	230	1	2	-2.85	-2.62
+305.20	collect	3	230	10	460	230	1	2	-1.53	-2.85
+310.00	sample	3	230	10	460	230	1	2	-9.62	-5.91
+310.43	clean	3	240	0	470	230	1	2	-8.38	-6.31
+311.43	dump	3	240	0	470	230	1	2	-9.85	-7.84
+313.19	collect	3	240	10	470	230	1	2	-10.34	-9.87
+315.48	dump	3	250	0	480	230	1	2	-8.46	-3.37
+318.34	clean	3	250	0	480	230	1	2	-11.96	-9.99
+320.00	sample	3	250	0	480	230	1	2	-8.11	-5.89
+321.20	dump	3	250	0	480	230	1	2	-9.85	-3.36
+323.85	serve	3	250	0	480	230	1	2	-11.96	-9.98
+324.01	collect	3	250	20	480	230	1	2	-11.19	-9.96
+329.41	serve	3	270	0	500	230	1	2	-2.89	-2.65
+330.00	sample	3	270	0	500	230	1	2	-1.40	-2.99
+330.09	collect	3	270	20	500	230	1	2	-1.40	-2.99
+330.61	pickup	3	290	0	520	230	1	2	-2.85	-2.62
+332.57	serve	3	290	0	520	230	1	2	1.09	-5.15
+332.99	collect	3	290	10	520	230	1	2	-0.82	-5.23
+335.51	clean	3	300	0	530	230	1	2	-8.27	-3.35
+335.88	collect	3	300	10	530	230	1	2	-9.85	-3.35
+340.00	sample	3	310	10	540	230	1	2	-5.71	-4.20
+341.66	dump	3	320	0	550	230	1	2	-8.45	-3.36
+343.42	collect	3	320	10	550	230	1	2	-8.03	-9.37
+344.52	dump	3	330	0	560	230	1	2	-8.50	-7.94
+346.32	clean	3	330	0	560	230	1	2	-11.96	-9.98
+349.24	dump	3	330	0	560	230	1	2	-9.85	-7.86
+350.00	sample	3	330	0	560	230	1	2	-8.08	-9.41
+351.55	pickup	3	330	0	560	230	1	2	-11.96	-9.98
+355.50	stock	3	330	0	560	230	1	2	2.18	-6.70
+356.75	pickup	3	330	0	560	230	1	2	-1.18	-4.03
+357.49	stock	3	330	0	560	230	1	2	1.30	-5.17
+358.24	pickup	3	330	0	560	230	1	2	-1.13	-4.01
+358.99	stock	3	330	0	560	230	1	2	1.30	-5.17
+359.73	pickup	3	330	0	560	230	1	2	-1.14	-4.01
+360.00	sample	3	330	0	560	230	1	2	-0.92	-4.98
+360.48	stock	3	330	0	560	230	1	2	1.30	-5.17
+360.60	serve	3	330	0	560	230	1	2	0.73	-5.19
+362.32	collect	3	330	20	560	230	1	2	-1.38	-3.05
+362.88	pickup	3	350	0	580	230	1	2	-2.87	-2.64
+364.20	stock	3	350	0	580	230	1	2	1.30	-5.17
+364.65	serve	3	350	0	580	230	1	2	-0.79	-5.24
+365.44	collect	3	350	10	580	230	1	2	-1.38	-3.05
+365.94	pickup	3	360	0	590	230	1	2	-2.87	-2.64
+367.26	stock	3	360	0	590	230	1	2	1.30	-5.17
+367.93	serve	3	360	0	590	230	1	2	-1.08	-4.38
+368.50	collect	3	360	10	590	230	1	2	-1.38	-3.05
+368.99	pickup	3	370	0	600	230	1	2	-2.87	-2.64
+370.00	sample	3	370	0	600	230	1	2	-1.47	-3.38
+371.16	collect	3	370	10	600	230	1	2	-1.39	-4.03
+378.06	clean	3	400	0	630	230	1	2	-8.38	-6.30
+380.00	sample	3	400	0	630	230	1	2	-8.06	-7.56
+380.88	dump	3	400	0	630	230	1	2	-9.85	-7.84
+382.78	pickup	3	400	0	630	230	1	2	-11.96	-9.98
+386.97	stock	3	400	0	630	230	1	2	2.18	-6.70
+388.43	pickup	3	400	0	630	230	1	2	-1.18	-4.03
+389.58	stock	3	400	0	630	230	1	2	1.30	-5.17
+390.00	sample	3	400	0	630	230	1	2	0.33	-5.20
+390.58	pickup	3	400	0	630	230	1	2	-1.13	-4.01
+391.34	stock	3	400	0	630	230	1	2	1.30	-5.17
+392.30	pickup	3	400	0	630	230	1	2	-1.14	-4.02
+393.41	stock	3	400	0	630	230	1	2	1.30	-5.17
+394.46	pickup	3	400	0	630	230	1	2	-1.26	-3.41
+396.69	serve	3	400	0	630	230	1	2	0.64	-5.11
+397.78	collect	3	400	10	630	230	1	2	-1.38	-3.05
+398.28	pickup	3	410	0	640	230	1	2	-2.87	-2.64
+400.00	sample	3	410	0	640	230	1	2	-0.71	-5.00
+402.06	serve	3	410	0	640	230	1	2	1.23	-5.16
+403.29	collect	3	410	10	640	230	1	2	-1.38	-3.05
+403.78	pickup	3	420	0	650	230	1	2	-2.87	-2.64
+405.92	stock	3	420	0	650	230	1	2	1.30	-5.17
+406.56	collect	3	420	10	650	230	1	2	0.62	-5.19
+409.83	clean	3	430	0	660	230	1	2	-8.27	-3.35
+410.00	sample	3	430	0	660	230	1	2	-9.06	-3.35
+410.49	dump	3	430	0	660	230	1	2	-9.85	-3.35
+410.81	collect	3	430	10	660	230	1	2	-8.37	-3.35
+411.30	dump	3	440	0	670	230	1	2	-7.88	-3.26
+413.76	serve	3	440	0	670	230	1	2	-11.96	-9.98
+417.70	collect	3	440	10	670	230	1	2	-1.39	-3.05
+418.20	pickup	3	450	0	680	230	1	2	-2.87	-2.64
+418.37	post-hire window end;R=126.67	3	450	0	680	230	1	2	-2.05	-2.69
+418.37	end	3	450	0	680	230	1	2	-2.05	-2.69
+
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1675" name="Spec083EconomySceneTests" fullname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests" classname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.219768" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1677" name="PlacementRefreshesChangedQuoteBeforeChargingAndCancelIsFree" fullname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests.PlacementRefreshesChangedQuoteBeforeChargingAndCancelIsFree" methodname="PlacementRefreshesChangedQuoteBeforeChargingAndCancelIsFree" classname="BurgerShop.Tests.EditMode.Spec083EconomySceneTests" runstate="Runnable" seed="704888788" result="Passed" start-time="2026-09-22 10:15:15Z" end-time="2026-09-22 10:15:17Z" duration="2.139498" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1678" name="Spec083EconomyTests" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" testcasecount="13" result="Failed" site="Child" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.042347" total="13" passed="12" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1694" name="DirtyTablesDoNotProduceABuyMoreSeatsRecommendation" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.DirtyTablesDoNotProduceABuyMoreSeatsRecommendation" methodname="DirtyTablesDoNotProduceABuyMoreSeatsRecommendation" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="415874139" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.006024" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1687" name="HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.004805" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1683" name="HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(0)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(0)" methodname="HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="1121562450" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.001323" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1684" name="HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(49)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(49)" methodname="HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="1640175578" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.000830" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1685" name="HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(80)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(80)" methodname="HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="1981280144" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.000809" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1686" name="HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(120)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(120)" methodname="HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="200595141" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.000815" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1693" name="LiveObservationDistinguishesSupplyTransportAndServiceIncludingHandoffs" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.LiveObservationDistinguishesSupplyTransportAndServiceIncludingHandoffs" methodname="LiveObservationDistinguishesSupplyTransportAndServiceIncludingHandoffs" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="2046703905" result="Failed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.013253" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: null
+  But was:  <Customer_1 (BurgerShop.Customer.CustomerAgent)>
+]]></message>
+                  <stack-trace><![CDATA[at BurgerShop.Tests.EditMode.Spec083EconomyTests.LiveObservationDistinguishesSupplyTransportAndServiceIncludingHandoffs () [0x002a7] in /private/tmp/bs083-economy/Assets/Tests/EditMode/Spec083EconomyTests.cs:122
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1692" name="QuotesUsePrepurchaseCountAndSeparateCredit" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.001126" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1689" name="QuotesUsePrepurchaseCountAndSeparateCredit(0,200)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit(0,200)" methodname="QuotesUsePrepurchaseCountAndSeparateCredit" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="1844125082" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.000173" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1690" name="QuotesUsePrepurchaseCountAndSeparateCredit(1,250)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit(1,250)" methodname="QuotesUsePrepurchaseCountAndSeparateCredit" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="2046323796" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.000045" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1691" name="QuotesUsePrepurchaseCountAndSeparateCredit(4,490)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit(4,490)" methodname="QuotesUsePrepurchaseCountAndSeparateCredit" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="2064676069" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.000041" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1682" name="RealWindowStartsShareOneCooldownOverlappingHandoff" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.014987" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1679" name="RealWindowStartsShareOneCooldownOverlappingHandoff(1,0.75f)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff(1,0.75f)" methodname="RealWindowStartsShareOneCooldownOverlappingHandoff" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="536314538" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.006986" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1680" name="RealWindowStartsShareOneCooldownOverlappingHandoff(2,0.65f)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff(2,0.65f)" methodname="RealWindowStartsShareOneCooldownOverlappingHandoff" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="1176179497" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.003686" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1681" name="RealWindowStartsShareOneCooldownOverlappingHandoff(3,0.55f)" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff(3,0.55f)" methodname="RealWindowStartsShareOneCooldownOverlappingHandoff" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="589113610" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.003599" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1688" name="RecommendationRequiresPersistentEvidenceAndDoesNotFlap" fullname="BurgerShop.Tests.EditMode.Spec083EconomyTests.RecommendationRequiresPersistentEvidenceAndDoesNotFlap" methodname="RecommendationRequiresPersistentEvidenceAndDoesNotFlap" classname="BurgerShop.Tests.EditMode.Spec083EconomyTests" runstate="Runnable" seed="150972508" result="Passed" start-time="2026-09-22 10:15:17Z" end-time="2026-09-22 10:15:17Z" duration="0.000628" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /Users/max/Library/Application Support/DefaultCompany/BurgerShop/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

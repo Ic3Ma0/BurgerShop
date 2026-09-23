@@ -10,6 +10,7 @@ using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace BurgerShop.Tests.EditMode
 {
@@ -63,10 +64,21 @@ namespace BurgerShop.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");yield return new EnterPlayMode();for(int boot=0;boot<12;boot++)yield return null;
             Assert.That(FacilityLayout.Current,Is.Not.Null,"runtime layout booted");
-            Time.timeScale=0;var layout=FacilityLayout.Current;var goals=layout.GetComponent<SessionGoalTracker>();
+            VerifyPlacementTransactions();
+            Time.timeScale=1;LogAssert.NoUnexpectedReceived();yield return new ExitPlayMode();
+        }
+
+        static void VerifyPlacementTransactions()
+        {
+            Time.timeScale=0;
+            var layout=FacilityLayout.Current;
+            Assert.That(layout != null, Is.True, "live layout");
+            var goals=layout.GetComponent<SessionGoalTracker>();
+            Assert.That(goals != null, Is.True, "goals");
+            Assert.That(layout.GetComponent<MainHallExpansion>() != null, Is.True, "hall");
             layout.GetComponent<MainHallExpansion>().Restore(true,true,150);goals.Restore(7,0,0);goals.ApplyUnlocks();layout.Discover();
             layout.Wallet.RestoreProgress(5000,0);
-            var candidate=layout.BeginPurchase(FacilityKind.PairTable);Assert.That(candidate,Is.Not.Null);
+            var candidate=layout.BeginPurchase(FacilityKind.PairTable);Assert.That(candidate != null,Is.True,"live candidate: "+layout.LastError);
             var position=new Vector3(-10,0,9);
             Assert.That(layout.CanPlace(candidate,position,0,true),Is.True,layout.LastError);
             layout.Restore(new[]{new FacilityPlacementRecord{id="custom:08300000000000000000000000000002",kind=(int)FacilityKind.PairTable,purchased=true,x=7,z=9,level=1}});
@@ -82,7 +94,49 @@ namespace BurgerShop.Tests.EditMode
             var placed=layout.Instances.Single(f=>Vector3.Distance(f.transform.position,position)<.01f);
             Assert.That(layout.BeginMove(placed),Is.True);Assert.That(layout.Confirm(position,0),Is.True);
             Assert.That(layout.Wallet.Coins,Is.EqualTo(5000-due));Assert.That(goals.Stars,Is.EqualTo(2));
-            Time.timeScale=1;LogAssert.NoUnexpectedReceived();yield return new ExitPlayMode();
+
+        }
+
+        [UnityTest] public IEnumerator CatalogQuotesFitPhoneAndLandscapeWithoutCoveringPurchaseControls()
+        {
+            EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");yield return new EnterPlayMode();
+            var layout=FacilityLayout.Current;
+            layout.GetComponent<MainHallExpansion>().Restore(true,true,MainHallExpansion.Cost);
+            layout.Wallet.RestoreProgress(0,0);layout.Wallet.CollectCoins(5000);
+            var goals=layout.GetComponent<SessionGoalTracker>();goals.Restore(7,0,0);goals.ApplyUnlocks();layout.Discover();
+            // This fixture is funded for UI checks, not used in the natural-income trace.
+            Object.FindFirstObjectByType<SalesHud>().Advance(2f);
+            var shop=Object.FindFirstObjectByType<FacilityShopHud>();shop.Open();
+            var camera=Camera.main;var canvas=shop.GetComponentInParent<Canvas>();
+            var cameraData=camera.GetComponents<Component>().First(c=>c.GetType().Name=="UniversalAdditionalCameraData");
+            var serialized=new UnityEditor.SerializedObject(cameraData);
+            serialized.FindProperty("m_RenderPostProcessing").boolValue=false;serialized.ApplyModifiedPropertiesWithoutUndo();
+            canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=camera;canvas.planeDistance=1;
+            foreach(var size in new[]{new Vector2Int(1080,1920),new Vector2Int(1600,1000)})
+            {
+                var target=new RenderTexture(size.x,size.y,24);camera.targetTexture=target;
+                yield return null;Canvas.ForceUpdateCanvases();shop.SendMessage("FitCatalog");Canvas.ForceUpdateCanvases();
+                foreach(var label in shop.GetComponentsInChildren<Text>().Where(t=>t.name=="OpeningQuote"&&t.text.Length>0))
+                {
+                    Assert.That(label.preferredHeight,Is.LessThanOrEqualTo(label.rectTransform.rect.height),label.transform.parent.name);
+                    var card=(RectTransform)label.transform.parent;
+                    var quoteBounds=HudChrome.LocalRect(label.rectTransform,card);
+                    var priceBounds=HudChrome.LocalRect((RectTransform)card.Find("Detail"),card);
+                    Assert.That(quoteBounds.yMin,Is.GreaterThan(priceBounds.yMax),"quote must not cover price or Buy");
+                }
+                var cola=(RectTransform)GameObject.Find("Buy_ColaMachine").transform;
+                Assert.That(cola.Find("OpeningQuote").GetComponent<Text>().text,Does.Contain("450"));
+                Assert.That(cola.Find("OpeningQuote").GetComponent<Text>().text,Does.Contain("750"));
+                var scroll=shop.GetComponentInChildren<ScrollRect>();
+                scroll.content.anchoredPosition=new Vector2(0,-cola.anchoredPosition.y);
+                Canvas.ForceUpdateCanvases();camera.Render();
+                var previous=RenderTexture.active;RenderTexture.active=target;
+                var pixels=new Texture2D(size.x,size.y,TextureFormat.RGB24,false);
+                pixels.ReadPixels(new Rect(0,0,size.x,size.y),0,0);pixels.Apply();
+                System.IO.File.WriteAllBytes("/tmp/bs083-quotes-"+size.x+".png",pixels.EncodeToPNG());
+                RenderTexture.active=previous;camera.targetTexture=null;Object.Destroy(pixels);Object.Destroy(target);
+            }
+            shop.Close();LogAssert.NoUnexpectedReceived();yield return new ExitPlayMode();
         }
     }
 }

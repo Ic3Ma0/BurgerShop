@@ -1,0 +1,202 @@
+{
+  "BurgerShop.Tests.EditMode.BoostRoomTests.ApproachingFormerPointDoesNotOpenUntilExplicitSelection": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.BoostRoomTests.ClickCloseHidesThePopupWithoutSpending": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.BoostRoomTests.DoorwayIsOpenAndRoomSitsOutsideWithoutBlockingHall": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.BoostRoomTests.FormerTrainingRoomBecomesCarBayAndKeepsUpgradeAccess": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.BoostRoomTests.InsufficientFundsStayGreyAndHallDoesNotOpenThePopup": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.BoostRoomTests.LegacyFiveCanContinueWithoutLosingProgress": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.BoostRoomTests.OldSavesMigrateBoostLevelToBothPlayerTiers": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.BoostRoomTests.PopupStaysOffTheJoystickAndOnlyControlsRaycast": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.BoostRoomTests.RestoreTiersAndNewSavesRoundTripIndependently": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.BoostRoomTests.SpeedAndCarryKeepTheirPricesAndExplicitCloseEndsSelection": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDetailsPlayTests.AllExistingUpgradeKindsShareDetailsAndKeepTheirPrices": {
+    "result": "Passed",
+    "evidence": "a.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDetailsPlayTests.DetailsFitPhoneAndDesktopAndRestorePauseOnDisable": {
+    "result": "Passed",
+    "evidence": "a.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDetailsPlayTests.TapUpgradeMoveAndSaveUseTheSameFacility": {
+    "result": "Passed",
+    "evidence": "a.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDetailsPlayTests.TouchTapOpensButDragMultitouchAndJoystickDoNot": {
+    "result": "Passed",
+    "evidence": "a.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent(Burger)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.DirectGrillNeverChargesForStandingAndCommitsBeforeWalletEvent(Cola)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.EveryTableShapeHasDistinctCachedStylePhotos": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.GestureRejectsDragLongPressOtherFacilityUiAndMultitouch": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.InsufficientTableMoneyDoesNotLosePartialCredit": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(0,Bistro,50)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(25,Diner,80)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.FacilityDirectPurchaseTests.TableBuyCreditsExistingInvestmentAndRecordsExactlyOneChoice(80,Patio,120)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec084CharacterUpgradeTests.CharacterCardsFitPortraitAndLandscapeAndInvestmentFollowsActor": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec084CharacterUpgradeTests.MouseSelectsPlayerAndStaffAtAnyLocationAndPersistsSharedUpgrades": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec084CharacterUpgradeTests.TouchDragUiMultitouchAndPlacementNeverBecomeActorTaps": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.ApproachingHrDoesNotOpenUntilExplicitSelection": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.ClickCarryAddsOneToStaffCarry": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.ClickCloseHidesTheStaffPopupWithoutSpending": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.ClickSpeedSpendsFiftyAndMakesTheWorkerFaster": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.LeavingHrDoesNotCloseAnExplicitSelection": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.OldSavesKeepStaffTiersAtZeroAndNewSavesRoundTrip": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.PaidUpgradeAppliesToEveryHiredEmployeeAndCannotReenter(1)": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.PaidUpgradeAppliesToEveryHiredEmployeeAndCannotReenter(3)": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.PoorButtonsStayGreyAndLaterHiresUseCurrentTiers": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.PopupStaysOffTheJoystickAndOnlyButtonsRaycast": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.StaffUpgradeTests.TwentyPurchasesApplyToStaffAndRejectTwentyFirst": {
+    "result": "Passed",
+    "evidence": "b.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.DirtyTablesDoNotProduceABuyMoreSeatsRecommendation": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(0)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(49)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(80)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.HiddenDirectTableAndFullyPaidChoiceUseFullOfflinePrice(120)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.LiveObservationDistinguishesSupplyTransportAndServiceIncludingHandoffs": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.PurchasedTierRestoresWithoutPaymentAndUpgradePublishesCommittedState": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit(0,200)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit(1,250)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.QuotesUsePrepurchaseCountAndSeparateCredit(4,490)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff(1,0.75f)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff(2,0.65f)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.RealWindowStartsShareOneCooldownOverlappingHandoff(3,0.55f)": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  },
+  "BurgerShop.Tests.EditMode.Spec083EconomyTests.RecommendationRequiresPersistentEvidenceAndDoesNotFlap": {
+    "result": "Passed",
+    "evidence": "c.xml"
+  }
+}

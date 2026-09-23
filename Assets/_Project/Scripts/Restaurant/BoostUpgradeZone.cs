@@ -10,6 +10,8 @@ namespace BurgerShop.Restaurant
         BurgerInventory player;
         PlayerMotor motor;
         TextMesh markerLabel;
+        bool purchasing;
+        public PlayerMotor Player => motor;
 
         public long Coins => wallet != null ? wallet.Coins : 0;
         public int SpeedTier { get; private set; }
@@ -64,9 +66,9 @@ namespace BurgerShop.Restaurant
 
         public void RestoreLevel(int level) => RestoreTiers(level, level);
 
-        public bool TryBuySpeed() => TryBuy(true);
+        public bool TryBuySpeed(int expectedTier = -1) => TryBuy(true, expectedTier);
 
-        public bool TryBuyCarry() => TryBuy(false);
+        public bool TryBuyCarry(int expectedTier = -1) => TryBuy(false, expectedTier);
 
         public void Advance(float deltaTime)
         {
@@ -75,19 +77,26 @@ namespace BurgerShop.Restaurant
                 HasVisitedRoom = true;
         }
 
-        bool TryBuy(bool speed)
+        bool TryBuy(bool speed, int expectedTier)
         {
-            if (!IsPlayerInRange || wallet == null) return false;
+            if (purchasing || player == null || wallet == null) return false;
+            if (expectedTier >= 0 && expectedTier != (speed ? SpeedTier : CarryTier)) return false;
             bool max = speed ? SpeedIsMax : CarryIsMax;
             int cost = speed ? SpeedCost : CarryCost;
             if (max || wallet.Coins < cost) return false;
-            if (!wallet.TrySpend(cost)) return false;
-            GetComponent<UI.SessionGoalTracker>()?.AddUpgradeStars();
-            if (speed) SpeedTier++;
-            else CarryTier++;
-            ApplyToPlayer();
-            RefreshVisuals();
-            GetComponent<UI.SessionGoalTracker>()?.EvaluateStarGateTasks();
+            purchasing = true;
+            try
+            {
+                if (!wallet.TrySpend(cost, () =>
+                {
+                    if (speed) SpeedTier++; else CarryTier++;
+                    ApplyToPlayer();
+                    RefreshVisuals();
+                    GetComponent<UI.SessionGoalTracker>()?.AddUpgradeStars();
+                    GetComponent<UI.SessionGoalTracker>()?.EvaluateStarGateTasks();
+                })) return false;
+            }
+            finally { purchasing = false; }
             UI.FeedbackDirector.Current?.Success(player.transform.position,"Level Up!",player.transform);
             return true;
         }
@@ -101,7 +110,7 @@ namespace BurgerShop.Restaurant
         void LateUpdate()
         {
             if (markerLabel == null) return;
-            markerLabel.gameObject.SetActive(!IsPlayerInRange);
+            markerLabel.gameObject.SetActive(false);
             if (Camera.main != null) markerLabel.transform.rotation = Camera.main.transform.rotation;
         }
 
