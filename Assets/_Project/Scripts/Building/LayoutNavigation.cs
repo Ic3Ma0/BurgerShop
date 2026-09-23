@@ -60,17 +60,17 @@ namespace BurgerShop.Building
             }
             return true;
         }
-        int Nearest(Vector2 point, bool allowOccupied=false)
+        int Nearest(Vector2 point)
         {
             int x=Mathf.FloorToInt((point.x-bounds.xMin)/Step),y=Mathf.FloorToInt((point.y-bounds.yMin)/Step),best=-1;float distance=2.25f;
             for(int dy=-3;dy<=3;dy++)for(int dx=-3;dx<=3;dx++)
-            {int nx=x+dx,ny=y+dy;if(nx<0||nx>=width||ny<0||ny>=height)continue;int i=ny*width+nx;if(!walkable[i])continue;float d=(Point(i)-point).sqrMagnitude;if(d<distance&&(allowOccupied||SegmentClear(point,Point(i)))){distance=d;best=i;}}
+            {int nx=x+dx,ny=y+dy;if(nx<0||nx>=width||ny<0||ny>=height)continue;int i=ny*width+nx;if(!walkable[i])continue;float d=(Point(i)-point).sqrMagnitude;if(d<distance&&SegmentClear(point,Point(i))){distance=d;best=i;}}
             return best;
         }
         // Flood once, then all service-port checks are constant-time. Do not build a path per port.
         public bool CanReach(Vector3 from,Vector3 to)
         {
-            int start=Nearest(new Vector2(from.x,from.z)),end=Nearest(new Vector2(to.x,to.z),true);
+            int start=Nearest(new Vector2(from.x,from.z)),end=Nearest(new Vector2(to.x,to.z));
             if(start<0||end<0)return false;
             if(regions==null)
             {
@@ -88,7 +88,7 @@ namespace BurgerShop.Building
         }
         public Vector3[] Route(Vector3 from,Vector3 to)
         {
-            int start=Nearest(new Vector2(from.x,from.z)),end=Nearest(new Vector2(to.x,to.z),true);
+            int start=Nearest(new Vector2(from.x,from.z)),end=Nearest(new Vector2(to.x,to.z));
             if(start<0||end<0)return null;
             var previous=new int[walkable.Length];for(int i=0;i<previous.Length;i++)previous[i]=-1;
             var queue=new Queue<int>();queue.Enqueue(start);previous[start]=start;
@@ -106,7 +106,7 @@ namespace BurgerShop.Building
                 if(i>0&&i+1<cells.Count&&cells[i]-cells[i-1]==cells[i+1]-cells[i])continue;
                 var p=Point(cells[i]);route.Add(new Vector3(p.x,from.y,p.y));
             }
-            if(SegmentClear(Point(end),new Vector2(to.x,to.z)))route.Add(new Vector3(to.x,from.y,to.z));return route.ToArray();
+            route.Add(new Vector3(to.x,from.y,to.z));return route.ToArray();
         }
     }
 }

@@ -36,7 +36,7 @@ namespace BurgerShop.Customer
                 var direction=(knots[i+1]-knots[i-1]).normalized;
                 var offset=Vector3.Cross(Vector3.up,direction)*lane;
                 Vector3 candidate=knots[i]+offset;
-                if(Clear(knots[i-1],candidate)&&Clear(candidate,knots[i+1]))personal[i]=candidate;
+                if(Clear(personal[i-1],candidate)&&Clear(candidate,knots[i+1]))personal[i]=candidate;
             }
             var curved=new List<Vector3>{personal[0]};
             for(int i=1;i<personal.Length-1;i++)
@@ -51,10 +51,12 @@ namespace BurgerShop.Customer
                     float t=j/12f;samples[j]=(1-t)*(1-t)*a+2*(1-t)*t*personal[i]+t*t*b;
                     clear &= Clear(samples[j-1],samples[j]);
                 }
-                if(clear)curved.AddRange(samples);else curved.Add(knots[i]);
+                if(clear)curved.AddRange(samples);else curved.Add(personal[i]);
             }
             if(personal.Length>1)curved.Add(personal[personal.Length-1]);
-            points=curved.ToArray();distances=new float[points.Length];
+            bool safe=true;
+            for(int i=1;i<curved.Count;i++)if(!Clear(curved[i-1],curved[i])){safe=false;break;}
+            points=safe?curved.ToArray():knots.ToArray();distances=new float[points.Length];
             for(int i=1;i<points.Length;i++)distances[i]=distances[i-1]+Vector3.Distance(points[i-1],points[i]);
         }
         public Vector3 At(float distance)

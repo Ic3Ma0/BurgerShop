@@ -34,16 +34,16 @@ namespace BurgerShop.Restaurant
             var floor=Rect.MinMaxRect(Mathf.Min(from.x,to.x)-8,Mathf.Min(from.z,to.z)-8,Mathf.Max(from.x,to.x)+8,Mathf.Max(from.z,to.z)+8);
             return new LayoutNavigation(new[]{floor},obstacles,Radius+.05f).Route(from,to);
         }
-        public static bool Clear(Vector3 from, Vector3 to)
+        public static bool Clear(Vector3 from, Vector3 to, Transform allowedChair=null, float radius=Radius)
         {
             from.y = to.y = 0;
             int steps = Mathf.Max(1, Mathf.CeilToInt(Vector3.Distance(from,to)/.12f));
             for(int step=0;step<=steps;step++)
             {
                 var p=Vector3.Lerp(from,to,step/(float)steps);
-                int count=Physics.OverlapCapsuleNonAlloc(p+Vector3.up*.55f,p+Vector3.up*1.45f,Radius,hits,~0,QueryTriggerInteraction.Ignore);
+                int count=Physics.OverlapCapsuleNonAlloc(p+Vector3.up*.55f,p+Vector3.up*1.45f,radius,hits,~0,QueryTriggerInteraction.Ignore);
                 if(count==hits.Length)return false;
-                for(int i=0;i<count;i++)if(IsObstacle(hits[i]))return false;
+                for(int i=0;i<count;i++)if(IsObstacle(hits[i])&&(allowedChair==null||!hits[i].transform.IsChildOf(allowedChair)))return false;
             }
             return true;
         }

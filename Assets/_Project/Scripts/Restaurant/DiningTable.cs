@@ -142,10 +142,18 @@ namespace BurgerShop.Restaurant
         {
             var seat=SeatPosition(index);
             if(ActorObstacles.Clear(seat,seat))return seat;
-            var outward=seat-Center;outward.y=0;
-            // Mount the chair from its side, never walk through the tabletop.
-            return seat+Vector3.Cross(Vector3.up,outward.normalized)*.8f;
+            var local=transform.InverseTransformPoint(seat);
+            // Approach along the outside edge of the table, away from the neighbouring
+            // chair. A diagonal tangent toward the table centre cuts through its corner.
+            Vector3 offset;
+            if(SeatCount==4)
+                offset=new Vector3(Mathf.Sign(local.x)*.3f,0,Mathf.Sign(local.z)*1.1f);
+            else
+                offset=new Vector3(Mathf.Sign(local.z)*1.1f,0,Mathf.Sign(local.z)*.15f);
+            return seat+transform.TransformVector(offset);
         }
+
+        public Transform SeatChair(int index)=>transform.Find("Chair"+(char)('A'+index));
 
         public bool TryAssignSeat(CustomerAgent guest, out Vector3 sitPosition, out int seatIndex)
         {

@@ -632,7 +632,11 @@ namespace BurgerShop.Restaurant
                 return cleaningTable != null ? cleaningTable.WaitPosition : transform.position;
             }
             if (state == WorkerState.ToBin)
-                return bin != null ? bin.DropPosition : transform.position;
+            {
+                if(bin==null)return transform.position;
+                var outward=transform.position-bin.DropPosition;outward.y=0;
+                return bin.DropPosition+(outward.sqrMagnitude>.001f?outward.normalized:Vector3.back)*.95f;
+            }
             return transform.position;
         }
 

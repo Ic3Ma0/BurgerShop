@@ -45,11 +45,10 @@ namespace BurgerShop.Tests.EditMode
             body.transform.position=new Vector3(3,.8f,0);Physics.SyncTransforms();layout.RefreshNavigation();
             AssertPath(new Vector3(-5,0,0),new Vector3(5,0,0));
         }
-        [Test] public void OccupiedInteractionTargetEndsOutsideBody()
+        [Test] public void OccupiedInteractionTargetIsNotSilentlyReplaced()
         {
             Obstacle(PrimitiveType.Cube,new Vector3(0,.8f,0),Vector3.one);
-            var path=layout.Route(new Vector3(-5,0,0),Vector3.zero);Assert.That(path,Is.Not.Null);
-            Assert.That(ActorObstacles.Clear(path[path.Length-1],path[path.Length-1]),Is.True);
+            Assert.That(layout.Route(new Vector3(-5,0,0),Vector3.zero),Is.Null);
         }
         [Test] public void FullyBlockedRouteNeverFallsBackThroughWall()
         {

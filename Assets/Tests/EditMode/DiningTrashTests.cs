@@ -294,7 +294,7 @@ namespace BurgerShop.Tests.EditMode
             CustomerAgent second = queue.ReadyCustomer;
             serving.Advance(1f);
             serving.Advance(BurgerServingZone.HandoffDuration);
-            for (int i = 0; i < 240; i++) second.AdvanceDeparture(1f / 60f);
+            for (int i = 0; i < 900 && Vector3.Distance(Flatten(second.transform.position), Flatten(table.WaitPosition)) >= .15f; i++) second.AdvanceDeparture(1f / 60f);
             Assert.That(second.IsEating, Is.False);
             Assert.That(second.IsDining, Is.True);
             Assert.That(second.gameObject.activeInHierarchy, Is.True);

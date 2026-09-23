@@ -27,7 +27,7 @@ namespace BurgerShop.Customer
         const float HandoffSeconds = 0.4f;
         const float DepartureSpeed = 1.92f;
 
-        enum Phase { None, Handoff, ToSeat, Eating, Restroom, Exiting }
+        enum Phase { None, Handoff, ToSeat, Seating, Eating, LeavingSeat, Restroom, Exiting }
         int restroomSlot=-1,restroomStage;float restroomTime,restroomWait;
         public bool IsUsingRestroom=>phase==Phase.Restroom;
 
@@ -48,7 +48,7 @@ namespace BurgerShop.Customer
         public bool HasReachedSlot { get; private set; }
         public bool HasOrdered { get; private set; }
         public bool IsDeparting { get; private set; }
-        public bool IsDining => phase == Phase.ToSeat || phase == Phase.Eating;
+        public bool IsDining => phase == Phase.ToSeat || phase == Phase.Seating || phase == Phase.Eating || phase == Phase.LeavingSeat;
         public bool IsEating => phase == Phase.Eating;
         public bool DepartureComplete { get; private set; }
         public int PaidAmount { get; private set; }
@@ -260,6 +260,7 @@ namespace BurgerShop.Customer
                 ? Mathf.Max(0f, departureTime - HandoffSeconds) - Mathf.Max(0f, previousTime - HandoffSeconds)
                 : deltaTime);
 
+            float mealDelta=deltaTime;
             if (phase == Phase.ToSeat)
             {
                 if (seatIndex < 0)
@@ -280,17 +281,24 @@ namespace BurgerShop.Customer
                 }
                 FaceTable();
                 LockMealTip(table.MealTip);
-                PlaceBurgerOnTable();
                 seatedApproach=transform.position;
-                phase = Phase.Eating;
+                phase = Phase.Seating;
                 eatTime = 0f;
+            }
+            if(phase==Phase.Seating)
+            {
+                if(table==null){phase=Phase.Exiting;return;}
+                if(!MoveAtChair(table.SeatPosition(seatIndex),ref remaining))return;
+                phase=Phase.Eating;
+                mealDelta=remaining/DepartureSpeed; // Only leftover time counts as eating.
             }
 
             if (phase == Phase.Eating)
             {
                 if (table != null && seatIndex >= 0)
-                { transform.position = table.SeatPosition(seatIndex); FaceTable(); PlaceBurgerOnTable(); }
-                eatTime += deltaTime;
+                { FaceTable(); PlaceBurgerOnTable(); }
+                float previousEatTime=eatTime;
+                eatTime += mealDelta;
                 float need = (table != null ? table.EatSeconds : 5f) * (Kind == CustomerKind.BigEater ? 1.5f : 1f);
                 if (eatTime < need) return;
                 int finishedSeat = seatIndex;
@@ -300,10 +308,15 @@ namespace BurgerShop.Customer
                     finishedTable.LeaveMealTrash(finishedSeat);
                     finishedTable.LeaveMealCash(lockedMealTip);
                 }
-                if(finishedTable!=null)transform.position=seatedApproach; // Dismount the same chair side used to sit.
-                finishedTable?.Release(this);
-                seatIndex = -1;
                 ReleaseMeal();
+                phase=Phase.LeavingSeat;
+                remaining=DepartureSpeed*Mathf.Max(0,mealDelta-Mathf.Max(0,need-previousEatTime));
+            }
+            if(phase==Phase.LeavingSeat)
+            {
+                if(!MoveAtChair(seatedApproach,ref remaining))return;
+                table?.Release(this);
+                seatIndex = -1;
                 if (exitRoute.Length > 0 && transform.position.x > ShopLayout.WallHalf)
                 {
                     var leaving = new System.Collections.Generic.List<Vector3>(ShopLayout.WingRoute(transform.position, exitRoute[0]));
@@ -374,6 +387,17 @@ namespace BurgerShop.Customer
             if(!StepToward(RestroomExpansion.Door+Vector3.forward,ref travel))return true;
             room.Release(this);return false;
         }
+        bool MoveAtChair(Vector3 target,ref float remaining)
+        {
+            target.y=transform.position.y;
+            var next=Vector3.MoveTowards(transform.position,target,remaining);
+            // A seated posture can enter its assigned chair, never another chair or table.
+            if(!ActorObstacles.Clear(transform.position,next,table?.SeatChair(seatIndex),.2f))return false;
+            float moved=Vector3.Distance(transform.position,next);
+            transform.position=next;remaining=Mathf.Max(0,remaining-moved);
+            FaceTable();
+            return Vector3.Distance(next,target)<.0001f;
+        }
         Vector3 seatedApproach;
         Vector3[] wingWalk;
         Vector3 wingTarget;
@@ -412,11 +436,7 @@ namespace BurgerShop.Customer
             float distance = offset.magnitude;
             Vector3 next=Vector3.MoveTowards(transform.position,new Vector3(target.x,transform.position.y,target.z),travel);
             if(!ActorObstacles.Clear(transform.position,next)){wingWalk=null;exitPathBuilt=false;rejoin=null;travel=0;return false;}
-            if (distance <= 0.04f)
-            {
-                transform.position = new Vector3(target.x, transform.position.y, target.z);
-                return true;
-            }
+            if (distance <= .00001f) return true;
             if (distance > 0.0001f)
                 transform.rotation = Quaternion.LookRotation(offset);
             if (travel < distance)
